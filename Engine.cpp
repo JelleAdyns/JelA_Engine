@@ -1,7 +1,7 @@
 // MyOwnEngineExercise.cpp : Defines the entry point for the application.
 //
 
-#include "framework.h"
+
 #include "Engine.h"
 
 #define MAX_LOADSTRING 100
@@ -10,6 +10,7 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+Engine* g_Engine =  Engine::GetSingleton();
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -38,7 +39,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-   return Engine::GetSingleton()->Run(hInstance);
+    return g_Engine->Run(hInstance);
 
 }
 
@@ -191,4 +192,13 @@ int Engine::Run(HINSTANCE& hInst)
         }
     }
     return (int)msg.wParam;
+}
+
+void Engine::SetColor(COLORREF newColor)
+{
+    m_PaintColor = newColor;
+}
+void Engine::PaintLine(POINT first, POINT second)
+{
+
 }
