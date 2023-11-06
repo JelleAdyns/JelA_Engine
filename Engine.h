@@ -2,12 +2,14 @@
 
 #include "resource.h"
 //#include "framework.h"
-#include "windows.h"
+#include <windows.h>
+#include "Application.h"
+#include "Defines.h"
 
 class Engine
 {
 private:
-    Engine() = default;
+    Engine();
     static Engine* m_pEngine;
 public:
 
@@ -22,9 +24,27 @@ public:
 
 
     void SetColor(COLORREF newColor);
+    void PaintLine(POINT first, POINT second, HDC hDc);
     void PaintLine(POINT first, POINT second);
-    int Run(HINSTANCE& hInst);
+
+    int Run(int nCmdShow);
+    bool MakeWindow(int nCmdShow);
+    HINSTANCE GetInstance() const;
+    void SetInstance(HINSTANCE hInst);
+    void SetTitle(const tstring& newTitle);
+    void SetWindow(HWND hWindow);
+    void SetWindowDimensions(POINT windowDimensions);
 
 private:
     COLORREF m_PaintColor;
+    Application* m_pGame;
+    HDC m_PaintHdc;
+    HINSTANCE m_hInstance;
+    HWND m_hWindow;
+
+    tstring* m_pTitle;
+    int m_Width;
+    int m_Height;
+
+
 };

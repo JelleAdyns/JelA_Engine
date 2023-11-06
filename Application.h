@@ -10,10 +10,13 @@ public:
     Application& operator=(const Application& other) = delete;
     Application& operator=(Application&& other) noexcept = delete;
 
-	void Paint() const;
+	void Initialize();
+	void Paint();
 	void Tick();
+
+    int variable{};
 private:
 
-
+    
 };
 
