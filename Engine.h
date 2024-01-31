@@ -34,7 +34,9 @@ public:
     void SetTitle(const tstring& newTitle);
     void SetWindow(HWND hWindow);
     void SetWindowDimensions(POINT windowDimensions);
+    LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+    void SetFrameRate(int framesPerSecond) { m_SecondsBetweenFrames = 1.f / framesPerSecond; }
 private:
     COLORREF m_PaintColor;
     Application* m_pGame;
@@ -46,5 +48,5 @@ private:
     int m_Width;
     int m_Height;
 
-
+    float m_SecondsBetweenFrames;
 };

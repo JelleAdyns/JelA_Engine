@@ -1,4 +1,5 @@
 #pragma once
+#include <windows.h>
 class Application
 {
 public:
@@ -16,7 +17,7 @@ public:
 
     int variable{};
 private:
-
-    
+    POINT m_point{};
+    float m_X{};
 };
 

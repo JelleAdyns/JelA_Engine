@@ -16,28 +16,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
-    {
-    case WM_CREATE:
-        ENGINE->SetWindow(hWnd);
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            RECT rect;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            GetClientRect(hWnd, &rect);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
-        }
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
+    return ENGINE->HandleMessages(hWnd, message, wParam, lParam);
 }
 
 
@@ -60,6 +39,44 @@ Engine* Engine::GetSingleton()
 {
     if (m_pEngine == nullptr) m_pEngine = new Engine();
     return m_pEngine;
+}
+LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_CREATE:
+        ENGINE->SetWindow(hWnd);
+        break;
+    case WM_PAINT:
+    {
+        PAINTSTRUCT ps;
+        RECT rect;
+        HDC hdc = BeginPaint(hWnd, &ps);
+        GetClientRect(hWnd, &rect);
+        m_PaintHdc = CreateCompatibleDC(hdc);
+        HBITMAP bitmapBuffer = CreateCompatibleBitmap(hdc, m_Width, m_Height);
+
+        HBITMAP bitmapOld = HBITMAP(SelectObject(m_PaintHdc, bitmapBuffer));
+        // TODO: Add any drawing code that uses hdc here...
+        m_pGame->Paint();
+        m_pGame->Tick();
+        
+        BitBlt(hdc, 0, 0, m_Width, m_Height, m_PaintHdc, 0, 0, SRCCOPY);
+
+        SelectObject(m_PaintHdc, bitmapOld);
+        DeleteObject(bitmapBuffer);
+
+        DeleteDC(m_PaintHdc);
+        EndPaint(hWnd, &ps);
+    }
+    break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;
 }
 
 int Engine::Run(int nCmdShow)
@@ -84,26 +101,32 @@ int Engine::Run(int nCmdShow)
         }
         else
         {
-            PAINTSTRUCT ps;
-            RECT rect;
-            HDC hdc = BeginPaint(m_hWindow, &ps);
-            GetClientRect(m_hWindow, &rect);
-
-            m_PaintHdc = CreateCompatibleDC(hdc);
-            HBITMAP bitmapBuffer = CreateCompatibleBitmap(hdc, m_Width, m_Height);
-
-            HBITMAP bitmapOld = HBITMAP(SelectObject(m_PaintHdc, bitmapBuffer));
-            // TODO: Add any drawing code that uses hdc here...
-            m_pGame->Paint();
             m_pGame->Tick();
-            PaintLine(POINT{ 23, 455 }, POINT{ 32, 5 });
-            BitBlt(hdc, 0, 0, m_Width, m_Height, m_PaintHdc, 0, 0, SRCCOPY);
+            InvalidateRect(m_hWindow, NULL, FALSE);
+            
+              
 
-            SelectObject(m_PaintHdc, bitmapOld);
-            DeleteObject(bitmapBuffer);
 
-            DeleteDC(m_PaintHdc);
-            EndPaint(m_hWindow, &ps);
+            //PAINTSTRUCT ps;
+            //RECT rect;
+            //HDC hdc = BeginPaint(m_hWindow, &ps);
+            //GetClientRect(m_hWindow, &rect);
+
+            //m_PaintHdc = CreateCompatibleDC(hdc);
+            //HBITMAP bitmapBuffer = CreateCompatibleBitmap(hdc, m_Width, m_Height);
+
+            //HBITMAP bitmapOld = HBITMAP(SelectObject(m_PaintHdc, bitmapBuffer));
+            //// TODO: Add any drawing code that uses hdc here...
+            //m_pGame->Paint();
+            //m_pGame->Tick();
+           
+            //BitBlt(hdc, 0, 0, m_Width, m_Height, m_PaintHdc, 0, 0, SRCCOPY);
+
+            //SelectObject(m_PaintHdc, bitmapOld);
+            //DeleteObject(bitmapBuffer);
+
+            //DeleteDC(m_PaintHdc);
+            //EndPaint(m_hWindow, &ps);
         }
     }
     
@@ -130,7 +153,7 @@ bool Engine::MakeWindow(int nCmdShow)
     if(!RegisterClassEx(&wcex)) return false;
 
     m_hWindow = CreateWindowW(m_pTitle->c_str(), m_pTitle->c_str(), WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, m_hInstance, nullptr);
+        0, 0, m_Width, m_Height, nullptr, nullptr, m_hInstance, nullptr);
 
     if (!m_hInstance) return false;
 
