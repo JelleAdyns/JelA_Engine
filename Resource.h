@@ -1,3 +1,7 @@
+#ifndef RESOURCE_H
+#define RESOURCE_H
+
+
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by MyOwnEngineExercise.rc
@@ -28,3 +32,5 @@
 #define _APS_NEXT_SYMED_VALUE		110
 #endif
 #endif
+
+#endif // !RESOURCE_H

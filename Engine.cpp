@@ -10,7 +10,12 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_ LPTSTR    lpCmdLine,
                      _In_ int       nCmdShow)
 {
-    ENGINE->SetInstance(hInstance);
+    
+    // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
+    // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
+    HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+
+    ENGINE->SetInstance(HINST_THISCOMPONENT);
     return ENGINE->Run(nCmdShow);
 }
 
@@ -22,17 +27,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 Engine* Engine::m_pEngine{ nullptr };
 
-Engine::Engine(): 
-    m_PaintColor{RGB(0,0,0)},
+Engine::Engine() :
+    m_hWindow{ NULL },
+    m_hInstance{ NULL },
+    m_pDFactory{ NULL },
+    m_pDRenderTarget{NULL},
     m_pGame{ new Application{} },
-    m_hInstance{NULL},
-    m_hWindow{NULL},
+    m_pDColorBrush{NULL},
+    m_PaintColor{RGB(0,0,0)},
     m_PaintHdc{ NULL },
     m_pTitle{ new tstring{L"Standard Game"}},
     m_Width{500},
     m_Height{500}
 {
 
+}
+
+Engine::~Engine()
+{
+    SafeRelease(&m_pDFactory);
+    SafeRelease(&m_pDRenderTarget);
+    SafeRelease(&m_pDColorBrush);
+    delete m_pGame;
 }
 
 Engine* Engine::GetSingleton()
@@ -42,41 +58,96 @@ Engine* Engine::GetSingleton()
 }
 LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
-    {
-    case WM_CREATE:
-        ENGINE->SetWindow(hWnd);
-        break;
-    case WM_PAINT:
-    {
-        PAINTSTRUCT ps;
-        RECT rect;
-        HDC hdc = BeginPaint(hWnd, &ps);
-        GetClientRect(hWnd, &rect);
-        m_PaintHdc = CreateCompatibleDC(hdc);
-        HBITMAP bitmapBuffer = CreateCompatibleBitmap(hdc, m_Width, m_Height);
+    LRESULT result = 0;
 
-        HBITMAP bitmapOld = HBITMAP(SelectObject(m_PaintHdc, bitmapBuffer));
-        // TODO: Add any drawing code that uses hdc here...
-        m_pGame->Paint();
-        m_pGame->Tick();
+    if (message == WM_CREATE)
+    {
+        LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
+        Application* pApplication = (Application*)pcs->lpCreateParams;
+
+        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pApplication));
+        // ENGINE->SetWindow(hWnd);
+        result = 1;
+    }
+    else
+    {
+        bool wasHandled = false;
+        if (m_pGame)
+        {
+            switch (message)
+            {
+            case WM_SIZE:
+            {
+                UINT width = LOWORD(lParam);
+                UINT height = HIWORD(lParam);
+                if (m_pDRenderTarget)
+                {
+                    //If error occurs, it will be returned by EndDraw()
+                    m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
+                }
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+
+            case WM_DISPLAYCHANGE:
+            {
+                InvalidateRect(hWnd, NULL, FALSE);
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+
+            case WM_PAINT:
+            {
+                m_pDRenderTarget->BeginDraw();
+                m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+                m_pDRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black));
+                m_pGame->Paint();
+                //m_pGame->Tick();
+                ValidateRect(hWnd, NULL);
+                m_pDRenderTarget->EndDraw();
+               
+                //PAINTSTRUCT ps;
+                //RECT rect;
+                //HDC hdc = BeginPaint(hWnd, &ps);
+                //GetClientRect(hWnd, &rect);
+                //m_PaintHdc = CreateCompatibleDC(hdc);
+                //HBITMAP bitmapBuffer = CreateCompatibleBitmap(hdc, m_Width, m_Height);
+
+                //HBITMAP bitmapOld = HBITMAP(SelectObject(m_PaintHdc, bitmapBuffer));
+                //// TODO: Add any drawing code that uses hdc here...
+                //
+                //m_pGame->Paint();
+                //ValidateRect(hWnd, NULL);
+                //m_pGame->Tick();
+
+                //BitBlt(hdc, 0, 0, m_Width, m_Height, m_PaintHdc, 0, 0, SRCCOPY);
+
+                //SelectObject(m_PaintHdc, bitmapOld);
+                //DeleteObject(bitmapBuffer);
+
+                //DeleteDC(m_PaintHdc);
+                //EndPaint(hWnd, &ps);
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+
+            case WM_DESTROY:
+                PostQuitMessage(0);
+                result = 1;
+                wasHandled = true;
+                break;
+            }     
+        }
+        if (!wasHandled)
+        {
+            result = DefWindowProc(hWnd, message, wParam, lParam);
+        }
         
-        BitBlt(hdc, 0, 0, m_Width, m_Height, m_PaintHdc, 0, 0, SRCCOPY);
-
-        SelectObject(m_PaintHdc, bitmapOld);
-        DeleteObject(bitmapBuffer);
-
-        DeleteDC(m_PaintHdc);
-        EndPaint(hWnd, &ps);
     }
-    break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
+    return result;
 }
 
 int Engine::Run(int nCmdShow)
@@ -86,6 +157,8 @@ int Engine::Run(int nCmdShow)
 
     m_pGame->Initialize();
     MakeWindow(nCmdShow);
+
+
     // Main message loop:
     while (true)
     {
@@ -103,72 +176,99 @@ int Engine::Run(int nCmdShow)
         {
             m_pGame->Tick();
             InvalidateRect(m_hWindow, NULL, FALSE);
-            
-              
-
-
-            //PAINTSTRUCT ps;
-            //RECT rect;
-            //HDC hdc = BeginPaint(m_hWindow, &ps);
-            //GetClientRect(m_hWindow, &rect);
-
-            //m_PaintHdc = CreateCompatibleDC(hdc);
-            //HBITMAP bitmapBuffer = CreateCompatibleBitmap(hdc, m_Width, m_Height);
-
-            //HBITMAP bitmapOld = HBITMAP(SelectObject(m_PaintHdc, bitmapBuffer));
-            //// TODO: Add any drawing code that uses hdc here...
-            //m_pGame->Paint();
-            //m_pGame->Tick();
-           
-            //BitBlt(hdc, 0, 0, m_Width, m_Height, m_PaintHdc, 0, 0, SRCCOPY);
-
-            //SelectObject(m_PaintHdc, bitmapOld);
-            //DeleteObject(bitmapBuffer);
-
-            //DeleteDC(m_PaintHdc);
-            //EndPaint(m_hWindow, &ps);
         }
     }
     
     return (int)msg.wParam;
 }
-bool Engine::MakeWindow(int nCmdShow)
+HRESULT Engine::MakeWindow(int nCmdShow)
 {
-    WNDCLASSEX wcex;
+    HRESULT hr = S_OK;
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDFactory);
 
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = WndProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = m_hInstance;
-    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = m_pTitle->c_str();
-    wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MYOWNENGINEEXERCISE));
-    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    if (SUCCEEDED(hr))
+    {
+        WNDCLASSEX wcex;
 
-    if(!RegisterClassEx(&wcex)) return false;
+        wcex.cbSize = sizeof(WNDCLASSEX);
 
-    m_hWindow = CreateWindowW(m_pTitle->c_str(), m_pTitle->c_str(), WS_OVERLAPPEDWINDOW,
-        0, 0, m_Width, m_Height, nullptr, nullptr, m_hInstance, nullptr);
+        wcex.style = CS_HREDRAW | CS_VREDRAW;
+        wcex.lpfnWndProc = WndProc;
+        wcex.cbClsExtra = 0;
+        wcex.cbWndExtra = 0;
+        wcex.hInstance = m_hInstance;
+        wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+        wcex.lpszMenuName = NULL;
+        wcex.lpszClassName = m_pTitle->c_str();
+        wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MYOWNENGINEEXERCISE));
+        wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
-    if (!m_hInstance) return false;
+        RegisterClassEx(&wcex);
 
-    ShowWindow(m_hWindow, nCmdShow);
-    UpdateWindow(m_hWindow);
+     
+        m_hWindow = CreateWindowW(m_pTitle->c_str(), m_pTitle->c_str(), WS_OVERLAPPEDWINDOW,
+            0, 0, NULL, NULL, nullptr, nullptr, m_hInstance, nullptr);
+        CreateOurRenderTarget();
+        if (m_hWindow)
+        {
+            ::SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
-    return true;
+            int windowWidth{ m_Width + GetSystemMetrics(SM_CXBORDER) * 2 };
+            int windowHeight{ m_Height + GetSystemMetrics(SM_CYBORDER) * 2 };
+
+            int xPos{ GetSystemMetrics(SM_CXSCREEN) / 2 - windowWidth / 2 };
+            int yPos{ GetSystemMetrics(SM_CYSCREEN) / 2 - windowHeight / 2 };
+
+            
+            SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_DRAWFRAME);
+
+            ShowWindow(m_hWindow, nCmdShow);
+            UpdateWindow(m_hWindow);
+        }
+    }
+
+    return hr;
+   
 }
-void Engine::PaintLine(POINT first, POINT second)
+HRESULT Engine::CreateOurRenderTarget()
 {
-    PaintLine(first, second, m_PaintHdc);
+    HRESULT hr = S_OK;
+
+    if (!m_pDRenderTarget)
+    {
+        RECT rc;
+        GetClientRect(m_hWindow, &rc);
+
+        D2D1_SIZE_U size = D2D1::SizeU(
+            rc.right - rc.left,
+            rc.bottom - rc.top
+        );
+
+        // Create a Direct2D render target.
+        hr = m_pDFactory->CreateHwndRenderTarget(
+            D2D1::RenderTargetProperties(),
+            D2D1::HwndRenderTargetProperties(m_hWindow, size),
+            &m_pDRenderTarget
+        );
+    }
+
+    return hr;
 }
-void Engine::PaintLine(POINT first, POINT second, HDC hDc)
+//void Engine::PaintLine(POINT first, POINT second)
+//{
+//    PaintLine(first, second, m_PaintHdc);
+//}
+void Engine::PaintLine(int firstX, int firstY, int secondX, int secondY, FLOAT lineThickness)
 {
-    HPEN newPen = CreatePen(PS_SOLID, 2, m_PaintColor);
+    m_pDRenderTarget->DrawLine(
+        D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(firstY)),
+        D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(secondY)),
+        m_pDColorBrush,
+        lineThickness
+    );
+   /* HPEN newPen = CreatePen(PS_SOLID, 2, m_PaintColor);
     HPEN oldPen = (HPEN)SelectObject(hDc, newPen);
 
     MoveToEx(hDc, first.x, first.y, 0);
@@ -176,12 +276,12 @@ void Engine::PaintLine(POINT first, POINT second, HDC hDc)
     MoveToEx(hDc, 0,0,0);
 
     SelectObject(hDc, oldPen);
-    DeleteObject(newPen);
+    DeleteObject(newPen);*/
 }
-HINSTANCE Engine::GetInstance() const
-{
-    return m_hInstance;
-}
+//HINSTANCE Engine::GetInstance() const
+//{
+//    return m_hInstance;
+//}
 void Engine::SetInstance(HINSTANCE hInst)
 {
     m_hInstance = hInst;
@@ -190,16 +290,18 @@ void Engine::SetTitle(const tstring& newTitle)
 {
     m_pTitle->assign(newTitle);
 }
-void Engine::SetWindow(HWND hWindow)
-{
-    m_hWindow = hWindow;
-}
+//void Engine::SetWindow(HWND hWindow)
+//{
+//    m_hWindow = hWindow;
+//}
 void Engine::SetWindowDimensions(POINT windowDimensions)
 {
     m_Width = windowDimensions.x;
     m_Height = windowDimensions.y;
 }
-void Engine::SetColor(COLORREF newColor)
+void Engine::SetColor(COLORREF newColor, FLOAT opacity)
 {
+    if (m_pDColorBrush) SafeRelease(&m_pDColorBrush);
+    m_pDRenderTarget->CreateSolidColorBrush(D2D1::ColorF(GetRValue(newColor), GetGValue(newColor), GetBValue(newColor), opacity), &m_pDColorBrush);
     m_PaintColor = newColor;
 }

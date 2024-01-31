@@ -1,4 +1,6 @@
-#pragma once
+#ifndef APPLICATION_H
+#define APPLICATION_H
+
 #include <windows.h>
 class Application
 {
@@ -21,3 +23,4 @@ private:
     float m_X{};
 };
 
+#endif // !APPLICATION_H

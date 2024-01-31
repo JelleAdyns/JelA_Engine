@@ -1,4 +1,7 @@
-#pragma once
+#ifndef DEFINES_H
+#define DEFINES_H
+
+
 #include <tchar.h>
 #include <string>
 #include <sstream>
@@ -27,4 +30,40 @@
 	#define to_tstring		std::to_string
 #endif
 
+
+
+// Direct2D
+#include <d2d1.h>
+#include <d2d1helper.h>
+#include <dwrite.h>
+#include <wincodec.h>
+
+template<typename Interface>
+inline void SafeRelease(
+	Interface** ppInterfaceToRelease)
+{
+	if (*ppInterfaceToRelease != NULL)
+	{
+		(*ppInterfaceToRelease)->Release();
+		(*ppInterfaceToRelease) = NULL;
+	}
+}
+
+#ifndef Assert
+#if defined( DEBUG ) || defined( _DEBUG )
+#define Assert(b) do {if (!(b)) {OutputDebugString("Assert: " #b "\n");}} while(0)
+#else
+#define Assert(b)
+#endif //DEBUG || _DEBUG
+#endif
+
+#ifndef HINST_THISCOMPONENT
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+#define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
+#endif
+
+
+
 #define ENGINE (Engine::GetSingleton())
+
+#endif // !DEFINES_H
