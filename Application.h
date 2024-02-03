@@ -1,7 +1,7 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include <windows.h>
+
 class Application
 {
 public:
@@ -14,13 +14,15 @@ public:
     Application& operator=(Application&& other) noexcept = delete;
 
 	void Initialize();
-	void Paint();
+	void Draw();
 	void Tick();
 
     int variable{};
 private:
-    POINT m_point{};
+    
     float m_X{};
+    int width{ 500 };
+    int height{ 500 };
 };
 
 #endif // !APPLICATION_H

@@ -14,8 +14,6 @@
 // Math
 #include <math.h>
 
-
-
 // Own Defines
 #include "Defines.h"
 

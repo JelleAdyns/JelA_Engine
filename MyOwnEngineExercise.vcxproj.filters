@@ -30,12 +30,21 @@
     <ClInclude Include="Defines.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Structs.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
       <Filter>Game Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Structs.cpp">
       <Filter>Engine Files</Filter>
     </ClCompile>
   </ItemGroup>
