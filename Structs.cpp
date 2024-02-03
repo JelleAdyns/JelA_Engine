@@ -12,6 +12,12 @@ Point2Int::Point2Int(int x, int y):
 		width{ width },
 		height{ height }
 	{}
+	RectInt::RectInt(const Point2Int& leftBottom, int width, int height) :
+		left{ leftBottom.x },
+		bottom{ leftBottom.y },
+		width{ width },
+		height{ height }
+	{}
 #else
 	RectInt::RectInt(int left, int top, int width, int height):
 		left{ left },
@@ -19,12 +25,23 @@ Point2Int::Point2Int(int x, int y):
 		width{ width },
 		height{ height }
 	{}
+	RectInt::RectInt(const Point2Int& leftTop, int width, int height) :
+		left{ leftTop.x },
+		top{ leftTop.y },
+		width{ width },
+		height{ height }
+	{}
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
 
 EllipseInt::EllipseInt(int xCenter, int yCenter, int xRadius, int yRadius) :
-	centerX{ xCenter },
-	centerY{ yCenter },
+	center{ Point2Int{ xCenter,yCenter } },
 	radiusX{ xRadius },
 	radiusY{ yRadius }
+{}
+
+EllipseInt::EllipseInt(const Point2Int& center, int xRadius, int yRadius) :
+	center{center},
+	radiusX{xRadius},
+	radiusY{yRadius}
 {}

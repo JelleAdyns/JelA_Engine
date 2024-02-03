@@ -7,13 +7,8 @@
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPTSTR    lpCmdLine,
-
-
-
-
                      _In_ int       nCmdShow)
 {
-    
     // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
     // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
@@ -399,67 +394,305 @@ void Engine::DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT tr
             static_cast<FLOAT>(rtHeight + reserveSpace)),
         m_pDColorBrush);
 }
+
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+//lines
 void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
 {
+    DrawLine(Point2Int{ firstX,firstY }, Point2Int{ secondX, secondY }, lineThickness);
+}
+void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
+{
     m_pDRenderTarget->DrawLine(
-        D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(firstY)),
-        D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(secondY)),
+        D2D1::Point2F(static_cast<FLOAT>(firstPoint.x), static_cast<FLOAT>(m_Height - firstPoint.y)),
+        D2D1::Point2F(static_cast<FLOAT>(secondPoint.x), static_cast<FLOAT>(m_Height - secondPoint.y)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness)
     );
-   /* HPEN newPen = CreatePen(PS_SOLID, 2, m_PaintColor);
-    HPEN oldPen = (HPEN)SelectObject(hDc, newPen);
-
-    MoveToEx(hDc, first.x, first.y, 0);
-    LineTo(hDc, second.x, second.y);
-    MoveToEx(hDc, 0,0,0);
-
-    SelectObject(hDc, oldPen);
-    DeleteObject(newPen);*/
 }
-void Engine::DrawRectangle(int left, int top, int width, int height, float lineThickness)const
+
+//Rectangles
+void Engine::DrawRectangle(int left, int bottom, int width, int height, float lineThickness)const
+{
+    DrawRectangle(RectInt{ left, bottom , width, height}, lineThickness);
+}
+void Engine::DrawRectangle(const Point2Int& leftBottom, int width, int height, float lineThickness)const
+{
+    DrawRectangle(RectInt{ leftBottom, width, height }, lineThickness);
+}
+void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
 {
     m_pDRenderTarget->DrawRectangle(
         D2D1::RectF(
-            static_cast<FLOAT>(left),
-            static_cast<FLOAT>(top),
-            static_cast<FLOAT>(left + width),
-            static_cast<FLOAT>(top + height)),
+            static_cast<FLOAT>(rect.left),
+            static_cast<FLOAT>(m_Height - rect.bottom),
+            static_cast<FLOAT>(rect.left + rect.width),
+            static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
-void Engine::DrawRoundedRect(int left, int top, int width, int height, float radius, float lineThickness)const
+
+//RoundedRects
+void Engine::DrawRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY, float lineThickness)const
 {
-    DrawRoundedRect(left, top, width, height, radius, radius, lineThickness);
+    DrawRoundedRect(RectInt{ left, bottom, width, height }, radiusX, radiusY, lineThickness);
 }
-void Engine::DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness)const
+void Engine::DrawRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY, float lineThickness)const
+{
+    DrawRoundedRect(RectInt{ leftBottom, width, height }, radiusX, radiusY, lineThickness);
+}
+void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
 {
     m_pDRenderTarget->DrawRoundedRectangle(
         D2D1::RoundedRect(
             D2D1::RectF(
-                static_cast<FLOAT>(left),
-                static_cast<FLOAT>(top),
-                static_cast<FLOAT>(left + width),
-                static_cast<FLOAT>(top + height)),
+                static_cast<FLOAT>(rect.left),
+                static_cast<FLOAT>(m_Height - rect.bottom),
+                static_cast<FLOAT>(rect.left + rect.width),
+                static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
             static_cast<FLOAT>(radiusX),
             static_cast<FLOAT>(radiusY)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
-void Engine::DrawEllipse(int centerX, int centerY, int radius, float lineThickness)const
-{
-    DrawEllipse(centerX, centerY, radius, radius, lineThickness);
-}
+
+//Ellipse
 void Engine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY, float lineThickness)const
+{
+    DrawEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY }, lineThickness);
+}
+void Engine::DrawEllipse(const Point2Int& center, int radiusX, int radiusY, float lineThickness)const
+{
+    DrawEllipse(EllipseInt{ center, radiusX, radiusY }, lineThickness);
+}
+void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
 {
     m_pDRenderTarget->DrawEllipse(
         D2D1::Ellipse(
-            D2D1::Point2F(static_cast<FLOAT>(centerX), static_cast<FLOAT>(centerY)),
+            D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(m_Height - ellipse.center.y)),
+            static_cast<FLOAT>(ellipse.radiusX),
+            static_cast<FLOAT>(ellipse.radiusY)),
+        m_pDColorBrush,
+        static_cast<FLOAT>(lineThickness));
+}
+//-----------------
+//Fill
+//----------------
+// 
+
+//Rectangles
+void Engine::FillRectangle(int left, int bottom, int width, int height)const
+{
+    FillRectangle(RectInt{ left, bottom , width, height });
+}
+void Engine::FillRectangle(const Point2Int& leftBottom, int width, int height)const
+{
+    FillRectangle(RectInt{ leftBottom, width, height });
+}
+void Engine::FillRectangle(const RectInt& rect)const
+{
+    m_pDRenderTarget->FillRectangle(
+        D2D1::RectF(
+            static_cast<FLOAT>(rect.left),
+            static_cast<FLOAT>(m_Height - rect.bottom),
+            static_cast<FLOAT>(rect.left + rect.width),
+            static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
+        m_pDColorBrush);
+}
+
+//RoundedRects
+void Engine::FillRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY)const
+{
+    FillRoundedRect(RectInt{ left, bottom, width, height }, radiusX, radiusY);
+}
+void Engine::FillRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY)const
+{
+    FillRoundedRect(RectInt{ leftBottom, width, height }, radiusX, radiusY);
+}
+void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const
+{
+    m_pDRenderTarget->FillRoundedRectangle(
+        D2D1::RoundedRect(
+            D2D1::RectF(
+                static_cast<FLOAT>(rect.left),
+                static_cast<FLOAT>(m_Height - rect.bottom),
+                static_cast<FLOAT>(rect.left + rect.width),
+                static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
+            static_cast<FLOAT>(radiusX),
+            static_cast<FLOAT>(radiusY)),
+        m_pDColorBrush);
+}
+
+//Ellipse
+void Engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const
+{
+    FillEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY });
+}
+void Engine::FillEllipse(const Point2Int& center, int radiusX, int radiusY)const
+{
+    FillEllipse(EllipseInt{ center, radiusX, radiusY });
+}
+void Engine::FillEllipse(const EllipseInt& ellipse)const
+{
+    m_pDRenderTarget->FillEllipse(
+        D2D1::Ellipse(
+            D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(m_Height - ellipse.center.y)),
+            static_cast<FLOAT>(ellipse.radiusX),
+            static_cast<FLOAT>(ellipse.radiusY)),
+        m_pDColorBrush);
+}
+#else
+
+//Lines
+void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
+{
+    DrawLine(Point2Int{ firstX, firstY }, Point2Int{ secondX, secondY }, lineThickness);
+}
+void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
+{
+    m_pDRenderTarget->DrawLine(
+        D2D1::Point2F(static_cast<FLOAT>(firstPoint.x), static_cast<FLOAT>(firstPoint.y)),
+        D2D1::Point2F(static_cast<FLOAT>(secondPoint.x), static_cast<FLOAT>(secondPoint.y)),
+        m_pDColorBrush,
+        static_cast<FLOAT>(lineThickness)
+    );
+}
+
+//Rectangles
+void Engine::DrawRectangle(int left, int top, int width, int height, float lineThickness)const
+{
+    DrawRectangle(RectInt{ left,top,width,height }, lineThickness);
+}
+void Engine::DrawRectangle(const Point2Int& leftTop, int width, int height, float lineThickness)const
+{
+    DrawRectangle(RectInt{ leftTop, width, height }, lineThickness);
+}
+void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
+{
+    m_pDRenderTarget->DrawRectangle(
+        D2D1::RectF(
+            static_cast<FLOAT>(rect.left),
+            static_cast<FLOAT>(rect.top),
+            static_cast<FLOAT>(rect.left + rect.width),
+            static_cast<FLOAT>(rect.top + rect.height)),
+        m_pDColorBrush,
+        static_cast<FLOAT>(lineThickness));
+}
+
+//RoundedRects
+void Engine::DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness)const
+{
+    DrawRoundedRect(RectInt{ left, top, width, height }, radiusX, radiusY, lineThickness);
+}
+void Engine::DrawRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY, float lineThickness)const
+{
+    DrawRoundedRect(RectInt{ leftTop, width, height }, radiusX, radiusY, lineThickness);
+}
+void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
+{
+    m_pDRenderTarget->DrawRoundedRectangle(
+        D2D1::RoundedRect(
+            D2D1::RectF(
+                static_cast<FLOAT>(rect.left),
+                static_cast<FLOAT>(rect.top),
+                static_cast<FLOAT>(rect.left + rect.width),
+                static_cast<FLOAT>(rect.top + rect.height)),
             static_cast<FLOAT>(radiusX),
             static_cast<FLOAT>(radiusY)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
+
+//Ellipse
+void Engine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY, float lineThickness)const
+{
+    DrawEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY }, lineThickness);
+}
+void Engine::DrawEllipse(const Point2Int& center, int radiusX, int radiusY, float lineThickness)const
+{
+    DrawEllipse(EllipseInt{ center, radiusX, radiusY }, lineThickness);
+}
+void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
+{
+    m_pDRenderTarget->DrawEllipse(
+        D2D1::Ellipse(
+            D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(ellipse.center.y)),
+            static_cast<FLOAT>(ellipse.radiusX),
+            static_cast<FLOAT>(ellipse.radiusY)),
+        m_pDColorBrush,
+        static_cast<FLOAT>(lineThickness));
+}
+
+//-----------------
+//Fill
+//-----------------
+
+//Rectangles
+void Engine::FillRectangle(int left, int top, int width, int height)const
+{
+    FillRectangle(RectInt{ left,top,width,height });
+}
+void Engine::FillRectangle(const Point2Int& leftTop, int width, int height)const
+{
+    FillRectangle(RectInt{ leftTop, width, height });
+}
+void Engine::FillRectangle(const RectInt& rect)const
+{
+    m_pDRenderTarget->FillRectangle(
+        D2D1::RectF(
+            static_cast<FLOAT>(rect.left),
+            static_cast<FLOAT>(rect.top),
+            static_cast<FLOAT>(rect.left + rect.width),
+            static_cast<FLOAT>(rect.top + rect.height)),
+        m_pDColorBrush);
+}
+
+//RoundedRects
+void Engine::FillRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY)const
+{
+    FillRoundedRect(RectInt{ left, top, width, height }, radiusX, radiusY);
+}
+void Engine::FillRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY)const
+{
+    FillRoundedRect(RectInt{ leftTop, width, height }, radiusX, radiusY);
+}
+void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const
+{
+    m_pDRenderTarget->FillRoundedRectangle(
+        D2D1::RoundedRect(
+            D2D1::RectF(
+                static_cast<FLOAT>(rect.left),
+                static_cast<FLOAT>(rect.top),
+                static_cast<FLOAT>(rect.left + rect.width),
+                static_cast<FLOAT>(rect.top + rect.height)),
+            static_cast<FLOAT>(radiusX),
+            static_cast<FLOAT>(radiusY)),
+        m_pDColorBrush);
+}
+
+//Ellipse
+void Engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const
+{
+    FillEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY });
+}
+void Engine::FillEllipse(const Point2Int& center, int radiusX, int radiusY)const
+{
+    FillEllipse(EllipseInt{ center, radiusX, radiusY });
+}
+void Engine::FillEllipse(const EllipseInt& ellipse)const
+{
+    m_pDRenderTarget->FillEllipse(
+        D2D1::Ellipse(
+            D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(ellipse.center.y)),
+            static_cast<FLOAT>(ellipse.radiusX),
+            static_cast<FLOAT>(ellipse.radiusY)),
+        m_pDColorBrush);
+}
+#endif // MATHEMATICAL_COORDINATSYSTEM
+
+
+
 void Engine::DrawString(int left, int top, int width, int height)const
 {
 
@@ -468,16 +701,7 @@ void Engine::DrawBitmap(int left, int top, int width, int height)const
 {
 
 }
-void Engine::FillRectangle(int left, int top, int width, int height)const
-{
-    m_pDRenderTarget->FillRectangle(
-        D2D1::RectF(
-            static_cast<FLOAT>(left),
-            static_cast<FLOAT>(top),
-            static_cast<FLOAT>(left + width),
-            static_cast<FLOAT>(top + height)),
-        m_pDColorBrush);
-}
+
 void Engine::SetInstance(HINSTANCE hInst)
 {
     m_hInstance = hInst;

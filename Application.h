@@ -21,7 +21,7 @@ public:
 private:
     
     float m_X{};
-    int width{ 500 };
+    int width{ 700 };
     int height{ 500 };
 };
 

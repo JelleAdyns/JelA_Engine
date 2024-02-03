@@ -27,14 +27,50 @@ public:
 
     //void PaintLine(POINT first, POINT second, HDC hDc);
     void DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness = 1.f) const;
+    void DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness = 1.f) const;
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+    void DrawRectangle(int left, int bottom, int width, int height, float lineThickness = 1.f)const;
+    void DrawRectangle(const Point2Int& leftBottom, int width, int height, float lineThickness = 1.f)const;
+    void DrawRectangle(const RectInt& rect, float lineThickness = 1.f)const;
+    void DrawRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
+    void DrawRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
+    void DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
+#else
     void DrawRectangle(int left, int top, int width, int height, float lineThickness = 1.f)const;
-    void DrawRoundedRect(int left, int top, int width, int height, float radius, float lineThickness = 1.f)const;
+    void DrawRectangle(const Point2Int& leftTop, int width, int height, float lineThickness = 1.f)const;
+    void DrawRectangle(const RectInt& rect, float lineThickness = 1.f)const;
     void DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
-    void DrawEllipse(int centerX, int centerY, int radius, float lineThickness = 1.f)const;
+    void DrawRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
+    void DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
     void DrawEllipse(int centerX, int centerY, int radiusX, int radiusY, float lineThickness = 1.f)const;
+    void DrawEllipse(const Point2Int& center, int radiusX, int radiusY, float lineThickness = 1.f)const;
+    void DrawEllipse(const EllipseInt& ellipse, float lineThickness = 1.f)const;
+
     void DrawString(int left, int top, int width, int height)const;
     void DrawBitmap(int left, int top, int width, int height)const;
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+    void FillRectangle(int left, int bottom, int width, int height)const;
+    void FillRectangle(const Point2Int& leftBottom, int width, int height)const;
+    void FillRectangle(const RectInt& rect)const;
+    void FillRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY)const;
+    void FillRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY)const;
+    void FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const;
+#else
     void FillRectangle(int left, int top, int width, int height)const;
+    void FillRectangle(const Point2Int& leftTop, int width, int height)const;
+    void FillRectangle(const RectInt& rect)const;
+    void FillRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY)const;
+    void FillRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY)const;
+    void FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const;
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+    void FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const;
+    void FillEllipse(const Point2Int& center, int radiusX, int radiusY)const;
+    void FillEllipse(const EllipseInt& ellipse)const;
 
     void SetColor(COLORREF newColor, float opacity = 1.F);
     void SetInstance(HINSTANCE hInst);
