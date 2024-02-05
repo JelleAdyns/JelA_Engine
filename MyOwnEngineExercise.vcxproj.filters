@@ -21,7 +21,7 @@
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="Application.h">
+    <ClInclude Include="BaseGame.h">
       <Filter>Game Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine.h">
@@ -36,16 +36,19 @@
     <ClInclude Include="Structs.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.cpp">
-      <Filter>Game Files</Filter>
-    </ClCompile>
     <ClCompile Include="Engine.cpp">
       <Filter>Engine Files</Filter>
     </ClCompile>
     <ClCompile Include="Structs.cpp">
       <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Game Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

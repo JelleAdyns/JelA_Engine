@@ -1,8 +1,7 @@
 
 #include "Engine.h"
+#include "Game.h"
 #include <chrono>
-// Forward declarations of functions included in this code module:
-//LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -13,8 +12,13 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 
-    ENGINE->SetInstance(HINST_THISCOMPONENT);
-    return ENGINE->Run(nCmdShow);
+    if (SUCCEEDED(CoInitialize(NULL)))
+    {
+        ENGINE->SetInstance(HINST_THISCOMPONENT);
+        return ENGINE->Run(nCmdShow);
+        CoUninitialize();
+    }
+    return 0;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -24,14 +28,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 Engine* Engine::m_pEngine{ nullptr };
+ID2D1HwndRenderTarget* Engine::m_pDRenderTarget{ nullptr };
 
 Engine::Engine() :
     m_hWindow{ NULL },
     m_hInstance{ NULL },
     m_pDFactory{ NULL },
-    m_pDRenderTarget{NULL},
     m_pDColorBrush{NULL},
-    m_pGame{ new Application{} },
+    m_DColorBackGround{ D2D1::ColorF(D2D1::ColorF::Black)},
+    m_pGame{ new Game{} },
     m_pTitle{ new tstring{L"Standard Game"}},
     m_Width{500},
     m_Height{500},
@@ -60,9 +65,9 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
     if (message == WM_CREATE)
     {
         LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-        Application* pApplication = (Application*)pcs->lpCreateParams;
+        BaseGame* pBaseGame = (BaseGame*)pcs->lpCreateParams;
 
-        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pApplication));
+        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pBaseGame));
         // ENGINE->SetWindow(hWnd);
         result = 1;
     }
@@ -132,7 +137,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
                 // Clear background
                 m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-                m_pDRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black));
+                m_pDRenderTarget->Clear(m_DColorBackGround);
 
                 // Set tranformation for when the window changes in size
                 // The user draw calls should always appear in the middle of the screen,
@@ -219,7 +224,7 @@ int Engine::Run(int nCmdShow)
     MakeWindow(nCmdShow);
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-    double elapsedSec{};
+    float elapsedSec{};
    
     // Main message loop:
     while (true)
@@ -239,17 +244,18 @@ int Engine::Run(int nCmdShow)
         {
             std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-            elapsedSec += std::chrono::duration<double>(t2- t1).count();
+            elapsedSec += std::chrono::duration<float>(t2 - t1).count();
             
             t1 = t2;
 
             while (elapsedSec > m_TimePerFrame)
             {
-                m_pGame->Tick();
+                m_pGame->Tick(m_TimePerFrame);
+                InvalidateRect(m_hWindow, NULL, FALSE);
                 elapsedSec -= m_TimePerFrame;
             }
             
-            InvalidateRect(m_hWindow, NULL, FALSE);
+           
         }
     }
     
@@ -353,10 +359,6 @@ HRESULT Engine::CreateOurRenderTarget()
 
     return hr;
 }
-//void Engine::PaintLine(POINT first, POINT second)
-//{
-//    PaintLine(first, second, m_PaintHdc);
-//}
 void Engine::DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT translationY) const
 {
 
@@ -730,6 +732,14 @@ void Engine::SetColor(COLORREF newColor, float opacity)
             static_cast<FLOAT>(opacity))),
         &m_pDColorBrush);
 }
+void Engine::SetBackGroundColor(COLORREF newColor)
+{
+    m_DColorBackGround = D2D1::ColorF(
+        GetRValue(newColor) / 255.f,
+        GetGValue(newColor) / 255.f,
+        GetBValue(newColor) / 255.f,
+        1.f);
+}
 
 RectInt Engine::GetRenderTargetSize() const
 {
@@ -739,4 +749,78 @@ RectInt Engine::GetRenderTargetSize() const
 RectInt Engine::GetWindowSize() const
 {
     return RectInt{ 0, 0, m_Width, m_Height };
+}
+
+
+
+//---------------------
+//TEXTURE
+//---------------------
+
+IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
+
+Texture::Texture(const tstring& filename):
+    m_pDBitmap{NULL},
+    m_pWICConverter{NULL}
+{
+
+    HRESULT hr = S_OK;
+
+    if (!m_pWICFactory)
+    {
+        hr = CoCreateInstance(
+            CLSID_WICImagingFactory,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            IID_PPV_ARGS(&m_pWICFactory)
+        );
+    }
+
+
+
+    IWICBitmapDecoder* pDecoder = NULL;
+    IWICBitmapFrameDecode* pSource = NULL;
+    IWICBitmapScaler* pScaler = NULL;
+       
+    if (SUCCEEDED(hr))
+    {
+        hr = m_pWICFactory->CreateDecoderFromFilename(
+            filename.c_str(),
+            NULL,
+            GENERIC_READ,
+            WICDecodeMetadataCacheOnLoad,
+            &pDecoder);
+    }
+
+
+    if (SUCCEEDED(hr))
+    {
+        // Create the initial frame.
+        hr = pDecoder->GetFrame(0, &pSource);
+    }
+
+
+    // Convert the image format to 32bppPBGRA
+ // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
+    if (SUCCEEDED(hr)) hr = m_pWICFactory->CreateFormatConverter(&m_pWICConverter);
+    if (SUCCEEDED(hr))
+    {
+        hr = m_pWICConverter->Initialize(
+            pSource,
+            GUID_WICPixelFormat32bppPBGRA,
+            WICBitmapDitherTypeNone,
+            NULL,
+            0.f,
+            WICBitmapPaletteTypeMedianCut
+        );
+    }
+
+
+
+ 
+
+    SafeRelease(&pDecoder);
+    SafeRelease(&pSource);
+    SafeRelease(&pScaler);
+
 }

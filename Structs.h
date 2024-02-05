@@ -15,7 +15,6 @@ struct Point2Int
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 struct RectInt
 {
-public:
 	RectInt() = default;
 	explicit RectInt(int left, int bottom, int width, int height);
 	explicit RectInt(const Point2Int& leftBottom, int width, int height);
