@@ -24,10 +24,10 @@ private:
     int width{ 700 };
     int height{ 500 };
     float velocity{ 0 };
-    float maxVelocity{ 30 };
-    float acceleration{ -9.8f };
+    float maxVelocity{ 100 };
+    float acceleration{ -98.f };
 
-    Texture m_Texture{ _T("C:/Users/jelle/Documents/The Clashing Elements/TheClashingElements-SaviorsOfTheMultiverse-Game/Resources/Wesley.png")};
+    Texture* m_Texture{ new Texture{ _T("C:/Users/jelle/Documents/The Clashing Elements/TheClashingElements-SaviorsOfTheMultiverse-Game/Resources/Wesley.png")} };
 };
 
 #endif // !GAME_H

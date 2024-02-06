@@ -15,7 +15,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     if (SUCCEEDED(CoInitialize(NULL)))
     {
         ENGINE->SetInstance(HINST_THISCOMPONENT);
-        return ENGINE->Run(nCmdShow);
+        return ENGINE->Run();
         CoUninitialize();
     }
     return 0;
@@ -28,16 +28,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 Engine* Engine::m_pEngine{ nullptr };
-ID2D1HwndRenderTarget* Engine::m_pDRenderTarget{ nullptr };
 
 Engine::Engine() :
     m_hWindow{ NULL },
     m_hInstance{ NULL },
     m_pDFactory{ NULL },
+    m_pDRenderTarget{NULL},
     m_pDColorBrush{NULL},
     m_DColorBackGround{ D2D1::ColorF(D2D1::ColorF::Black)},
-    m_pGame{ new Game{} },
-    m_pTitle{ new tstring{L"Standard Game"}},
+    m_pGame{ nullptr },
+    m_pTitle{ tstring{L"Standard Game"}},
     m_Width{500},
     m_Height{500},
     m_TimePerFrame{1.f/60.f}
@@ -215,13 +215,18 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
     return result;
 }
 
-int Engine::Run(int nCmdShow)
+int Engine::Run()
 {
 
     MSG msg;
-
+    MakeWindow();       
+    CreateOurRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
+                             // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
+    m_pGame = new Game{};
     m_pGame->Initialize();
-    MakeWindow(nCmdShow);
+
+    ShowWindow(m_hWindow, SW_SHOWNORMAL);
+    UpdateWindow(m_hWindow);
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     float elapsedSec{};
@@ -261,7 +266,7 @@ int Engine::Run(int nCmdShow)
     
     return (int)msg.wParam;
 }
-HRESULT Engine::MakeWindow(int nCmdShow)
+HRESULT Engine::MakeWindow()
 {
     HRESULT hr = S_OK;
 
@@ -281,13 +286,13 @@ HRESULT Engine::MakeWindow(int nCmdShow)
         wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wcex.lpszMenuName = NULL;
-        wcex.lpszClassName = m_pTitle->c_str();
+        wcex.lpszClassName = m_pTitle.c_str();
         wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MYOWNENGINEEXERCISE));
         wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
         RegisterClassEx(&wcex);
 
-        m_hWindow = CreateWindow(m_pTitle->c_str(), m_pTitle->c_str(), WS_OVERLAPPEDWINDOW,
+        m_hWindow = CreateWindow(m_pTitle.c_str(), m_pTitle.c_str(), WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, nullptr, nullptr, m_hInstance, this);
 
 
@@ -305,25 +310,9 @@ HRESULT Engine::MakeWindow(int nCmdShow)
             ::GetDeviceCaps(hDC, HORZRES),
             ::GetDeviceCaps(hDC, VERTRES),
             SWP_FRAMECHANGED);*/
-            UINT dpi = GetDpiForWindow(m_hWindow);
 
-            int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + m_Width +10) };
-            int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
-                                GetSystemMetrics(SM_CYCAPTION) + m_Height+10) };
 
-            windowWidth = static_cast<int>(windowWidth * dpi / 96.f);
-            windowHeight = static_cast<int>(windowHeight * dpi / 96.f);
-
-            int xPos{ GetSystemMetrics(SM_CXSCREEN) / 2 - windowWidth / 2 };
-            int yPos{ GetSystemMetrics(SM_CYSCREEN) / 2 - windowHeight / 2 };
-
-            //::SetWindowLong(m_hWindow, GWL_STYLE, GetWindowLong(m_hWindow, GWL_STYLE) & ~WS_SIZEBOX);
-            //HDC hDC = ::GetWindowDC(NULL);
-            //::SetWindowPos(m_hWindow, NULL, 0, 0, ::GetDeviceCaps(hDC, HORZRES), ::GetDeviceCaps(hDC, VERTRES), SWP_FRAMECHANGED);
-            ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_ASYNCWINDOWPOS);
-
-            ShowWindow(m_hWindow, nCmdShow);
-            UpdateWindow(m_hWindow);
+            SetWindowPosition();
         }
     }
 
@@ -428,9 +417,9 @@ void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
     m_pDRenderTarget->DrawRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(rect.left),
-            static_cast<FLOAT>(m_Height - rect.bottom),
+            static_cast<FLOAT>(m_Height - (rect.bottom + rect.height)),
             static_cast<FLOAT>(rect.left + rect.width),
-            static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
+            static_cast<FLOAT>(m_Height - rect.bottom)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
@@ -450,16 +439,16 @@ void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, 
         D2D1::RoundedRect(
             D2D1::RectF(
                 static_cast<FLOAT>(rect.left),
-                static_cast<FLOAT>(m_Height - rect.bottom),
+                static_cast<FLOAT>(m_Height - (rect.bottom + rect.height)),
                 static_cast<FLOAT>(rect.left + rect.width),
-                static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
+                static_cast<FLOAT>(m_Height - rect.bottom)),
             static_cast<FLOAT>(radiusX),
             static_cast<FLOAT>(radiusY)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
 
-//Ellipse
+//Ellipses
 void Engine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY, float lineThickness)const
 {
     DrawEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY }, lineThickness);
@@ -478,10 +467,54 @@ void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
+
+//Textures
+void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftBottom, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(texture, RectInt{ destLeftBottom.x, destLeftBottom.y, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+}
+void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+{
+    D2D1_RECT_F destination = D2D1::RectF(
+        static_cast<FLOAT>(destRect.left),//0
+        static_cast<FLOAT>(m_Height - (destRect.bottom + destRect.height)),//screenheight
+        static_cast<FLOAT>(destRect.left + destRect.width), //destination width
+        static_cast<FLOAT>(m_Height - destRect.bottom)
+    );
+    D2D1_RECT_F source{};
+    if (srcRect.width <= 0 || srcRect.height <= 0)
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(destRect.left),
+            static_cast<FLOAT>(destRect.bottom),
+            static_cast<FLOAT>(destRect.left + destRect.width),
+            static_cast<FLOAT>(destRect.bottom + destRect.height)
+        );
+    }
+    else
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(srcRect.left),
+            static_cast<FLOAT>(srcRect.bottom),
+            static_cast<FLOAT>(srcRect.left + srcRect.width),
+            static_cast<FLOAT>(srcRect.bottom + srcRect.height));
+        destination.right = destination.left + srcRect.width;
+        destination.top = destination.bottom - srcRect.height;
+    }
+      
+    m_pDRenderTarget->DrawBitmap(
+        texture.GetBitmap(),
+        destination,
+        opacity,
+        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        source
+    );
+}
+
+
 //-----------------
 //Fill
 //----------------
-// 
 
 //Rectangles
 void Engine::FillRectangle(int left, int bottom, int width, int height)const
@@ -497,9 +530,9 @@ void Engine::FillRectangle(const RectInt& rect)const
     m_pDRenderTarget->FillRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(rect.left),
-            static_cast<FLOAT>(m_Height - rect.bottom),
+            static_cast<FLOAT>(m_Height - (rect.bottom + rect.height)),
             static_cast<FLOAT>(rect.left + rect.width),
-            static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
+            static_cast<FLOAT>(m_Height - rect.bottom)),
         m_pDColorBrush);
 }
 
@@ -518,15 +551,15 @@ void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)c
         D2D1::RoundedRect(
             D2D1::RectF(
                 static_cast<FLOAT>(rect.left),
-                static_cast<FLOAT>(m_Height - rect.bottom),
+                static_cast<FLOAT>(m_Height - (rect.bottom + rect.height)),
                 static_cast<FLOAT>(rect.left + rect.width),
-                static_cast<FLOAT>(m_Height - (rect.bottom + rect.height))),
+                static_cast<FLOAT>(m_Height - rect.bottom)),
             static_cast<FLOAT>(radiusX),
             static_cast<FLOAT>(radiusY)),
         m_pDColorBrush);
 }
 
-//Ellipse
+//Ellipses
 void Engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const
 {
     FillEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY });
@@ -626,6 +659,48 @@ void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
         static_cast<FLOAT>(lineThickness));
 }
 
+//Textures
+void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(texture, RectInt{ destLeftTop.x, destLeftTop.y, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+}
+void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+{
+    D2D1_RECT_F destination = D2D1::RectF(
+        static_cast<FLOAT>(destRect.left),
+        static_cast<FLOAT>(destRect.top),
+        static_cast<FLOAT>(destRect.left + destRect.width),
+        static_cast<FLOAT>(destRect.top + destRect.height)
+    );
+
+    D2D1_RECT_F source{};
+    if (srcRect.width <= 0 || srcRect.height <= 0)
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(destRect.left),
+            static_cast<FLOAT>(destRect.top),
+            static_cast<FLOAT>(destRect.left + destRect.width),
+            static_cast<FLOAT>(destRect.top + destRect.height)
+        );
+    }
+    else
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(srcRect.left),
+            static_cast<FLOAT>(srcRect.top),
+            static_cast<FLOAT>(srcRect.left + srcRect.width),
+            static_cast<FLOAT>(srcRect.top + srcRect.height)); 
+        destination.right = destination.left + srcRect.width;
+        destination.bottom = destination.top + srcRect.height;
+    }
+    m_pDRenderTarget->DrawBitmap(
+        texture.GetBitmap(),
+        destination,
+        opacity,
+        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        source
+    );
+}
 //-----------------
 //Fill
 //-----------------
@@ -699,10 +774,7 @@ void Engine::DrawString(int left, int top, int width, int height)const
 {
 
 }
-void Engine::DrawBitmap(int left, int top, int width, int height)const
-{
 
-}
 
 void Engine::SetInstance(HINSTANCE hInst)
 {
@@ -710,16 +782,35 @@ void Engine::SetInstance(HINSTANCE hInst)
 }
 void Engine::SetTitle(const tstring& newTitle)
 {
-    m_pTitle->assign(newTitle);
+    m_pTitle.assign(newTitle);
+    SetWindowText(m_hWindow, newTitle.c_str());
 }
 void Engine::SetWindowDimensions(int width, int height)
 {
     m_Width = width;
     m_Height = height;
+
+    SetWindowPosition();
+}
+void Engine::SetWindowPosition()
+{
+    UINT dpi = GetDpiForWindow(m_hWindow);
+
+    int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + m_Width + 10) };
+    int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
+                        GetSystemMetrics(SM_CYCAPTION) + m_Height + 10) };
+
+    windowWidth = static_cast<int>(windowWidth * dpi / 96.f);
+    windowHeight = static_cast<int>(windowHeight * dpi / 96.f);
+
+    int xPos{ GetSystemMetrics(SM_CXSCREEN) / 2 - windowWidth / 2 };
+    int yPos{ GetSystemMetrics(SM_CYSCREEN) / 2 - windowHeight / 2 };
+
+    ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_ASYNCWINDOWPOS);
 }
 void Engine::SetFrameRate(int FPS)
 {
-    m_TimePerFrame = 1.0 / FPS;
+    m_TimePerFrame = 1.0f / FPS;
 }
 void Engine::SetColor(COLORREF newColor, float opacity)
 {
@@ -750,7 +841,10 @@ RectInt Engine::GetWindowSize() const
 {
     return RectInt{ 0, 0, m_Width, m_Height };
 }
-
+ID2D1HwndRenderTarget* Engine::getRenderTarget() const
+{
+    return m_pDRenderTarget;
+}
 
 
 //---------------------
@@ -761,14 +855,15 @@ IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
 
 Texture::Texture(const tstring& filename):
     m_pDBitmap{NULL},
-    m_pWICConverter{NULL}
+    m_Width{0},
+    m_Height{0}
 {
 
-    HRESULT hr = S_OK;
+    HRESULT CreationResult = S_OK;
 
     if (!m_pWICFactory)
     {
-        hr = CoCreateInstance(
+        CreationResult = CoCreateInstance(
             CLSID_WICImagingFactory,
             NULL,
             CLSCTX_INPROC_SERVER,
@@ -776,15 +871,13 @@ Texture::Texture(const tstring& filename):
         );
     }
 
-
-
     IWICBitmapDecoder* pDecoder = NULL;
     IWICBitmapFrameDecode* pSource = NULL;
-    IWICBitmapScaler* pScaler = NULL;
-       
-    if (SUCCEEDED(hr))
+    IWICFormatConverter* pConverter = NULL;
+
+    if (SUCCEEDED(CreationResult))
     {
-        hr = m_pWICFactory->CreateDecoderFromFilename(
+        CreationResult = m_pWICFactory->CreateDecoderFromFilename(
             filename.c_str(),
             NULL,
             GENERIC_READ,
@@ -793,19 +886,19 @@ Texture::Texture(const tstring& filename):
     }
 
 
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(CreationResult))
     {
         // Create the initial frame.
-        hr = pDecoder->GetFrame(0, &pSource);
+        CreationResult = pDecoder->GetFrame(0, &pSource);
     }
 
 
     // Convert the image format to 32bppPBGRA
  // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
-    if (SUCCEEDED(hr)) hr = m_pWICFactory->CreateFormatConverter(&m_pWICConverter);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(CreationResult)) CreationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
+    if (SUCCEEDED(CreationResult))
     {
-        hr = m_pWICConverter->Initialize(
+        CreationResult = pConverter->Initialize(
             pSource,
             GUID_WICPixelFormat32bppPBGRA,
             WICBitmapDitherTypeNone,
@@ -816,11 +909,33 @@ Texture::Texture(const tstring& filename):
     }
 
 
+    if (SUCCEEDED(CreationResult))
+    {
+        CreationResult = ENGINE->getRenderTarget()->CreateBitmapFromWicBitmap(
+            pConverter,
+            NULL,
+            &m_pDBitmap
+        );
 
+
+        if (SUCCEEDED(CreationResult))
+        {
+            m_Width = m_pDBitmap->GetSize().width;
+            m_Height = m_pDBitmap->GetSize().height;
+        }
+    }
  
-
+    if (!SUCCEEDED(CreationResult))
+    {
+        tstring message = _T("ERROR! File \"") + filename + _T("\" couldn't load correctly");
+        OutputDebugString(message.c_str());
+    }
     SafeRelease(&pDecoder);
     SafeRelease(&pSource);
-    SafeRelease(&pScaler);
+    SafeRelease(&pConverter);
 
 }
+Texture::~Texture()
+{
+    SafeRelease(&m_pDBitmap);
+};
