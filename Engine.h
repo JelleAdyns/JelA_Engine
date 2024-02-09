@@ -7,6 +7,8 @@
 #include "Structs.h"
 
 class Texture;
+class Font;
+
 class Engine final
 {
 private:
@@ -39,8 +41,14 @@ public:
     void DrawRoundedRect    (const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
     void DrawRoundedRect    (const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
-    void DrawTexture        (const Texture& texture, const Point2Int& destLeftBottom = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
-    void DrawTexture        (const Texture& texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
+    void DrawString         (const tstring& textToDisplay, Font* font, int left, int bottom, int width, int height, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, Font* font, Point2Int leftBottom, int width, int height, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect = false)const;
+
+    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+    void DrawString         (const tstring& textToDisplay, Font* font, int left, int bottom, int width, bool showRect = false)const;
+    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+    void DrawString         (const tstring& textToDisplay, Font* font, Point2Int leftBottom, int width, bool showRect = false)const;
 
     void FillRectangle      (int left, int bottom, int width, int height)const;
     void FillRectangle      (const Point2Int& leftBottom, int width, int height)const;
@@ -58,8 +66,15 @@ public:
     void DrawRoundedRect    (const Point2Int& leftTop, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
     void DrawRoundedRect    (const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
-    void DrawTexture        (const Texture& texture, const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
-    void DrawTexture        (const Texture& texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
+    void DrawString         (const tstring& textToDisplay, Font* font, int left, int top, int width, int height, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, Font* font, Point2Int leftTop, int width, int height, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect = false)const;
+
+    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+    void DrawString         (const tstring& textToDisplay, Font* font, int left, int top, int width, bool showRect = false)const;
+    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+    void DrawString         (const tstring& textToDisplay, Font* font, Point2Int leftTop, int width, bool showRect = false)const;
+
 
     void FillRectangle      (int left, int top, int width, int height)const;
     void FillRectangle      (const Point2Int& leftTop, int width, int height)const;
@@ -74,12 +89,9 @@ public:
     void DrawEllipse        (const Point2Int& center, int radiusX, int radiusY, float lineThickness = 1.f)const;
     void DrawEllipse        (const EllipseInt& ellipse, float lineThickness = 1.f)const;
 
-    void FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const;
-    void FillEllipse(const Point2Int& center, int radiusX, int radiusY)const;
-    void FillEllipse(const EllipseInt& ellipse)const;
-
-    void DrawString         (int left, int top, int width, int height)const;
-
+    void FillEllipse        (int centerX, int centerY, int radiusX, int radiusY)const;
+    void FillEllipse        (const Point2Int& center, int radiusX, int radiusY)const;
+    void FillEllipse        (const EllipseInt& ellipse)const;
 
 
     void SetColor(COLORREF newColor, float opacity = 1.F);
@@ -102,13 +114,13 @@ private:
     HWND m_hWindow;
     HINSTANCE m_hInstance;
 
+    IDWriteFactory* m_pDWriteFactory;
     ID2D1Factory* m_pDFactory;
     ID2D1HwndRenderTarget*  m_pDRenderTarget;
     ID2D1SolidColorBrush* m_pDColorBrush;
     D2D1_COLOR_F m_DColorBackGround;
 
     BaseGame* m_pGame;
-
 
 
     tstring m_pTitle;
@@ -130,18 +142,59 @@ public:
     Texture& operator=(const Texture& other) = delete;
     Texture& operator=(Texture&& other) noexcept = delete;
 
-    ID2D1Bitmap* const  GetBitmap() const { return m_pDBitmap; }
-    float GetWidth() const { return m_Width; }
-    float GetHeight() const { return m_Height; }
-
     ~Texture();
+
+    ID2D1Bitmap* const  GetBitmap() const { return m_pDBitmap; }
+    float GetWidth() const { return m_TextureWidth; }
+    float GetHeight() const { return m_TextureHeight; }
+
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+    void DrawTexture        (int destLeft, int destBottom, const RectInt& srcRect = {}, float opacity = 1.f)const;
+    void DrawTexture        (const Point2Int& destLeftBottom = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
+    void DrawTexture        (const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
+#else
+    void DrawTexture        (int destLeft, int destTop, const RectInt& srcRect = {}, float opacity = 1.f)const;
+    void DrawTexture        (const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
+    void DrawTexture        (const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
+#endif // MATHEMATICAL_COORDINATESYSTEM
 private:
 
     static IWICImagingFactory* m_pWICFactory;
     ID2D1Bitmap* m_pDBitmap;
 
-    float m_Width;
-    float m_Height;
+    float m_TextureWidth;
+    float m_TextureHeight;
+};
+
+//https://stackoverflow.com/questions/37572961/c-directwrite-load-font-from-file-at-runtime
+class Font final
+{
+public:
+    Font(const std::wstring& filename, bool fromFile = false);
+    Font(const std::wstring& filename, int size, bool bold = false, bool italic = false, bool fromFile = false);
+
+    Font(const Font& other) = delete;
+    Font(Font&& other) noexcept = delete;
+    Font& operator=(const Font& other) = delete;
+    Font& operator=(Font&& other) noexcept = delete;
+
+    ~Font();
+
+    void SetTextFormat(int size, bool bold, bool italic);
+    IDWriteTextFormat* GetFormat() const;
+    int GetFontSize() const;
+
+private:
+    HRESULT Initialize(const std::wstring& filename);
+
+    static IDWriteFactory5* m_pDWriteFactory;
+
+    IDWriteFontCollection1* m_pFontCollection;
+    IDWriteTextFormat* m_pTextFormat;
+
+    std::wstring m_FontName;
+    int m_FontSize;
 };
 
 #endif // !ENGINE_H

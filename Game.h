@@ -28,6 +28,8 @@ private:
     float acceleration{ -98.f };
 
     Texture* m_Texture{ new Texture{ _T("C:/Users/jelle/Documents/The Clashing Elements/TheClashingElements-SaviorsOfTheMultiverse-Game/Resources/Wesley.png")} };
+    Font* m_pFont{ new Font{L"C:/Users/jelle/Documents/DAE GD/Semester 3/Programming 3/Castlevania_III/Resources/castlevania-3.ttf", 60, false, false, true} };
+    Font* m_pFont2{ new Font{L"C:/Users/jelle/Documents/DAE GD/Semester 1/Programming 1/7/1DAE10_07_Adyns_Jelle/ImageAndText/Recources/DIN-Light.otf", 60, false, false, true}};
 };
 
 #endif // !GAME_H

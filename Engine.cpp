@@ -468,50 +468,63 @@ void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
         static_cast<FLOAT>(lineThickness));
 }
 
-//Textures
-void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftBottom, const RectInt& srcRect, float opacity)const
+// Strings
+void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int bottom, int width, int height, bool showRect)const
 {
-    DrawTexture(texture, RectInt{ destLeftBottom.x, destLeftBottom.y, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+    DrawString(textToDisplay, font, RectInt{ left, bottom, width, height }, showRect);
 }
-void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftBottom, int width, int height, bool showRect)const
 {
-    D2D1_RECT_F destination = D2D1::RectF(
-        static_cast<FLOAT>(destRect.left),//0
-        static_cast<FLOAT>(m_Height - (destRect.bottom + destRect.height)),//screenheight
-        static_cast<FLOAT>(destRect.left + destRect.width), //destination width
-        static_cast<FLOAT>(m_Height - destRect.bottom)
-    );
-    D2D1_RECT_F source{};
-    if (srcRect.width <= 0 || srcRect.height <= 0)
+    DrawString(textToDisplay, font, RectInt{ leftBottom.x, leftBottom.y, width, height }, showRect);
+}
+void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect)const
+{
+    D2D1_RECT_F rect = D2D1::RectF(
+        static_cast<FLOAT>(destRect.left),
+        static_cast<FLOAT>(m_Height - (destRect.bottom + destRect.height)),
+        static_cast<FLOAT>(destRect.left + destRect.width),
+        static_cast<FLOAT>(m_Height - destRect.bottom));
+
+    if (showRect)
     {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(destRect.bottom),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(destRect.bottom + destRect.height)
-        );
+        m_pDRenderTarget->DrawRectangle(rect, m_pDColorBrush);
     }
-    else
-    {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(srcRect.left),
-            static_cast<FLOAT>(srcRect.bottom),
-            static_cast<FLOAT>(srcRect.left + srcRect.width),
-            static_cast<FLOAT>(srcRect.bottom + srcRect.height));
-        destination.right = destination.left + srcRect.width;
-        destination.top = destination.bottom - srcRect.height;
-    }
-      
-    m_pDRenderTarget->DrawBitmap(
-        texture.GetBitmap(),
-        destination,
-        opacity,
-        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
-        source
-    );
+
+    m_pDRenderTarget->DrawText(
+        textToDisplay.c_str(),
+        textToDisplay.length(),
+        font->GetFormat(),
+        rect,
+        m_pDColorBrush,
+        D2D1_DRAW_TEXT_OPTIONS_NONE,
+        DWRITE_MEASURING_MODE_NATURAL);
 }
 
-
+void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int bottom, int width, bool showRect)const
+{
+    DrawString(textToDisplay, font, Point2Int{ left, bottom }, width, showRect);
+}
+void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftBottom, int width, bool showRect)const
+{
+    D2D1_RECT_F rect = D2D1::RectF(
+        static_cast<FLOAT>(leftBottom.x),
+        static_cast<FLOAT>(m_Height - (leftBottom.y + font->GetFontSize())),
+        static_cast<FLOAT>(leftBottom.x + width),
+        static_cast<FLOAT>(m_Height - leftBottom.y));
+    if (showRect)
+    {
+        m_pDRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+    }
+    
+    m_pDRenderTarget->DrawText(
+        textToDisplay.c_str(),
+        textToDisplay.length(),
+        font->GetFormat(),
+        rect,
+        m_pDColorBrush,
+        D2D1_DRAW_TEXT_OPTIONS_NONE,
+        DWRITE_MEASURING_MODE_NATURAL);
+}
 //-----------------
 //Fill
 //----------------
@@ -658,48 +671,64 @@ void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
-
-//Textures
-void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
+void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int top, int width, int height, bool showRect)const
 {
-    DrawTexture(texture, RectInt{ destLeftTop.x, destLeftTop.y, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+    DrawString(textToDisplay, font, RectInt{ left, top, width, height }, showRect);
 }
-void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftTop, int width, int height, bool showRect)const
 {
-    D2D1_RECT_F destination = D2D1::RectF(
+    DrawString(textToDisplay, font, RectInt{ leftTop.x, leftTop.y, width, height }, showRect);
+}
+void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect)const
+{
+    D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(destRect.left),
         static_cast<FLOAT>(destRect.top),
         static_cast<FLOAT>(destRect.left + destRect.width),
-        static_cast<FLOAT>(destRect.top + destRect.height)
-    );
+        static_cast<FLOAT>(destRect.top + destRect.height));
 
-    D2D1_RECT_F source{};
-    if (srcRect.width <= 0 || srcRect.height <= 0)
+    if (showRect)
     {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(destRect.top),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(destRect.top + destRect.height)
-        );
+        m_pDRenderTarget->DrawRectangle(rect, m_pDColorBrush);
     }
-    else
+
+    m_pDRenderTarget->DrawText(
+        textToDisplay.c_str(),
+        textToDisplay.length(),
+        font->GetFormat(),
+        rect,
+        m_pDColorBrush,
+        D2D1_DRAW_TEXT_OPTIONS_NONE,
+        DWRITE_MEASURING_MODE_NATURAL);
+}
+
+//Takes the size of the font as Height of the destination rectangle in order to have a logical position
+void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int top, int width, bool showRect)const
+{
+    DrawString(textToDisplay, font, Point2Int{ left,top }, width, showRect);
+}
+//Takes the size of the font as Height of the destination rectangle in order to have a logical position
+void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftTop, int width, bool showRect)const
+{
+    D2D1_RECT_F rect = D2D1::RectF(
+        static_cast<FLOAT>(leftTop.x),
+        static_cast<FLOAT>(leftTop.y),
+        static_cast<FLOAT>(leftTop.x + width),
+        static_cast<FLOAT>(leftTop.y + font->GetFontSize()));
+
+    if (showRect)
     {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(srcRect.left),
-            static_cast<FLOAT>(srcRect.top),
-            static_cast<FLOAT>(srcRect.left + srcRect.width),
-            static_cast<FLOAT>(srcRect.top + srcRect.height)); 
-        destination.right = destination.left + srcRect.width;
-        destination.bottom = destination.top + srcRect.height;
+        m_pDRenderTarget->DrawRectangle(rect, m_pDColorBrush);
     }
-    m_pDRenderTarget->DrawBitmap(
-        texture.GetBitmap(),
-        destination,
-        opacity,
-        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
-        source
-    );
+    
+    m_pDRenderTarget->DrawText(
+        textToDisplay.c_str(),
+        textToDisplay.length(),
+        font->GetFormat(),
+        rect,
+        m_pDColorBrush,
+        D2D1_DRAW_TEXT_OPTIONS_NONE,
+        DWRITE_MEASURING_MODE_NATURAL);
 }
 //-----------------
 //Fill
@@ -770,10 +799,7 @@ void Engine::FillEllipse(const EllipseInt& ellipse)const
 
 
 
-void Engine::DrawString(int left, int top, int width, int height)const
-{
 
-}
 
 
 void Engine::SetInstance(HINSTANCE hInst)
@@ -855,15 +881,15 @@ IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
 
 Texture::Texture(const tstring& filename):
     m_pDBitmap{NULL},
-    m_Width{0},
-    m_Height{0}
+    m_TextureWidth{0},
+    m_TextureHeight{0}
 {
 
-    HRESULT CreationResult = S_OK;
+    HRESULT creationResult = S_OK;
 
     if (!m_pWICFactory)
     {
-        CreationResult = CoCreateInstance(
+        creationResult = CoCreateInstance(
             CLSID_WICImagingFactory,
             NULL,
             CLSCTX_INPROC_SERVER,
@@ -875,9 +901,9 @@ Texture::Texture(const tstring& filename):
     IWICBitmapFrameDecode* pSource = NULL;
     IWICFormatConverter* pConverter = NULL;
 
-    if (SUCCEEDED(CreationResult))
+    if (SUCCEEDED(creationResult))
     {
-        CreationResult = m_pWICFactory->CreateDecoderFromFilename(
+        creationResult = m_pWICFactory->CreateDecoderFromFilename(
             filename.c_str(),
             NULL,
             GENERIC_READ,
@@ -886,19 +912,19 @@ Texture::Texture(const tstring& filename):
     }
 
 
-    if (SUCCEEDED(CreationResult))
+    if (SUCCEEDED(creationResult))
     {
         // Create the initial frame.
-        CreationResult = pDecoder->GetFrame(0, &pSource);
+        creationResult = pDecoder->GetFrame(0, &pSource);
     }
 
 
     // Convert the image format to 32bppPBGRA
  // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
-    if (SUCCEEDED(CreationResult)) CreationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
-    if (SUCCEEDED(CreationResult))
+    if (SUCCEEDED(creationResult)) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
+    if (SUCCEEDED(creationResult))
     {
-        CreationResult = pConverter->Initialize(
+        creationResult = pConverter->Initialize(
             pSource,
             GUID_WICPixelFormat32bppPBGRA,
             WICBitmapDitherTypeNone,
@@ -909,23 +935,23 @@ Texture::Texture(const tstring& filename):
     }
 
 
-    if (SUCCEEDED(CreationResult))
+    if (SUCCEEDED(creationResult))
     {
-        CreationResult = ENGINE->getRenderTarget()->CreateBitmapFromWicBitmap(
+        creationResult = ENGINE->getRenderTarget()->CreateBitmapFromWicBitmap(
             pConverter,
             NULL,
             &m_pDBitmap
         );
 
 
-        if (SUCCEEDED(CreationResult))
+        if (SUCCEEDED(creationResult))
         {
-            m_Width = m_pDBitmap->GetSize().width;
-            m_Height = m_pDBitmap->GetSize().height;
+            m_TextureWidth = m_pDBitmap->GetSize().width;
+            m_TextureHeight = m_pDBitmap->GetSize().height;
         }
     }
  
-    if (!SUCCEEDED(CreationResult))
+    if (!SUCCEEDED(creationResult))
     {
         tstring message = _T("ERROR! File \"") + filename + _T("\" couldn't load correctly");
         OutputDebugString(message.c_str());
@@ -939,3 +965,264 @@ Texture::~Texture()
 {
     SafeRelease(&m_pDBitmap);
 };
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+void Texture::DrawTexture(int destLeft, int destBottom, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(RectInt{ destLeft, destBottom, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
+}
+void Texture::DrawTexture(const Point2Int& destLeftBottom, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(RectInt{ destLeftBottom.x, destLeftBottom.y, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
+}
+void Texture::DrawTexture(const RectInt& destRect, const RectInt& srcRect, float opacity)const
+{
+    RectInt wndwSize = ENGINE->GetWindowSize();
+
+    D2D1_RECT_F destination = D2D1::RectF(
+        static_cast<FLOAT>(destRect.left),//0
+        static_cast<FLOAT>(wndwSize.height - (destRect.bottom + destRect.height)),//screenheight
+        static_cast<FLOAT>(destRect.left + destRect.width), //destination width
+        static_cast<FLOAT>(wndwSize.height - destRect.bottom)
+    );
+    D2D1_RECT_F source{};
+    if (srcRect.width <= 0 || srcRect.height <= 0)
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(destRect.left),
+            static_cast<FLOAT>(destRect.bottom),
+            static_cast<FLOAT>(destRect.left + destRect.width),
+            static_cast<FLOAT>(destRect.bottom + destRect.height)
+        );
+    }
+    else
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(srcRect.left),
+            static_cast<FLOAT>(srcRect.bottom),
+            static_cast<FLOAT>(srcRect.left + srcRect.width),
+            static_cast<FLOAT>(srcRect.bottom + srcRect.height));
+        destination.right = destination.left + srcRect.width;
+        destination.top = destination.bottom - srcRect.height;
+    }
+
+    ENGINE->getRenderTarget()->DrawBitmap(
+        m_pDBitmap,
+        destination,
+        opacity,
+        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        source
+    );
+}
+#else
+//Textures
+void Texture::DrawTexture(int destLeft, int destTop, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(RectInt{ destLeft, destTop, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
+}
+void Texture::DrawTexture(const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(RectInt{ destLeftTop.x, destLeftTop.y, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
+}
+void Texture::DrawTexture(const RectInt& destRect, const RectInt& srcRect, float opacity)const
+{
+    D2D1_RECT_F destination = D2D1::RectF(
+        static_cast<FLOAT>(destRect.left),
+        static_cast<FLOAT>(destRect.top),
+        static_cast<FLOAT>(destRect.left + destRect.width),
+        static_cast<FLOAT>(destRect.top + destRect.height)
+    );
+
+    D2D1_RECT_F source{};
+    if (srcRect.width <= 0 || srcRect.height <= 0)
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(destRect.left),
+            static_cast<FLOAT>(destRect.top),
+            static_cast<FLOAT>(destRect.left + destRect.width),
+            static_cast<FLOAT>(destRect.top + destRect.height)
+        );
+    }
+    else
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(srcRect.left),
+            static_cast<FLOAT>(srcRect.top),
+            static_cast<FLOAT>(srcRect.left + srcRect.width),
+            static_cast<FLOAT>(srcRect.top + srcRect.height));
+        destination.right = destination.left + srcRect.width;
+        destination.bottom = destination.top + srcRect.height;
+    }
+    ENGINE->getRenderTarget()->DrawBitmap(
+        m_pDBitmap,
+        destination,
+        opacity,
+        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        source
+    );
+}
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+//---------------------
+//Font
+//---------------------
+
+IDWriteFactory5* Font::m_pDWriteFactory{ nullptr };
+
+Font::Font(const std::wstring& fontName, bool fromFile)
+{
+    if (fromFile)
+    {
+        HRESULT hr = Initialize(fontName);
+        if (SUCCEEDED(hr))
+        {
+            SetTextFormat(20, false, false);
+        }
+    }
+    else
+    {
+        if (!m_pDWriteFactory)
+        {
+            DWriteCreateFactory(
+                DWRITE_FACTORY_TYPE_SHARED,
+                __uuidof(IDWriteFactory5),
+                reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
+        }
+        m_FontName = fontName;
+        SetTextFormat(20, false, false);
+    }
+    
+}
+Font::Font(const std::wstring& fontName, int size ,bool bold, bool italic, bool fromFile)
+{
+    if (fromFile)
+    {
+        HRESULT hr = Initialize(fontName);
+        if (SUCCEEDED(hr))
+        {
+            SetTextFormat(size, bold, italic);
+        }
+    }
+    else
+    {
+        if (!m_pDWriteFactory)
+        {
+            DWriteCreateFactory(
+                DWRITE_FACTORY_TYPE_SHARED,
+                __uuidof(IDWriteFactory5),
+                reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
+        }
+        m_FontName = fontName;
+        SetTextFormat(size, bold, italic);
+    }
+   
+}
+Font::~Font()
+{
+    SafeRelease(&m_pFontCollection);
+    SafeRelease(&m_pTextFormat);
+}
+HRESULT Font::Initialize(const std::wstring& fontName)
+{
+    HRESULT hr = S_OK;
+
+    IDWriteFontSetBuilder1* pFontSetBuilder{ nullptr };
+    IDWriteFontSet* pFontSet{ nullptr };
+    IDWriteFontFile* pFontFile{ nullptr };
+    m_pFontCollection = nullptr;
+
+    if (!m_pDWriteFactory)
+    {
+        DWriteCreateFactory(
+            DWRITE_FACTORY_TYPE_SHARED,
+            __uuidof(IDWriteFactory5),
+            reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
+    }
+
+
+    hr = m_pDWriteFactory->CreateFontSetBuilder(&pFontSetBuilder);
+    if (SUCCEEDED(hr))
+    {
+        hr = m_pDWriteFactory->CreateFontFileReference(fontName.c_str(), NULL, &pFontFile);
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = pFontSetBuilder->AddFontFile(pFontFile);
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = pFontSetBuilder->CreateFontSet(&pFontSet);
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = m_pDWriteFactory->CreateFontCollectionFromFontSet(pFontSet, &m_pFontCollection);
+    }
+
+    IDWriteFontFamily* pFontFamily{ nullptr };
+    IDWriteLocalizedStrings* pStrings{ nullptr };
+
+    UINT32 length;
+    std::wstring name{};
+
+    if (SUCCEEDED(hr))
+    {
+        hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = pFontFamily->GetFamilyNames(&pStrings);
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = pStrings->GetStringLength(0, &length);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        name.resize(length);
+        hr = pStrings->GetString(0, &name[0], length + 1);
+    }
+
+
+    if (!SUCCEEDED(hr))
+    {
+        OutputDebugString((_T("Something went wrong in the Font constructor using file ") + fontName).c_str());
+    }
+    else
+    {
+        m_FontName = name;
+
+    }
+
+    SafeRelease(&pFontSetBuilder);
+    SafeRelease(&pFontSet);
+    SafeRelease(&pFontFile);
+    SafeRelease(&pFontFamily);
+    SafeRelease(&pStrings);
+
+    return hr;
+}
+
+void Font::SetTextFormat(int size, bool bold, bool italic)
+{
+    if (m_pTextFormat) SafeRelease(&m_pTextFormat);
+    m_pDWriteFactory->CreateTextFormat(
+        m_FontName.c_str(),
+        m_pFontCollection,
+        bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
+        italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        static_cast<FLOAT>(size),
+        L"en-us",
+        &m_pTextFormat);
+
+    m_FontSize = size;
+}
+IDWriteTextFormat* Font::GetFormat() const
+{
+    return m_pTextFormat;
+}
+int Font::GetFontSize() const
+{
+    return m_FontSize;
+}
