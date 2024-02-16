@@ -40,7 +40,9 @@ Engine::Engine() :
     m_pTitle{ tstring{L"Standard Game"}},
     m_Width{500},
     m_Height{500},
-    m_TimePerFrame{1.f/60.f}
+    m_TimePerFrame{1.f/60.f},
+    m_IsFullscreen{false},
+    m_KeyIsDown{false}
 {
 
 }
@@ -73,36 +75,20 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
     }
     else
     {
+    
         bool wasHandled = false;
         if (m_pGame)
         {
             switch (message)
             {
-            case WM_GETMINMAXINFO: {
-               /* DWORD dwStyle = ::GetWindowLong(m_hWindow, GWL_STYLE);
-                DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-                DWORD dwNewStyle = dwStyle & ~dwRemove;
-                ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
-                ::SetWindowPos(m_hWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE
-                    | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-                HDC hDC = ::GetWindowDC(NULL);
-                ::SetWindowPos(m_hWindow, NULL, 0, 0, ::GetDeviceCaps(hDC, HORZRES), ::GetDeviceCaps(hDC, VERTRES), SWP_FRAMECHANGED);*/
-
-                //return 0;
-            }
-            result = 0;
-            wasHandled = false;
-            break;
             case WM_SIZE:
-            {
-               
+            {              
                 UINT width = LOWORD(lParam);
                 UINT height = HIWORD(lParam);
                 if (m_pDRenderTarget)
                 {
                     //If error occurs, it will be returned by EndDraw()
                     m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
-                    
                 }
             }
             result = 0;
@@ -130,40 +116,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
             case WM_PAINT:
             {
-                HRESULT hr = S_OK;
-
-                CreateOurRenderTarget();
-                m_pDRenderTarget->BeginDraw();
-
-                // Clear background
-                m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-                m_pDRenderTarget->Clear(m_DColorBackGround);
-
-                // Set tranformation for when the window changes in size
-                // The user draw calls should always appear in the middle of the screen,
-                // not the left corner
-                int rendertargetWidth{ GetRenderTargetSize().width };
-                int rendertargetHeight{ GetRenderTargetSize().height };
-
-                float scaleX{ rendertargetWidth / static_cast<float>(m_Width) };
-                float scaleY{ rendertargetHeight / static_cast<float>(m_Height) };
-                FLOAT minScale{ std::min<float>(scaleX,scaleY) };
-
-                FLOAT translationX{ (rendertargetWidth - m_Width * minScale) / 2.f };
-                FLOAT translationY{ (rendertargetHeight - m_Height * minScale) / 2.f };
-
-                m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Scale(minScale, minScale) *
-                    D2D1::Matrix3x2F::Translation(D2D1::SizeF(translationX, translationY)));
-
-                // User Draw Calls
-                m_pGame->Draw();
-
-                // Dont show more than the the scaled window size given by the user
-                m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-                SetColor(RGB(0, 0, 0));
-                DrawBorders(rendertargetWidth, rendertargetHeight, translationX, translationY);
-
-                m_pDRenderTarget->EndDraw();
+                HRESULT hr = OnRender();
 
                 if (hr == D2DERR_RECREATE_TARGET)
                 {
@@ -171,8 +124,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     SafeRelease(&m_pDRenderTarget);
                     SafeRelease(&m_pDColorBrush);
                 }
-                ValidateRect(hWnd, NULL);
-               
+                ValidateRect(hWnd, NULL);   
                 //PAINTSTRUCT ps;
                 //RECT rect;
                 //HDC hdc = BeginPaint(hWnd, &ps);
@@ -198,6 +150,60 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             result = 0;
             wasHandled = true;
             break;
+            case WM_KEYUP:
+            {
+                if (static_cast<int>(wParam) == VK_F11)
+                {
+                    if (m_IsFullscreen) SetWindowPosition();
+                    else SetFullscreen();
+                    m_IsFullscreen = !m_IsFullscreen;
+                }
+                
+                m_pGame->KeyUp(static_cast<int>(wParam));
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+            case WM_KEYDOWN:
+            {
+                m_pGame->KeyDown(static_cast<int>(wParam));
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+
+
+            case WM_LBUTTONDOWN:
+                m_pGame->MouseDown(true, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_LBUTTONUP:
+                m_pGame->MouseUp(true, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_RBUTTONDOWN:
+                m_pGame->MouseDown(false, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_RBUTTONUP:
+                m_pGame->MouseUp(false, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_MOUSEMOVE:
+                m_pGame->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), wParam);
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_MOUSEWHEEL:
+                m_pGame->MouseWheelTurn(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), GET_WHEEL_DELTA_WPARAM(wParam), LOWORD(wParam));
+                result = 0;
+                wasHandled = true;
+                break;
+
 
             case WM_DESTROY:
                 PostQuitMessage(0);
@@ -205,7 +211,10 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 wasHandled = true;
                 break;
             }     
+            
         }
+
+        
         if (!wasHandled)
         {
             result = DefWindowProc(hWnd, message, wParam, lParam);
@@ -225,8 +234,7 @@ int Engine::Run()
     m_pGame = new Game{};
     m_pGame->Initialize();
 
-    ShowWindow(m_hWindow, SW_SHOWNORMAL);
-    UpdateWindow(m_hWindow);
+    
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     float elapsedSec{};
@@ -247,6 +255,7 @@ int Engine::Run()
         }
         else
         {
+           
             std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
             elapsedSec += std::chrono::duration<float>(t2 - t1).count();
@@ -256,97 +265,15 @@ int Engine::Run()
             while (elapsedSec > m_TimePerFrame)
             {
                 m_pGame->Tick(m_TimePerFrame);
-                InvalidateRect(m_hWindow, NULL, FALSE);
                 elapsedSec -= m_TimePerFrame;
             }
+            InvalidateRect(m_hWindow, NULL, FALSE);
             
            
         }
     }
     
     return (int)msg.wParam;
-}
-HRESULT Engine::MakeWindow()
-{
-    HRESULT hr = S_OK;
-
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDFactory);
-
-    if (SUCCEEDED(hr))
-    {
-        WNDCLASSEX wcex;
-
-        wcex.cbSize = sizeof(WNDCLASSEX);
-
-        wcex.style = CS_HREDRAW | CS_VREDRAW;
-        wcex.lpfnWndProc = WndProc;
-        wcex.cbClsExtra = 0;
-        wcex.cbWndExtra = 0;
-        wcex.hInstance = m_hInstance;
-        wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-        wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-        wcex.lpszMenuName = NULL;
-        wcex.lpszClassName = m_pTitle.c_str();
-        wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MYOWNENGINEEXERCISE));
-        wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-        RegisterClassEx(&wcex);
-
-        m_hWindow = CreateWindow(m_pTitle.c_str(), m_pTitle.c_str(), WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, nullptr, nullptr, m_hInstance, this);
-
-
-        if (m_hWindow)
-        {
-            //https://www.codeproject.com/Questions/108400/How-to-Set-Win32-Application-to-Full-Screen-C
-            /*DWORD dwStyle = ::GetWindowLong(m_hWindow, GWL_STYLE);
-            DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
-            DWORD dwNewStyle = dwStyle & ~dwRemove;
-            ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
-            ::SetWindowPos(m_hWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
-                | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-            HDC hDC = ::GetWindowDC(NULL);
-            ::SetWindowPos(m_hWindow, NULL, 0, 0,
-            ::GetDeviceCaps(hDC, HORZRES),
-            ::GetDeviceCaps(hDC, VERTRES),
-            SWP_FRAMECHANGED);*/
-
-
-            SetWindowPosition();
-        }
-    }
-
-    return hr;
-   
-}
-HRESULT Engine::CreateOurRenderTarget()
-{
-    HRESULT hr = S_OK;
-
-    if (!m_pDRenderTarget)
-    {
-        RECT rc;
-        GetClientRect(m_hWindow, &rc);
-
-        D2D1_SIZE_U size = D2D1::SizeU(
-            rc.right - rc.left,
-            rc.bottom - rc.top
-        );
-
-        // Create a Direct2D render target.
-        hr = m_pDFactory->CreateHwndRenderTarget(
-            D2D1::RenderTargetProperties(),
-            D2D1::HwndRenderTargetProperties(m_hWindow, size),
-            &m_pDRenderTarget
-        );
-
-        if (!m_pDColorBrush)
-        {
-            SetColor(RGB(255, 255, 255));
-        }
-    }
-
-    return hr;
 }
 void Engine::DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT translationY) const
 {
@@ -384,6 +311,108 @@ void Engine::DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT tr
             static_cast<FLOAT>(rtWidth + reserveSpace),
             static_cast<FLOAT>(rtHeight + reserveSpace)),
         m_pDColorBrush);
+}
+HRESULT Engine::MakeWindow()
+{
+    HRESULT hr = S_OK;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDFactory);
+
+    if (SUCCEEDED(hr))
+    {
+        WNDCLASSEX wcex;
+
+        wcex.cbSize = sizeof(WNDCLASSEX);
+
+        wcex.style = CS_HREDRAW | CS_VREDRAW;
+        wcex.lpfnWndProc = WndProc;
+        wcex.cbClsExtra = 0;
+        wcex.cbWndExtra = 0;
+        wcex.hInstance = m_hInstance;
+        wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+        wcex.lpszMenuName = NULL;
+        wcex.lpszClassName = m_pTitle.c_str();
+        wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MYOWNENGINEEXERCISE));
+        wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+
+        RegisterClassEx(&wcex);
+
+        m_hWindow = CreateWindow(m_pTitle.c_str(), m_pTitle.c_str(), WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, nullptr, nullptr, m_hInstance, this);
+
+        if (m_hWindow) SetWindowPosition();
+    }
+
+    return hr;
+   
+}
+HRESULT Engine::CreateOurRenderTarget()
+{
+    HRESULT hr = S_OK;
+
+    if (!m_pDRenderTarget)
+    {
+        RECT rc;
+        GetClientRect(m_hWindow, &rc);
+
+        D2D1_SIZE_U size = D2D1::SizeU(
+            rc.right - rc.left,
+            rc.bottom - rc.top
+        );
+
+        // Create a Direct2D render target.
+        hr = m_pDFactory->CreateHwndRenderTarget(
+            D2D1::RenderTargetProperties(),
+            D2D1::HwndRenderTargetProperties(m_hWindow, size),
+            &m_pDRenderTarget
+        );
+
+        if (!m_pDColorBrush)
+        {
+            SetColor(RGB(255, 255, 255));
+        }
+    }
+
+    return hr;
+}
+HRESULT Engine::OnRender()
+{
+    HRESULT hr = S_OK;
+
+    CreateOurRenderTarget();
+    m_pDRenderTarget->BeginDraw();
+
+    // Clear background
+    m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+    m_pDRenderTarget->Clear(m_DColorBackGround);
+
+    // Set tranformation for when the window changes in size
+    // The user draw calls should always appear in the middle of the screen,
+    // not the left corner
+    int rendertargetWidth{ GetRenderTargetSize().width };
+    int rendertargetHeight{ GetRenderTargetSize().height };
+
+    float scaleX{ rendertargetWidth / static_cast<float>(m_Width) };
+    float scaleY{ rendertargetHeight / static_cast<float>(m_Height) };
+    FLOAT minScale{ std::min<float>(scaleX,scaleY) };
+
+    FLOAT translationX{ (rendertargetWidth - m_Width * minScale) / 2.f };
+    FLOAT translationY{ (rendertargetHeight - m_Height * minScale) / 2.f };
+
+    m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Scale(minScale, minScale) *
+        D2D1::Matrix3x2F::Translation(D2D1::SizeF(translationX, translationY)));
+
+    // User Draw Calls
+    m_pGame->Draw();
+
+    // Dont show more than the the scaled window size given by the user
+    m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+    SetColor(RGB(0, 0, 0));
+    DrawBorders(rendertargetWidth, rendertargetHeight, translationX, translationY);
+    
+    hr = m_pDRenderTarget->EndDraw();
+    return hr;
 }
 
 
@@ -797,11 +826,10 @@ void Engine::FillEllipse(const EllipseInt& ellipse)const
 }
 #endif // MATHEMATICAL_COORDINATSYSTEM
 
-
-
-
-
-
+bool Engine::IsKeyPressed(int virtualKeycode) const
+{
+    return GetKeyState(virtualKeycode) < 0;
+}
 void Engine::SetInstance(HINSTANCE hInst)
 {
     m_hInstance = hInst;
@@ -820,6 +848,9 @@ void Engine::SetWindowDimensions(int width, int height)
 }
 void Engine::SetWindowPosition()
 {
+    DWORD dwAdd = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
+    ::SetWindowLong(m_hWindow, GWL_STYLE, dwAdd);
+
     UINT dpi = GetDpiForWindow(m_hWindow);
 
     int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + m_Width + 10) };
@@ -832,7 +863,27 @@ void Engine::SetWindowPosition()
     int xPos{ GetSystemMetrics(SM_CXSCREEN) / 2 - windowWidth / 2 };
     int yPos{ GetSystemMetrics(SM_CYSCREEN) / 2 - windowHeight / 2 };
 
-    ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_ASYNCWINDOWPOS);
+    ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_FRAMECHANGED);
+    ShowWindow(m_hWindow, SW_SHOWNORMAL);
+    UpdateWindow(m_hWindow);
+    
+}
+void Engine::SetFullscreen()
+{
+    //https://www.codeproject.com/Questions/108400/How-to-Set-Win32-Application-to-Full-Screen-C
+    DWORD dwStyle = ::GetWindowLong(m_hWindow, GWL_STYLE);
+    DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
+    DWORD dwNewStyle = dwStyle & ~dwRemove;
+    ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
+    ::SetWindowPos(m_hWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
+        | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    HDC hDC = ::GetWindowDC(m_hWindow);
+    ::SetWindowPos(m_hWindow, NULL, 0, 0,
+        ::GetDeviceCaps(hDC, HORZRES),
+        ::GetDeviceCaps(hDC, VERTRES),
+        SWP_FRAMECHANGED);
+    ShowWindow(m_hWindow, SW_SHOWNORMAL);
+    UpdateWindow(m_hWindow);
 }
 void Engine::SetFrameRate(int FPS)
 {

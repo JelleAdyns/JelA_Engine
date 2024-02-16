@@ -16,6 +16,12 @@ public:
 	virtual void Initialize() = 0;
 	virtual void Draw() = 0;
 	virtual void Tick(float elapsedSec) = 0;
+    virtual void KeyDown(int virtualKeycode) = 0;
+    virtual void KeyUp(int virtualKeycode) = 0;
+    virtual void MouseDown(bool isLeft, int x, int y) = 0;
+    virtual void MouseUp(bool isLeft, int x, int y) = 0;
+    virtual void MouseMove(int x, int y, int keyDown) = 0;
+    virtual void MouseWheelTurn(int x, int y, int turnDistance, int keyDown) = 0;
 };
 
 #endif // !BASEGAME_H

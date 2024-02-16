@@ -93,6 +93,8 @@ public:
     void FillEllipse        (const Point2Int& center, int radiusX, int radiusY)const;
     void FillEllipse        (const EllipseInt& ellipse)const;
 
+    //Use CAPITAL letters or the virtual keycodes
+    bool IsKeyPressed(int virtualKeycode) const;
 
     void SetColor(COLORREF newColor, float opacity = 1.F);
     void SetBackGroundColor(COLORREF newColor);
@@ -107,28 +109,34 @@ public:
 private:
     void DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT translationY) const;
     void SetWindowPosition();
+    void SetFullscreen();
     RectInt GetRenderTargetSize() const;
+    HRESULT OnRender();
     HRESULT MakeWindow();
     HRESULT CreateOurRenderTarget();
 
+    //Win32
     HWND m_hWindow;
     HINSTANCE m_hInstance;
 
-    IDWriteFactory* m_pDWriteFactory;
+    //Direct2D
     ID2D1Factory* m_pDFactory;
     ID2D1HwndRenderTarget*  m_pDRenderTarget;
     ID2D1SolidColorBrush* m_pDColorBrush;
     D2D1_COLOR_F m_DColorBackGround;
 
+    //BaseGame
     BaseGame* m_pGame;
 
-
+    //General datamembers
     tstring m_pTitle;
     int m_Width;
     int m_Height;
 
     float m_TimePerFrame;
 
+    bool m_IsFullscreen;
+    bool m_KeyIsDown;
     
 };
 
@@ -158,6 +166,7 @@ public:
     void DrawTexture        (const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
     void DrawTexture        (const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
+
 private:
 
     static IWICImagingFactory* m_pWICFactory;
