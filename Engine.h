@@ -5,6 +5,7 @@
 #include "framework.h"
 #include "BaseGame.h"
 #include "Structs.h"
+#include "player.h"
 
 class Texture;
 class Font;
@@ -104,6 +105,8 @@ public:
     void SetFrameRate(int FPS);
 
     RectInt GetWindowSize() const;
+    HWND GetWindow() const;
+    HINSTANCE GetHInstance() const;
 
     ID2D1HwndRenderTarget* getRenderTarget() const;
 private:
@@ -180,8 +183,8 @@ private:
 class Font final
 {
 public:
-    Font(const std::wstring& filename, bool fromFile = false);
-    Font(const std::wstring& filename, int size, bool bold = false, bool italic = false, bool fromFile = false);
+    Font(const tstring& fontname, bool fromFile = false);
+    Font(const tstring& fontname, int size, bool bold, bool italic, bool fromFile = false);
 
     Font(const Font& other) = delete;
     Font(Font&& other) noexcept = delete;
@@ -195,15 +198,54 @@ public:
     int GetFontSize() const;
 
 private:
-    HRESULT Initialize(const std::wstring& filename);
+    HRESULT Initialize(const tstring& filename);
 
     static IDWriteFactory5* m_pDWriteFactory;
 
     IDWriteFontCollection1* m_pFontCollection;
     IDWriteTextFormat* m_pTextFormat;
 
-    std::wstring m_FontName;
+    tstring m_FontName;
     int m_FontSize;
+};
+
+
+class Audio
+{
+public:
+
+    Audio(const std::wstring& filename, bool absolutePath = false);
+    ~Audio();
+
+    Audio(const Audio& other) = delete;
+    Audio(Audio&& other) noexcept = delete;
+    Audio& operator=(const Audio& other) = delete;
+    Audio& operator=(Audio&& other) noexcept = delete;
+
+    void Play(bool repeat) const;
+    void Stop() const;
+    void Pause() const;
+
+    bool IsPlaying() const;
+    bool IsStopped() const;
+    bool IsPaused() const;
+
+    int GetVolume() const;
+    void SetVolume(int volumePercentage);
+    void IncrementVolume(int volumePercentage);
+    void DecrementVolume(int volumePercentage);
+
+private:
+
+    static LRESULT CALLBACK AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    void OnEvent(WPARAM wParam);
+
+    void OpenFile(const std::wstring& fileName) const;
+    void NotifyError(const WCHAR* pszErrorMessage, HRESULT hrErr) const;
+
+    CPlayer* m_pPlayer;
+    std::wstring m_FileName;
+    HWND m_hWnd;
 };
 
 #endif // !ENGINE_H

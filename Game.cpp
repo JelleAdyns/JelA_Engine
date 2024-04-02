@@ -21,10 +21,10 @@ void Game::Draw()
 	ENGINE->DrawRectangle(0, 0, width - 1, height);
 	ENGINE->DrawLine(20, 20, width - 20, height - 20);
 	ENGINE->DrawLine(20, 20, width - 20, 20);
-	//ENGINE->FillRectangle(30, 0, 230, 200);
-	//ENGINE->FillRoundedRect(250, 0, 230, 200, 80, 80);
-	//ENGINE->FillEllipse(Point2Int{ width / 2, height - 100 }, 50, 60);
-	//ENGINE->DrawRectangle(width / 2, 0, width, height);
+	ENGINE->FillRectangle(30, 0, 230, 200);
+	ENGINE->FillRoundedRect(250, 0, 230, 200, 80, 80);
+	ENGINE->FillEllipse(Point2Int{ width / 2, height - 100 }, 50, 60);
+	ENGINE->DrawRectangle(width / 2, 0, width, height);
 	
 	ENGINE->SetColor(RGB(255, 0, 0));
 	ENGINE->DrawLine(m_Y, height, m_Y, 0);
@@ -77,6 +77,16 @@ void Game::KeyUp(int virtualKeycode)
 	//
 	// Click here for more information: https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
 	
+	if (virtualKeycode == 'B') if(!M_pAudio->IsPlaying()) M_pAudio->Play(true);
+	if (virtualKeycode == 'V') M_pAudio2->Play(false);
+	if (virtualKeycode == 'C')
+	{
+		//M_pAudio->Pause();
+		delete M_pAudio;
+		M_pAudio = nullptr;
+	}
+	
+	//if (virtualKeycode == 'V') M_pAudio2->Play();
 }
 void Game::MouseDown(bool isLeft, int x, int y)
 {

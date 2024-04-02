@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "Game.h"
 #include <chrono>
+#include <algorithm>
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -11,14 +12,15 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
     // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
-
-    if (SUCCEEDED(CoInitialize(NULL)))
+    int result = 0;
+    if (SUCCEEDED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
     {
         ENGINE->SetInstance(HINST_THISCOMPONENT);
-        return ENGINE->Run();
+        result = ENGINE->Run();
         CoUninitialize();
+        MFShutdown();
     }
-    return 0;
+    return result;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -194,7 +196,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 wasHandled = true;
                 break;
             case WM_MOUSEMOVE:
-                m_pGame->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), wParam);
+                m_pGame->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), static_cast<int>(wParam));
                 result = 0;
                 wasHandled = true;
                 break;
@@ -234,7 +236,6 @@ int Engine::Run()
     m_pGame = new Game{};
     m_pGame->Initialize();
 
-    
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     float elapsedSec{};
@@ -521,7 +522,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRe
 
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
-        textToDisplay.length(),
+        (UINT32) textToDisplay.length(),
         font->GetFormat(),
         rect,
         m_pDColorBrush,
@@ -547,7 +548,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
     
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
-        textToDisplay.length(),
+        (UINT32) textToDisplay.length(),
         font->GetFormat(),
         rect,
         m_pDColorBrush,
@@ -864,9 +865,12 @@ void Engine::SetWindowPosition()
     int yPos{ GetSystemMetrics(SM_CYSCREEN) / 2 - windowHeight / 2 };
 
     ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_FRAMECHANGED);
-    ShowWindow(m_hWindow, SW_SHOWNORMAL);
-    UpdateWindow(m_hWindow);
-    
+
+    if (m_pGame)
+    {
+        ShowWindow(m_hWindow, SW_SHOWNORMAL);
+        UpdateWindow(m_hWindow);
+    }
 }
 void Engine::SetFullscreen()
 {
@@ -882,8 +886,12 @@ void Engine::SetFullscreen()
         ::GetDeviceCaps(hDC, HORZRES),
         ::GetDeviceCaps(hDC, VERTRES),
         SWP_FRAMECHANGED);
-    ShowWindow(m_hWindow, SW_SHOWNORMAL);
-    UpdateWindow(m_hWindow);
+
+    if (m_pGame)
+    {
+        ShowWindow(m_hWindow, SW_SHOWNORMAL);
+        UpdateWindow(m_hWindow);
+    }
 }
 void Engine::SetFrameRate(int FPS)
 {
@@ -918,6 +926,14 @@ RectInt Engine::GetWindowSize() const
 {
     return RectInt{ 0, 0, m_Width, m_Height };
 }
+HWND Engine::GetWindow() const
+{
+    return m_hWindow;
+}
+HINSTANCE Engine::GetHInstance() const
+{
+    return m_hInstance;
+}
 ID2D1HwndRenderTarget* Engine::getRenderTarget() const
 {
     return m_pDRenderTarget;
@@ -943,7 +959,7 @@ Texture::Texture(const tstring& filename):
         creationResult = CoCreateInstance(
             CLSID_WICImagingFactory,
             NULL,
-            CLSCTX_INPROC_SERVER,
+            CLSCTX_ALL,
             IID_PPV_ARGS(&m_pWICFactory)
         );
     }
@@ -1120,7 +1136,7 @@ void Texture::DrawTexture(const RectInt& destRect, const RectInt& srcRect, float
 
 IDWriteFactory5* Font::m_pDWriteFactory{ nullptr };
 
-Font::Font(const std::wstring& fontName, bool fromFile)
+Font::Font(const tstring& fontName, bool fromFile)
 {
     if (fromFile)
     {
@@ -1144,7 +1160,7 @@ Font::Font(const std::wstring& fontName, bool fromFile)
     }
     
 }
-Font::Font(const std::wstring& fontName, int size ,bool bold, bool italic, bool fromFile)
+Font::Font(const tstring& fontName, int size ,bool bold, bool italic, bool fromFile)
 {
     if (fromFile)
     {
@@ -1166,14 +1182,13 @@ Font::Font(const std::wstring& fontName, int size ,bool bold, bool italic, bool 
         m_FontName = fontName;
         SetTextFormat(size, bold, italic);
     }
-   
 }
 Font::~Font()
 {
     SafeRelease(&m_pFontCollection);
     SafeRelease(&m_pTextFormat);
 }
-HRESULT Font::Initialize(const std::wstring& fontName)
+HRESULT Font::Initialize(const tstring& fontName)
 {
     HRESULT hr = S_OK;
 
@@ -1213,7 +1228,7 @@ HRESULT Font::Initialize(const std::wstring& fontName)
     IDWriteLocalizedStrings* pStrings{ nullptr };
 
     UINT32 length;
-    std::wstring name{};
+    tstring name{};
 
     if (SUCCEEDED(hr))
     {
@@ -1276,4 +1291,150 @@ IDWriteTextFormat* Font::GetFormat() const
 int Font::GetFontSize() const
 {
     return m_FontSize;
+}
+
+
+//---------------------
+//Audio
+//---------------------
+
+
+Audio::Audio(const std::wstring& filename, bool absolutePath) :
+    m_pPlayer{ nullptr },
+    m_FileName{},
+    m_hWnd{}
+{
+    //next 3 lines are code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
+    m_hWnd = CreateWindow(TEXT("STATIC"), TEXT(""), 0, 0, 0, 0, 0, 0, 0, Engine::GetSingleton()->GetHInstance(), 0);
+    SetWindowLongPtr(m_hWnd, GWLA_WNDPROC, (LONG_PTR) AudioProc);	// set the custom message loop (subclassing)
+    SetWindowLongPtr(m_hWnd, GWLP_USERDATA, (LONG_PTR)this);		// set this object as the parameter for the Proc
+
+    HRESULT hr = CPlayer::CreateInstance(m_hWnd, m_hWnd, &m_pPlayer);
+    
+    std::wstring adjustedFileName{};
+    adjustedFileName.resize(filename.size());
+    std::replace_copy(filename.cbegin(), filename.cend(), adjustedFileName.begin(), '/', '\\');
+
+    if (absolutePath) m_FileName = adjustedFileName;
+    else
+    {
+        wchar_t pathOfThisFile[MAX_PATH]{};
+        GetCurrentDirectory(MAX_PATH, pathOfThisFile);
+        m_FileName = std::wstring{ pathOfThisFile } + std::wstring{ '\\' } + adjustedFileName;
+    }
+
+    if (SUCCEEDED(hr)) OpenFile(m_FileName);
+    else
+    {
+        NotifyError(L"Could not initialize the player object.", hr);
+        m_pPlayer->Release();
+        return;
+    }
+    
+}
+
+Audio::~Audio()
+{
+    m_pPlayer->Stop();
+    m_pPlayer->Shutdown();
+    m_pPlayer->Release();
+}
+
+void Audio::Play(bool repeat) const
+{
+    HRESULT hr = m_pPlayer->Play(repeat);
+    if (FAILED(hr)) NotifyError(L"Play reported on error.", hr);
+}
+
+void Audio::Stop() const
+{
+    HRESULT hr = m_pPlayer->Stop();
+    if (FAILED(hr)) NotifyError(L"Stop reported on error.", hr);
+}
+
+void Audio::Pause() const
+{
+    HRESULT hr = m_pPlayer->Pause();
+    if (FAILED(hr)) NotifyError(L"Pause reported on error.", hr);
+}
+
+bool Audio::IsPlaying() const
+{
+    return m_pPlayer->GetState() == CPlayer::PlayerState::Started;
+}
+
+bool Audio::IsStopped() const
+{
+    return m_pPlayer->GetState() == CPlayer::PlayerState::Stopped;
+}
+
+bool Audio::IsPaused() const
+{
+    return m_pPlayer->GetState() == CPlayer::PlayerState::Paused;
+}
+
+int Audio::GetVolume() const
+{
+    return m_pPlayer->GetVolume();
+}
+
+void Audio::SetVolume(int volumePercentage)
+{
+    HRESULT hr = m_pPlayer->SetVolume(volumePercentage);
+    if (FAILED(hr)) NotifyError(L"SetVolume reported on error.", hr);
+}
+
+void Audio::IncrementVolume(int volumePercentage)
+{
+    int newVolume{ m_pPlayer->GetVolume() + 1 };
+    HRESULT hr = m_pPlayer->SetVolume(volumePercentage);
+    if (FAILED(hr)) NotifyError(L"IncrementVolume reported on error.", hr);
+}
+
+void Audio::DecrementVolume(int volumePercentage)
+{
+    int newVolume{ m_pPlayer->GetVolume() - 1 };
+    HRESULT hr = m_pPlayer->SetVolume(volumePercentage);
+    if (FAILED(hr)) NotifyError(L"IncrementVolume reported on error.", hr);
+}
+
+LRESULT Audio::AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    //next 3 lines are code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
+    #pragma warning(disable: 4312)
+    Audio* audio = reinterpret_cast<Audio*>(GetWindowLongPtr(hWnd, GWLA_USERDATA));
+    #pragma warning(default: 4312)
+
+    switch (message)
+    {
+    case CPlayer::WM_APP_PLAYER_EVENT:
+        audio->OnEvent(wParam);
+    default:
+        break;
+    };
+
+    return 0;
+}
+
+void Audio::OnEvent(WPARAM wParam)
+{
+    m_pPlayer->HandleEvent(wParam);
+}
+
+void Audio::OpenFile( const std::wstring& fileName) const
+{
+    HRESULT hr = m_pPlayer->OpenURL(fileName);
+    if (FAILED(hr)) NotifyError(L"Could not open the file.", hr);
+}
+
+void Audio::NotifyError(const WCHAR* pszErrorMessage, HRESULT hrErr) const
+{
+    const size_t MESSAGE_LEN = 512;
+    WCHAR message[MESSAGE_LEN];
+
+    if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, L"%s (HRESULT = 0x%X)",
+        pszErrorMessage, hrErr)))
+    {
+        MessageBox(m_hWnd, message, NULL, MB_OK | MB_ICONERROR);
+    }
 }
