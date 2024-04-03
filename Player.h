@@ -52,8 +52,8 @@ public:
     HRESULT       Shutdown();
     HRESULT       HandleEvent(UINT_PTR pEventPtr);
     PlayerState   GetState() const { return m_state; }
-    int           GetVolume() const;
-    HRESULT       SetVolume(int volumePercentage);
+    static int           GetVolume();
+    static HRESULT       SetVolume(int volumePercentage);
 
     static const UINT WM_APP_PLAYER_EVENT = WM_APP + 1;
 protected:
@@ -80,12 +80,16 @@ protected:
 
     IMFMediaSession*        m_pSession;
     IMFMediaSource*         m_pSource;
-    IMFSimpleAudioVolume*   m_pVolume;
+    //IMFAudioStreamVolume*   m_pVolume;
+    UINT32                  m_ChannelIndex;
 
     HWND                    m_hwndAudio;        // Audio window.
     HWND                    m_hwndEvent;        // App window to receive events.
     PlayerState             m_state;            // Current state of the media session.
     HANDLE                  m_hCloseEvent;      // Event to wait on while closing.
+
+    static IMFSimpleAudioVolume*   m_pMasterVolume;
+    static UINT32           m_NrOfSessions;
 };
 
 #endif PLAYER_H

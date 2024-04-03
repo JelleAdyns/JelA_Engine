@@ -8,6 +8,9 @@
 #include "Player.h"
 #include "propvarutil.h"
 
+UINT32 CPlayer::m_NrOfSessions{};
+IMFSimpleAudioVolume* CPlayer::m_pMasterVolume{nullptr};
+
 template <class Q>
 HRESULT GetEventObject(IMFMediaEvent* pEvent, Q** ppObject)
 {
@@ -51,7 +54,10 @@ HRESULT CPlayer::Initialize()
 {
     // Start up Media Foundation platform.
     HRESULT hr = S_OK;
-
+    
+    m_ChannelIndex = m_NrOfSessions;
+    ++m_NrOfSessions;
+    
     m_hCloseEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (m_hCloseEvent == NULL) hr = HRESULT_FROM_WIN32(GetLastError());
     
@@ -63,7 +69,6 @@ CPlayer::CPlayer(HWND hVideo, HWND hEvent) :
     m_Repeat(false),
     m_pSession(NULL),
     m_pSource(NULL),
-    m_pVolume(NULL),
     m_hwndAudio(hVideo),
     m_hwndEvent(hEvent),
     m_state(PlayerState::Closed),
@@ -112,7 +117,12 @@ ULONG CPlayer::AddRef()
 ULONG CPlayer::Release()
 {
     ULONG uCount = InterlockedDecrement(&m_nRefCount);
-    if (uCount == 0) delete this;
+    
+    if (uCount == 0)
+    {
+        --m_NrOfSessions;
+        delete this;
+    }
     return uCount;
 }
 
@@ -266,10 +276,8 @@ HRESULT CPlayer::HandleEvent(UINT_PTR pEventPtr)
             hr = OnNewPresentation(pEvent);
             break;
         case MESessionTopologySet:
-            hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pVolume));
-            float volume;
-            m_pVolume->GetMasterVolume(&volume);
-            OutputDebugString(to_tstring(volume).c_str());
+            //hr = MFGetService(m_pSession, MR_STREAM_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
+            hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
             break;
          
         default:
@@ -282,10 +290,10 @@ HRESULT CPlayer::HandleEvent(UINT_PTR pEventPtr)
     return hr;
 }
 
-int CPlayer::GetVolume() const
+int CPlayer::GetVolume()
 {
     float volume;
-    m_pVolume->GetMasterVolume(&volume); 
+    m_pMasterVolume->GetMasterVolume(&volume); 
     return static_cast<int>(volume * 100);
 }
 
@@ -294,7 +302,7 @@ HRESULT CPlayer::SetVolume(int volumePercentage)
     int newVolume{ volumePercentage };
     if (volumePercentage > 100) newVolume = 100;
     if (volumePercentage < 0) newVolume = 0;
-    return m_pVolume->SetMasterVolume(static_cast<float>(newVolume));
+    return m_pMasterVolume->SetMasterVolume(newVolume / 100.f);
 }
 
 //  Release all resources held by this object.
@@ -419,7 +427,7 @@ HRESULT CPlayer::CloseSession()
 
     SafeRelease(&m_pSource);
     SafeRelease(&m_pSession);
-    SafeRelease(&m_pVolume);
+    SafeRelease(&m_pMasterVolume);
     m_state = PlayerState::Closed;
     return hr;
 }

@@ -210,6 +210,9 @@ private:
 };
 
 
+
+
+
 class Audio
 {
 public:
@@ -230,10 +233,10 @@ public:
     bool IsStopped() const;
     bool IsPaused() const;
 
-    int GetVolume() const;
-    void SetVolume(int volumePercentage);
-    void IncrementVolume(int volumePercentage);
-    void DecrementVolume(int volumePercentage);
+    static int GetVolume();
+    static void SetVolume(int volumePercentage);
+    static void IncrementVolume();
+    static void DecrementVolume();
 
 private:
 
@@ -241,7 +244,7 @@ private:
     void OnEvent(WPARAM wParam);
 
     void OpenFile(const std::wstring& fileName) const;
-    void NotifyError(const WCHAR* pszErrorMessage, HRESULT hrErr) const;
+    static void NotifyError(HWND hWnd, const WCHAR* pszErrorMessage, HRESULT hrErr);
 
     CPlayer* m_pPlayer;
     std::wstring m_FileName;

@@ -1326,7 +1326,7 @@ Audio::Audio(const std::wstring& filename, bool absolutePath) :
     if (SUCCEEDED(hr)) OpenFile(m_FileName);
     else
     {
-        NotifyError(L"Could not initialize the player object.", hr);
+        NotifyError(m_hWnd, L"Could not initialize the player object.", hr);
         m_pPlayer->Release();
         return;
     }
@@ -1343,19 +1343,19 @@ Audio::~Audio()
 void Audio::Play(bool repeat) const
 {
     HRESULT hr = m_pPlayer->Play(repeat);
-    if (FAILED(hr)) NotifyError(L"Play reported on error.", hr);
+    if (FAILED(hr)) NotifyError(m_hWnd, L"Play reported on error.", hr);
 }
 
 void Audio::Stop() const
 {
     HRESULT hr = m_pPlayer->Stop();
-    if (FAILED(hr)) NotifyError(L"Stop reported on error.", hr);
+    if (FAILED(hr)) NotifyError(m_hWnd, L"Stop reported on error.", hr);
 }
 
 void Audio::Pause() const
 {
     HRESULT hr = m_pPlayer->Pause();
-    if (FAILED(hr)) NotifyError(L"Pause reported on error.", hr);
+    if (FAILED(hr)) NotifyError(m_hWnd, L"Pause reported on error.", hr);
 }
 
 bool Audio::IsPlaying() const
@@ -1373,29 +1373,29 @@ bool Audio::IsPaused() const
     return m_pPlayer->GetState() == CPlayer::PlayerState::Paused;
 }
 
-int Audio::GetVolume() const
+int Audio::GetVolume()
 {
-    return m_pPlayer->GetVolume();
+    return CPlayer::GetVolume();
 }
 
 void Audio::SetVolume(int volumePercentage)
 {
-    HRESULT hr = m_pPlayer->SetVolume(volumePercentage);
-    if (FAILED(hr)) NotifyError(L"SetVolume reported on error.", hr);
+    HRESULT hr = CPlayer::SetVolume(volumePercentage);
+    if (FAILED(hr)) NotifyError(NULL, L"SetVolume reported on error.", hr);
 }
 
-void Audio::IncrementVolume(int volumePercentage)
+void Audio::IncrementVolume()
 {
-    int newVolume{ m_pPlayer->GetVolume() + 1 };
-    HRESULT hr = m_pPlayer->SetVolume(volumePercentage);
-    if (FAILED(hr)) NotifyError(L"IncrementVolume reported on error.", hr);
+    int newVolume{ CPlayer::GetVolume() + 1 };
+    HRESULT hr = CPlayer::SetVolume(newVolume);
+    if (FAILED(hr)) NotifyError(NULL, L"IncrementVolume reported on error.", hr);
 }
 
-void Audio::DecrementVolume(int volumePercentage)
+void Audio::DecrementVolume()
 {
-    int newVolume{ m_pPlayer->GetVolume() - 1 };
-    HRESULT hr = m_pPlayer->SetVolume(volumePercentage);
-    if (FAILED(hr)) NotifyError(L"IncrementVolume reported on error.", hr);
+    int newVolume{ CPlayer::GetVolume() - 1 };
+    HRESULT hr = CPlayer::SetVolume(newVolume);
+    if (FAILED(hr)) NotifyError(NULL, L"IncrementVolume reported on error.", hr);
 }
 
 LRESULT Audio::AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1424,10 +1424,10 @@ void Audio::OnEvent(WPARAM wParam)
 void Audio::OpenFile( const std::wstring& fileName) const
 {
     HRESULT hr = m_pPlayer->OpenURL(fileName);
-    if (FAILED(hr)) NotifyError(L"Could not open the file.", hr);
+    if (FAILED(hr)) NotifyError(m_hWnd, L"Could not open the file.", hr);
 }
 
-void Audio::NotifyError(const WCHAR* pszErrorMessage, HRESULT hrErr) const
+void Audio::NotifyError(HWND hWnd, const WCHAR* pszErrorMessage, HRESULT hrErr)
 {
     const size_t MESSAGE_LEN = 512;
     WCHAR message[MESSAGE_LEN];
@@ -1435,6 +1435,6 @@ void Audio::NotifyError(const WCHAR* pszErrorMessage, HRESULT hrErr) const
     if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, L"%s (HRESULT = 0x%X)",
         pszErrorMessage, hrErr)))
     {
-        MessageBox(m_hWnd, message, NULL, MB_OK | MB_ICONERROR);
+        MessageBox(hWnd, message, NULL, MB_OK | MB_ICONERROR);
     }
 }

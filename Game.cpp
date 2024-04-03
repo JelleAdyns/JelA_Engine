@@ -63,7 +63,8 @@ void Game::KeyDown(int virtualKeycode)
 	// VK_MENU represents the 'Alt' key
 	//
 	// Click here for more information: https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
-
+	if (virtualKeycode == 'H') M_pAudio->DecrementVolume();
+	if (virtualKeycode == 'J') M_pAudio->IncrementVolume();
 }
 void Game::KeyUp(int virtualKeycode)
 {
@@ -78,6 +79,9 @@ void Game::KeyUp(int virtualKeycode)
 	// Click here for more information: https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
 	
 	if (virtualKeycode == 'B') if(!M_pAudio->IsPlaying()) M_pAudio->Play(true);
+	if (virtualKeycode == 'Q') if(M_pAudio->IsPlaying()) M_pAudio->SetVolume(20);
+	if (virtualKeycode == 'W') if(M_pAudio->IsPlaying()) M_pAudio->SetVolume(80);
+	if (virtualKeycode == 'L') M_pAudio2->SetVolume(80);
 	if (virtualKeycode == 'V') M_pAudio2->Play(false);
 	if (virtualKeycode == 'C')
 	{
