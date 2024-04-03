@@ -35,7 +35,13 @@ void Game::Draw() const
 	
 	ENGINE->SetColor(RGB(255, 0, 0));
 	ENGINE->DrawLine(m_Y, height, m_Y, 0);
-	m_Texture->DrawTexture(Point2Int{ width / 2,int(spritePos) }, RectInt{ 24,0,12,27 });
+
+	ENGINE->Scale(4.f, Point2Int{ width / 2,int(spritePos) });
+	ENGINE->Translate(200, 100);
+	ENGINE->Rotate(angle, Point2Int{ width / 2,int(spritePos) }, false);
+	ENGINE->DrawTexture(*m_Texture, Point2Int{ width / 2,int(spritePos) }, RectInt{ 24,0,12,27 });
+	ENGINE->EndTransform();
+
 	ENGINE->SetColor(RGB(23, 56, 233));
 
 	ENGINE->Rotate(angle, 0, 20, false);

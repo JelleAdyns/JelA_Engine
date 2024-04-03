@@ -534,6 +534,56 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
         D2D1_DRAW_TEXT_OPTIONS_NONE,
         DWRITE_MEASURING_MODE_NATURAL);
 }
+
+//Textures
+void Engine::DrawTexture(const Texture& texture, int destLeft, int destBottom, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(texture, RectInt{ destLeft, destBottom, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+}
+void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftBottom, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(texture, RectInt{ destLeftBottom.x, destLeftBottom.y, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+}
+void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+{
+    RectInt wndwSize = ENGINE->GetWindowSize();
+
+    D2D1_RECT_F destination = D2D1::RectF(
+        static_cast<FLOAT>(destRect.left),
+        static_cast<FLOAT>(wndwSize.height - (destRect.bottom + destRect.height)),
+        static_cast<FLOAT>(destRect.left + destRect.width),
+        static_cast<FLOAT>(wndwSize.height - destRect.bottom)
+    );
+    D2D1_RECT_F source{};
+    if (srcRect.width <= 0 || srcRect.height <= 0)
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(destRect.left),
+            static_cast<FLOAT>(destRect.bottom),
+            static_cast<FLOAT>(destRect.left + destRect.width),
+            static_cast<FLOAT>(destRect.bottom + destRect.height)
+        );
+    }
+    else
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(srcRect.left),
+            static_cast<FLOAT>(srcRect.bottom),
+            static_cast<FLOAT>(srcRect.left + srcRect.width),
+            static_cast<FLOAT>(srcRect.bottom + srcRect.height));
+        destination.right = destination.left + srcRect.width;
+        destination.top = destination.bottom - srcRect.height;
+    }
+
+    SetTransform();
+    ENGINE->getRenderTarget()->DrawBitmap(
+        texture.GetBitmap(),
+        destination,
+        opacity,
+        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        source
+    );
+}
 //-----------------
 //Fill
 //----------------
@@ -743,6 +793,55 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
         DWRITE_MEASURING_MODE_NATURAL);
+}
+
+//Textures
+void Engine::DrawTexture(const Texture& texture, int destLeft, int destTop, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(texture, RectInt{ destLeft, destTop, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+}
+void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
+{
+    DrawTexture(texture, RectInt{ destLeftTop.x, destLeftTop.y, int(texture.GetWidth()), int(texture.GetHeight()) }, srcRect, opacity);
+}
+void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+{
+    D2D1_RECT_F destination = D2D1::RectF(
+        static_cast<FLOAT>(destRect.left),
+        static_cast<FLOAT>(destRect.top),
+        static_cast<FLOAT>(destRect.left + destRect.width),
+        static_cast<FLOAT>(destRect.top + destRect.height)
+    );
+
+    D2D1_RECT_F source{};
+    if (srcRect.width <= 0 || srcRect.height <= 0)
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(destRect.left),
+            static_cast<FLOAT>(destRect.top),
+            static_cast<FLOAT>(destRect.left + destRect.width),
+            static_cast<FLOAT>(destRect.top + destRect.height)
+        );
+    }
+    else
+    {
+        source = D2D1::RectF(
+            static_cast<FLOAT>(srcRect.left),
+            static_cast<FLOAT>(srcRect.top),
+            static_cast<FLOAT>(srcRect.left + srcRect.width),
+            static_cast<FLOAT>(srcRect.top + srcRect.height));
+        destination.right = destination.left + srcRect.width;
+        destination.bottom = destination.top + srcRect.height;
+    }
+
+    SetTransform();
+    ENGINE->getRenderTarget()->DrawBitmap(
+        texture.GetBitmap(),
+        destination,
+        opacity,
+        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        source
+    );
 }
 //-----------------
 //Fill
@@ -1089,7 +1188,7 @@ Texture::Texture(const tstring& filename):
 
 
     // Convert the image format to 32bppPBGRA
- // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
+    // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
     if (SUCCEEDED(creationResult)) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
     if (SUCCEEDED(creationResult))
     {
@@ -1135,102 +1234,7 @@ Texture::~Texture()
     SafeRelease(&m_pDBitmap);
 };
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-void Texture::DrawTexture(int destLeft, int destBottom, const RectInt& srcRect, float opacity)const
-{
-    DrawTexture(RectInt{ destLeft, destBottom, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
-}
-void Texture::DrawTexture(const Point2Int& destLeftBottom, const RectInt& srcRect, float opacity)const
-{
-    DrawTexture(RectInt{ destLeftBottom.x, destLeftBottom.y, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
-}
-void Texture::DrawTexture(const RectInt& destRect, const RectInt& srcRect, float opacity)const
-{
-    RectInt wndwSize = ENGINE->GetWindowSize();
 
-    D2D1_RECT_F destination = D2D1::RectF(
-        static_cast<FLOAT>(destRect.left),//0
-        static_cast<FLOAT>(wndwSize.height - (destRect.bottom + destRect.height)),//screenheight
-        static_cast<FLOAT>(destRect.left + destRect.width), //destination width
-        static_cast<FLOAT>(wndwSize.height - destRect.bottom)
-    );
-    D2D1_RECT_F source{};
-    if (srcRect.width <= 0 || srcRect.height <= 0)
-    {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(destRect.bottom),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(destRect.bottom + destRect.height)
-        );
-    }
-    else
-    {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(srcRect.left),
-            static_cast<FLOAT>(srcRect.bottom),
-            static_cast<FLOAT>(srcRect.left + srcRect.width),
-            static_cast<FLOAT>(srcRect.bottom + srcRect.height));
-        destination.right = destination.left + srcRect.width;
-        destination.top = destination.bottom - srcRect.height;
-    }
-
-    ENGINE->getRenderTarget()->DrawBitmap(
-        m_pDBitmap,
-        destination,
-        opacity,
-        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
-        source
-    );
-}
-#else
-//Textures
-void Texture::DrawTexture(int destLeft, int destTop, const RectInt& srcRect, float opacity)const
-{
-    DrawTexture(RectInt{ destLeft, destTop, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
-}
-void Texture::DrawTexture(const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
-{
-    DrawTexture(RectInt{ destLeftTop.x, destLeftTop.y, int(m_TextureWidth), int(m_TextureHeight) }, srcRect, opacity);
-}
-void Texture::DrawTexture(const RectInt& destRect, const RectInt& srcRect, float opacity)const
-{
-    D2D1_RECT_F destination = D2D1::RectF(
-        static_cast<FLOAT>(destRect.left),
-        static_cast<FLOAT>(destRect.top),
-        static_cast<FLOAT>(destRect.left + destRect.width),
-        static_cast<FLOAT>(destRect.top + destRect.height)
-    );
-
-    D2D1_RECT_F source{};
-    if (srcRect.width <= 0 || srcRect.height <= 0)
-    {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(destRect.top),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(destRect.top + destRect.height)
-        );
-    }
-    else
-    {
-        source = D2D1::RectF(
-            static_cast<FLOAT>(srcRect.left),
-            static_cast<FLOAT>(srcRect.top),
-            static_cast<FLOAT>(srcRect.left + srcRect.width),
-            static_cast<FLOAT>(srcRect.top + srcRect.height));
-        destination.right = destination.left + srcRect.width;
-        destination.bottom = destination.top + srcRect.height;
-    }
-    ENGINE->getRenderTarget()->DrawBitmap(
-        m_pDBitmap,
-        destination,
-        opacity,
-        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
-        source
-    );
-}
-#endif // MATHEMATICAL_COORDINATESYSTEM
 
 //---------------------
 //Font
