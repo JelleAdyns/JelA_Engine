@@ -104,15 +104,27 @@ public:
     void SetWindowDimensions(int width, int height);
     void SetFrameRate(int FPS);
 
+    void EndTransform();
+    void Translate(int xTranslation, int yTranslation);
+    void Translate(const Vector2Int& translation);
+    void Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst) ;
+    void Rotate(float angle, const Point2Int& pivotPoint, bool translationFirst) ;
+    void Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom);
+    void Scale(float scale, int xPointToScaleFrom, int yPointToScaleFrom);
+    void Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom);
+    void Scale(float scale, const Point2Int& PointToScaleFrom);
+
     RectInt GetWindowSize() const;
     HWND GetWindow() const;
     HINSTANCE GetHInstance() const;
 
     ID2D1HwndRenderTarget* getRenderTarget() const;
 private:
-    void DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT translationY) const;
+
+    void DrawBorders(int rtWidth, int rtHeight) const;
     void SetWindowPosition();
     void SetFullscreen();
+    void SetTransform() const;
     RectInt GetRenderTargetSize() const;
     HRESULT OnRender();
     HRESULT MakeWindow();
@@ -131,17 +143,49 @@ private:
     //BaseGame
     BaseGame* m_pGame;
 
+    //Transform
+    class TransformObserver
+    {
+    public:
+        TransformObserver() = default;
+        void ClearFlag() const { Engine::GetSingleton()->m_TransformChanged = false; }
+    };
+
+    FLOAT m_ViewPortTranslationX{};
+    FLOAT m_ViewPortTranslationY{};
+    FLOAT m_ViewPortScaling{};
+
+    FLOAT m_ScalingX{ 1 };
+    FLOAT m_ScalingY{ 1 };
+    FLOAT m_PointToScaleFromX{};
+    FLOAT m_PointToScaleFromY{};
+
+    FLOAT m_TranslationX{};
+    FLOAT m_TranslationY{};
+
+    FLOAT m_Rotation{};
+    FLOAT m_PivotPointX{};
+    FLOAT m_PivotPointY{};
+
+    bool m_TranslationBeforeRotation{};
+    bool m_TransformChanged{};
+    const TransformObserver m_TransformObserver{};
+
     //General datamembers
     tstring m_pTitle;
     int m_Width;
     int m_Height;
 
-    float m_TimePerFrame;
+    float m_MilliSecondsPerFrame;
 
     bool m_IsFullscreen;
     bool m_KeyIsDown;
-    
+
 };
+
+
+
+
 
 class Texture final
 {
@@ -178,6 +222,10 @@ private:
     float m_TextureWidth;
     float m_TextureHeight;
 };
+
+
+
+
 
 //https://stackoverflow.com/questions/37572961/c-directwrite-load-font-from-file-at-runtime
 class Font final

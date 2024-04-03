@@ -3,6 +3,7 @@
 #include "Game.h"
 #include <chrono>
 #include <algorithm>
+#include <thread>
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -42,11 +43,11 @@ Engine::Engine() :
     m_pTitle{ tstring{L"Standard Game"}},
     m_Width{500},
     m_Height{500},
-    m_TimePerFrame{1.f/60.f},
+    m_MilliSecondsPerFrame{1.f/60.f},
     m_IsFullscreen{false},
     m_KeyIsDown{false}
 {
-
+    
 }
 
 Engine::~Engine()
@@ -91,6 +92,21 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 {
                     //If error occurs, it will be returned by EndDraw()
                     m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
+
+                    int rendertargetWidth{ GetRenderTargetSize().width };
+                    int rendertargetHeight{ GetRenderTargetSize().height };
+
+                    float scaleX{ rendertargetWidth / static_cast<float>(m_Width) };
+                    float scaleY{ rendertargetHeight / static_cast<float>(m_Height) };
+                    float minScale{ std::min<float>(scaleX,scaleY) };
+
+                    float translationX{ (rendertargetWidth - m_Width * minScale) / 2.f };
+                    float translationY{ (rendertargetHeight - m_Height * minScale) / 2.f };
+
+                    m_ViewPortTranslationX = translationX;
+                    m_ViewPortTranslationY = translationY;
+                    m_ViewPortScaling = minScale;
+                    m_TransformChanged = true;
                 }
             }
             result = 0;
@@ -99,17 +115,6 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
             case WM_DISPLAYCHANGE:
             {
-                /* DWORD dwStyle = ::GetWindowLong(m_hWindow, GWL_STYLE);
-                DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-                DWORD dwNewStyle = dwStyle & ~dwRemove;
-                ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
-                ::SetWindowPos(m_hWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE
-                    | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-                HDC hDC = ::GetWindowDC(NULL);
-                ::SetWindowPos(m_hWindow, NULL, 0, 0,
-                ::GetDeviceCaps(hDC, HORZRES),
-                ::GetDeviceCaps(hDC, VERTRES),
-                SWP_FRAMECHANGED);*/
                 InvalidateRect(hWnd, NULL, FALSE);
             }
             result = 0;
@@ -127,27 +132,6 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     SafeRelease(&m_pDColorBrush);
                 }
                 ValidateRect(hWnd, NULL);   
-                //PAINTSTRUCT ps;
-                //RECT rect;
-                //HDC hdc = BeginPaint(hWnd, &ps);
-                //GetClientRect(hWnd, &rect);
-                //m_PaintHdc = CreateCompatibleDC(hdc);
-                //HBITMAP bitmapBuffer = CreateCompatibleBitmap(hdc, m_Width, m_Height);
-                //
-                //HBITMAP bitmapOld = HBITMAP(SelectObject(m_PaintHdc, bitmapBuffer));
-                //// TODO: Add any drawing code that uses hdc here...
-                //
-                //m_pGame->Paint();
-                //ValidateRect(hWnd, NULL);
-                //m_pGame->Tick();
-                //
-                //BitBlt(hdc, 0, 0, m_Width, m_Height, m_PaintHdc, 0, 0, SRCCOPY);
-                //
-                //SelectObject(m_PaintHdc, bitmapOld);
-                //DeleteObject(bitmapBuffer);
-                //
-                //DeleteDC(m_PaintHdc);
-                //EndPaint(hWnd, &ps);
             }
             result = 0;
             wasHandled = true;
@@ -238,7 +222,7 @@ int Engine::Run()
 
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-    float elapsedSec{};
+    
    
     // Main message loop:
     while (true)
@@ -259,24 +243,21 @@ int Engine::Run()
            
             std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-            elapsedSec += std::chrono::duration<float>(t2 - t1).count();
+            float elapsedSec{ std::chrono::duration<float>(t2 - t1).count() };
             
             t1 = t2;
 
-            while (elapsedSec > m_TimePerFrame)
-            {
-                m_pGame->Tick(m_TimePerFrame);
-                elapsedSec -= m_TimePerFrame;
-            }
+            m_pGame->Tick(elapsedSec);
             InvalidateRect(m_hWindow, NULL, FALSE);
             
-           
+            const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>( m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
+            std::this_thread::sleep_for(sleepTime);
         }
     }
     
     return (int)msg.wParam;
 }
-void Engine::DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT translationY) const
+void Engine::DrawBorders(int rtWidth, int rtHeight) const
 {
 
 
@@ -285,13 +266,13 @@ void Engine::DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT tr
         D2D1::RectF(
             static_cast<FLOAT>(-reserveSpace),
             static_cast<FLOAT>(-reserveSpace),
-            static_cast<FLOAT>(translationX - 1),
+            static_cast<FLOAT>(m_ViewPortTranslationX - 1),
             static_cast<FLOAT>(rtHeight + reserveSpace)),
         m_pDColorBrush);
 
     m_pDRenderTarget->FillRectangle(
         D2D1::RectF(
-            static_cast<FLOAT>(rtWidth - translationX),
+            static_cast<FLOAT>(rtWidth - m_ViewPortTranslationX),
             static_cast<FLOAT>(-reserveSpace),
             static_cast<FLOAT>(rtWidth + reserveSpace),
             static_cast<FLOAT>(rtHeight + reserveSpace)),
@@ -302,13 +283,13 @@ void Engine::DrawBorders(int rtWidth, int rtHeight, FLOAT translationX, FLOAT tr
             static_cast<FLOAT>(-reserveSpace),
             static_cast<FLOAT>(-reserveSpace),
             static_cast<FLOAT>(rtWidth + reserveSpace),
-            static_cast<FLOAT>(translationY - 1)),
+            static_cast<FLOAT>(m_ViewPortTranslationY - 1)),
         m_pDColorBrush);
 
     m_pDRenderTarget->FillRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(-reserveSpace),
-            static_cast<FLOAT>(rtHeight - translationY + 1),
+            static_cast<FLOAT>(rtHeight - m_ViewPortTranslationY + 1),
             static_cast<FLOAT>(rtWidth + reserveSpace),
             static_cast<FLOAT>(rtHeight + reserveSpace)),
         m_pDColorBrush);
@@ -371,7 +352,7 @@ HRESULT Engine::CreateOurRenderTarget()
 
         if (!m_pDColorBrush)
         {
-            SetColor(RGB(255, 255, 255));
+            m_pDRenderTarget->CreateSolidColorBrush(D2D1::ColorF(255, 255, 255), &m_pDColorBrush);
         }
     }
 
@@ -385,46 +366,39 @@ HRESULT Engine::OnRender()
     m_pDRenderTarget->BeginDraw();
 
     // Clear background
-    m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+    //m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
     m_pDRenderTarget->Clear(m_DColorBackGround);
 
     // Set tranformation for when the window changes in size
     // The user draw calls should always appear in the middle of the screen,
     // not the left corner
-    int rendertargetWidth{ GetRenderTargetSize().width };
-    int rendertargetHeight{ GetRenderTargetSize().height };
-
-    float scaleX{ rendertargetWidth / static_cast<float>(m_Width) };
-    float scaleY{ rendertargetHeight / static_cast<float>(m_Height) };
-    FLOAT minScale{ std::min<float>(scaleX,scaleY) };
-
-    FLOAT translationX{ (rendertargetWidth - m_Width * minScale) / 2.f };
-    FLOAT translationY{ (rendertargetHeight - m_Height * minScale) / 2.f };
-
-    m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Scale(minScale, minScale) *
-        D2D1::Matrix3x2F::Translation(D2D1::SizeF(translationX, translationY)));
+    SetTransform();
 
     // User Draw Calls
     m_pGame->Draw();
 
     // Dont show more than the the scaled window size given by the user
     m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+    m_TransformChanged = true;
     SetColor(RGB(0, 0, 0));
-    DrawBorders(rendertargetWidth, rendertargetHeight, translationX, translationY);
+    DrawBorders(GetRenderTargetSize().width, GetRenderTargetSize().height);
     
+    
+
     hr = m_pDRenderTarget->EndDraw();
     return hr;
 }
 
-
-#ifdef MATHEMATICAL_COORDINATESYSTEM
 //lines
 void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
 {
     DrawLine(Point2Int{ firstX,firstY }, Point2Int{ secondX, secondY }, lineThickness);
 }
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
 void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
 {
+    SetTransform();
     m_pDRenderTarget->DrawLine(
         D2D1::Point2F(static_cast<FLOAT>(firstPoint.x), static_cast<FLOAT>(m_Height - firstPoint.y)),
         D2D1::Point2F(static_cast<FLOAT>(secondPoint.x), static_cast<FLOAT>(m_Height - secondPoint.y)),
@@ -444,6 +418,7 @@ void Engine::DrawRectangle(const Point2Int& leftBottom, int width, int height, f
 }
 void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
 {
+    SetTransform();
     m_pDRenderTarget->DrawRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(rect.left),
@@ -465,6 +440,7 @@ void Engine::DrawRoundedRect(const Point2Int& leftBottom, int width, int height,
 }
 void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
 {
+    SetTransform();
     m_pDRenderTarget->DrawRoundedRectangle(
         D2D1::RoundedRect(
             D2D1::RectF(
@@ -489,6 +465,7 @@ void Engine::DrawEllipse(const Point2Int& center, int radiusX, int radiusY, floa
 }
 void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
 {
+    SetTransform();
     m_pDRenderTarget->DrawEllipse(
         D2D1::Ellipse(
             D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(m_Height - ellipse.center.y)),
@@ -509,6 +486,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
 }
 void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect)const
 {
+    SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(destRect.left),
         static_cast<FLOAT>(m_Height - (destRect.bottom + destRect.height)),
@@ -536,6 +514,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int 
 }
 void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftBottom, int width, bool showRect)const
 {
+    SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(leftBottom.x),
         static_cast<FLOAT>(m_Height - (leftBottom.y + font->GetFontSize())),
@@ -570,6 +549,7 @@ void Engine::FillRectangle(const Point2Int& leftBottom, int width, int height)co
 }
 void Engine::FillRectangle(const RectInt& rect)const
 {
+    SetTransform();
     m_pDRenderTarget->FillRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(rect.left),
@@ -590,6 +570,7 @@ void Engine::FillRoundedRect(const Point2Int& leftBottom, int width, int height,
 }
 void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const
 {
+    SetTransform();
     m_pDRenderTarget->FillRoundedRectangle(
         D2D1::RoundedRect(
             D2D1::RectF(
@@ -613,6 +594,7 @@ void Engine::FillEllipse(const Point2Int& center, int radiusX, int radiusY)const
 }
 void Engine::FillEllipse(const EllipseInt& ellipse)const
 {
+    SetTransform();
     m_pDRenderTarget->FillEllipse(
         D2D1::Ellipse(
             D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(m_Height - ellipse.center.y)),
@@ -623,12 +605,9 @@ void Engine::FillEllipse(const EllipseInt& ellipse)const
 #else
 
 //Lines
-void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
-{
-    DrawLine(Point2Int{ firstX, firstY }, Point2Int{ secondX, secondY }, lineThickness);
-}
 void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
 {
+    SetTransform();
     m_pDRenderTarget->DrawLine(
         D2D1::Point2F(static_cast<FLOAT>(firstPoint.x), static_cast<FLOAT>(firstPoint.y)),
         D2D1::Point2F(static_cast<FLOAT>(secondPoint.x), static_cast<FLOAT>(secondPoint.y)),
@@ -648,6 +627,7 @@ void Engine::DrawRectangle(const Point2Int& leftTop, int width, int height, floa
 }
 void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
 {
+    SetTransform();
     m_pDRenderTarget->DrawRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(rect.left),
@@ -669,6 +649,7 @@ void Engine::DrawRoundedRect(const Point2Int& leftTop, int width, int height, fl
 }
 void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
 {
+    SetTransform();
     m_pDRenderTarget->DrawRoundedRectangle(
         D2D1::RoundedRect(
             D2D1::RectF(
@@ -693,6 +674,7 @@ void Engine::DrawEllipse(const Point2Int& center, int radiusX, int radiusY, floa
 }
 void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
 {
+    SetTransform();
     m_pDRenderTarget->DrawEllipse(
         D2D1::Ellipse(
             D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(ellipse.center.y)),
@@ -711,6 +693,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
 }
 void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect)const
 {
+    SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(destRect.left),
         static_cast<FLOAT>(destRect.top),
@@ -724,7 +707,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRe
 
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
-        textToDisplay.length(),
+        (UINT32) textToDisplay.length(),
         font->GetFormat(),
         rect,
         m_pDColorBrush,
@@ -740,6 +723,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int 
 //Takes the size of the font as Height of the destination rectangle in order to have a logical position
 void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftTop, int width, bool showRect)const
 {
+    SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(leftTop.x),
         static_cast<FLOAT>(leftTop.y),
@@ -753,7 +737,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
     
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
-        textToDisplay.length(),
+        (UINT32) textToDisplay.length(),
         font->GetFormat(),
         rect,
         m_pDColorBrush,
@@ -775,6 +759,7 @@ void Engine::FillRectangle(const Point2Int& leftTop, int width, int height)const
 }
 void Engine::FillRectangle(const RectInt& rect)const
 {
+    SetTransform();
     m_pDRenderTarget->FillRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(rect.left),
@@ -795,6 +780,7 @@ void Engine::FillRoundedRect(const Point2Int& leftTop, int width, int height, fl
 }
 void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const
 {
+    SetTransform();
     m_pDRenderTarget->FillRoundedRectangle(
         D2D1::RoundedRect(
             D2D1::RectF(
@@ -818,6 +804,7 @@ void Engine::FillEllipse(const Point2Int& center, int radiusX, int radiusY)const
 }
 void Engine::FillEllipse(const EllipseInt& ellipse)const
 {
+    SetTransform();
     m_pDRenderTarget->FillEllipse(
         D2D1::Ellipse(
             D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(ellipse.center.y)),
@@ -893,20 +880,135 @@ void Engine::SetFullscreen()
         UpdateWindow(m_hWindow);
     }
 }
+void Engine::SetTransform() const
+{
+    if (m_TransformChanged)
+    {
+        if(m_TranslationBeforeRotation)
+        {
+             m_pDRenderTarget->SetTransform(
+                D2D1::Matrix3x2F::Scale(m_ScalingX, m_ScalingY, D2D1::Point2F(m_PointToScaleFromX, m_PointToScaleFromY)) *
+                D2D1::Matrix3x2F::Translation(m_TranslationX, m_TranslationY) *
+                D2D1::Matrix3x2F::Rotation(m_Rotation, D2D1::Point2F(m_PivotPointX , m_PivotPointY))*
+                D2D1::Matrix3x2F::Scale(m_ViewPortScaling, m_ViewPortScaling)*
+                D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY) 
+               
+            );
+        }
+        else
+        {
+           m_pDRenderTarget->SetTransform(
+               D2D1::Matrix3x2F::Scale(m_ScalingX, m_ScalingY, D2D1::Point2F(m_PointToScaleFromX, m_PointToScaleFromY)) *
+               D2D1::Matrix3x2F::Rotation(m_Rotation, D2D1::Point2F(m_PivotPointX, m_PivotPointY)) *
+               D2D1::Matrix3x2F::Translation(m_TranslationX, m_TranslationY) *
+               D2D1::Matrix3x2F::Scale(m_ViewPortScaling, m_ViewPortScaling) *
+               D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY)
+            );
+        }
+
+        m_TransformObserver.ClearFlag();
+    }
+}
 void Engine::SetFrameRate(int FPS)
 {
-    m_TimePerFrame = 1.0f / FPS;
+    m_MilliSecondsPerFrame = 1000.0f / FPS;
 }
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+void Engine::Translate(int xTranslation, int yTranslation)
+{
+    m_TranslationX = static_cast<FLOAT>(xTranslation);
+    m_TranslationY = static_cast<FLOAT>(-yTranslation);
+
+    m_TransformChanged = true;
+}
+void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst)
+{
+    m_Rotation = static_cast<FLOAT>(-angle);
+    m_PivotPointX = static_cast<FLOAT>(xPivotPoint);
+    m_PivotPointY = static_cast<FLOAT>(m_Height - yPivotPoint);
+
+    m_TransformChanged = true;
+    m_TranslationBeforeRotation = translationFirst;
+}
+void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
+{
+    m_ScalingX = static_cast<FLOAT>(xScale);
+    m_ScalingY = static_cast<FLOAT>(yScale);
+    m_PointToScaleFromX = static_cast<FLOAT>(xPointToScaleFrom);
+    m_PointToScaleFromY = static_cast<FLOAT>(m_Height - yPointToScaleFrom);
+
+    m_TransformChanged = true;
+}
+#else
+void Engine::Translate(int xTranslation, int yTranslation)
+{
+    m_TranslationX = static_cast<FLOAT>(xTranslation);
+    m_TranslationY = static_cast<FLOAT>(yTranslation);
+
+    m_TransformChanged = true;
+}
+void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst)
+{
+    m_Rotation = static_cast<FLOAT>(angle);
+    m_PivotPointX = static_cast<FLOAT>(xPivotPoint);
+    m_PivotPointY = static_cast<FLOAT>(yPivotPoint);
+
+    m_TransformChanged = true;
+    m_TranslationBeforeRotation = translationFirst;
+}
+void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
+{
+    m_ScalingX = static_cast<FLOAT>(xScale);
+    m_ScalingY = static_cast<FLOAT>(yScale);
+    m_PointToScaleFromX = static_cast<FLOAT>(xPointToScaleFrom);
+    m_PointToScaleFromY = static_cast<FLOAT>(yPointToScaleFrom);
+
+    m_TransformChanged = true;
+}
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+void Engine::EndTransform()
+{
+    m_ScalingX = 1;
+    m_ScalingY = 1;
+    m_TranslationX = 0;
+    m_TranslationY = 0;
+    m_Rotation = 0;
+
+    m_TransformChanged = true;  
+    m_TranslationBeforeRotation = false;  
+}
+void Engine::Translate(const Vector2Int& translation)
+{
+    Translate(translation.x, translation.y);
+}
+void Engine::Rotate(float angle, const Point2Int& pivotPoint, bool translationFirst)
+{
+    Rotate(angle, pivotPoint.x, pivotPoint.y, translationFirst);
+}
+void Engine::Scale(float scale, int xPointToScaleFrom, int yPointToScaleFrom)
+{
+    Scale(scale, scale, xPointToScaleFrom, yPointToScaleFrom);
+}
+void Engine::Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom)
+{
+    Scale(xScale, yScale, PointToScaleFrom.x, PointToScaleFrom.y);
+}
+void Engine::Scale(float scale, const Point2Int& PointToScaleFrom)
+{
+    Scale(scale, scale, PointToScaleFrom.x, PointToScaleFrom.y);
+}
+
 void Engine::SetColor(COLORREF newColor, float opacity)
 {
-    if (m_pDColorBrush) SafeRelease(&m_pDColorBrush);
-    m_pDRenderTarget->CreateSolidColorBrush(
-        D2D1::ColorF(D2D1::ColorF(
-            GetRValue(newColor)/255.f,
-            GetGValue(newColor)/255.f,
-            GetBValue(newColor)/255.f,
-            static_cast<FLOAT>(opacity))),
-        &m_pDColorBrush);
+    //if (m_pDColorBrush) SafeRelease(&m_pDColorBrush);
+    m_pDColorBrush->SetColor(D2D1::ColorF(
+        GetRValue(newColor) / 255.f,
+        GetGValue(newColor) / 255.f,
+        GetBValue(newColor) / 255.f));
+
+    m_pDColorBrush->SetOpacity(static_cast<FLOAT>(opacity));
 }
 void Engine::SetBackGroundColor(COLORREF newColor)
 {

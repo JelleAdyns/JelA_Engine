@@ -15,14 +15,21 @@ void Game::Initialize()
 	ENGINE->SetBackGroundColor(RGB(0, 0, 0));
 	ENGINE->SetFrameRate(120);
 }
-void Game::Draw()
+void Game::Draw() const
 {
 	ENGINE->SetColor(RGB(255, 255, 255));
 	ENGINE->DrawRectangle(0, 0, width - 1, height);
 	ENGINE->DrawLine(20, 20, width - 20, height - 20);
 	ENGINE->DrawLine(20, 20, width - 20, 20);
-	ENGINE->FillRectangle(30, 0, 230, 200);
+	ENGINE->DrawLine(200, 100, 200, height);
+
+	ENGINE->Scale(1.25f,0,0);
+	ENGINE->Translate(200,100);
+	ENGINE->Rotate(angle, 200,100, false);
+	ENGINE->FillRectangle(0, 0, 230, 200);
 	ENGINE->FillRoundedRect(250, 0, 230, 200, 80, 80);
+	ENGINE->EndTransform();
+
 	ENGINE->FillEllipse(Point2Int{ width / 2, height - 100 }, 50, 60);
 	ENGINE->DrawRectangle(width / 2, 0, width, height);
 	
@@ -30,7 +37,10 @@ void Game::Draw()
 	ENGINE->DrawLine(m_Y, height, m_Y, 0);
 	m_Texture->DrawTexture(Point2Int{ width / 2,int(spritePos) }, RectInt{ 24,0,12,27 });
 	ENGINE->SetColor(RGB(23, 56, 233));
+
+	ENGINE->Rotate(angle, 0, 20, false);
 	ENGINE->DrawString(L"kaas",m_pFont,0,20,400,true);
+	ENGINE->EndTransform();
 	ENGINE->DrawString(L"kaas",m_pFont2, 400,20,400,true);
 }
 void Game::Tick(float elapsedSec)
@@ -51,6 +61,8 @@ void Game::Tick(float elapsedSec)
 	//else spritevelocity = 0;
 	spritePos += spritevelocity * elapsedSec;
 	spritevelocity = 0;
+
+	angle += 60*elapsedSec;
 }
 void Game::KeyDown(int virtualKeycode)
 {
@@ -89,8 +101,7 @@ void Game::KeyUp(int virtualKeycode)
 		delete M_pAudio;
 		M_pAudio = nullptr;
 	}
-	
-	//if (virtualKeycode == 'V') M_pAudio2->Play();
+
 }
 void Game::MouseDown(bool isLeft, int x, int y)
 {

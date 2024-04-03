@@ -14,7 +14,7 @@ public:
     BaseGame& operator=(BaseGame&& other) noexcept = delete;
 
 	virtual void Initialize() = 0;
-	virtual void Draw() = 0;
+	virtual void Draw() const = 0;
 	virtual void Tick(float elapsedSec) = 0;
     virtual void KeyDown(int virtualKeycode) = 0;
     virtual void KeyUp(int virtualKeycode) = 0;

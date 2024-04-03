@@ -15,7 +15,7 @@ public:
     Game& operator=(Game&& other) noexcept = delete;
 
     virtual void Initialize() override;
-    virtual void Draw() override;
+    virtual void Draw() const override;
     virtual void Tick(float elapsedSec) override;
     virtual void KeyDown(int virtualKeycode) override;
     virtual void KeyUp(int virtualKeycode) override;
@@ -27,12 +27,12 @@ private:
 
     float m_X{};
     float m_Y{};
-    int width{ 700 };
-    int height{ 500 };
+    int width{ 1000 };
+    int height{ 800 };
     float velocity{ 0 };
     float maxVelocity{ 100 };
     float acceleration{ -98.f };
-
+    float angle{};
     float spritePos{};
     int spritevelocity{};
 

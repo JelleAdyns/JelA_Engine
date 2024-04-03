@@ -3,6 +3,15 @@
 
 #include "Defines.h"
 
+struct Vector2Int
+{
+	Vector2Int() = default;
+	explicit Vector2Int(int x, int y);
+	int x;
+	int y;
+};
+
+
 struct Point2Int
 {
 	Point2Int() = default;

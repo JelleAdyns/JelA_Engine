@@ -1,5 +1,11 @@
 #include "Structs.h"
 
+Vector2Int::Vector2Int(int x, int y) :
+	x{ x },
+	y{ y }
+{}
+
+
 Point2Int::Point2Int(int x, int y):
 	x{x},
 	y{y}
