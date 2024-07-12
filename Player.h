@@ -46,14 +46,14 @@ public:
 
     // Playback
     HRESULT       OpenURL(const std::wstring& fileName);
-    HRESULT       Play(bool repeat);
+    HRESULT       Play(bool repeat, bool resume = false);
     HRESULT       Pause();
     HRESULT       Stop();
     HRESULT       Shutdown();
     HRESULT       HandleEvent(UINT_PTR pEventPtr);
     PlayerState   GetState() const { return m_state; }
-    static int           GetVolume();
-    static HRESULT       SetVolume(int volumePercentage);
+    static uint8_t       GetVolume();
+    static HRESULT       SetVolume(uint8_t volumePercentage);
 
     static const UINT WM_APP_PLAYER_EVENT = WM_APP + 1;
 protected:
@@ -67,12 +67,16 @@ protected:
     HRESULT Initialize();
     HRESULT CreateSession();
     HRESULT CloseSession();
-    HRESULT StartPlayback();
+    HRESULT StartPlayback(bool resume);
 
     // Media event handlers
     virtual HRESULT OnTopologyStatus(IMFMediaEvent* pEvent);
     virtual HRESULT OnPresentationEnded(IMFMediaEvent* pEvent);
     virtual HRESULT OnNewPresentation(IMFMediaEvent* pEvent);
+    virtual HRESULT OnSessionEvent(IMFMediaEvent*, MediaEventType)
+    {
+        return S_OK;
+    }
 
 protected:
     long                    m_nRefCount;        // Reference count.
@@ -80,8 +84,6 @@ protected:
 
     IMFMediaSession*        m_pSession;
     IMFMediaSource*         m_pSource;
-    //IMFAudioStreamVolume*   m_pVolume;
-    UINT32                  m_ChannelIndex;
 
     HWND                    m_hwndAudio;        // Audio window.
     HWND                    m_hwndEvent;        // App window to receive events.
@@ -89,7 +91,6 @@ protected:
     HANDLE                  m_hCloseEvent;      // Event to wait on while closing.
 
     static IMFSimpleAudioVolume*   m_pMasterVolume;
-    static UINT32           m_NrOfSessions;
 };
 
 #endif PLAYER_H

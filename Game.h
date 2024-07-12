@@ -36,11 +36,20 @@ private:
     float spritePos{};
     int spritevelocity{};
 
-    Texture* m_Texture{ new Texture{ _T("Resources\\Wesley.png")} };
-    Font* m_pFont{ new Font{L"Resources\\castlevania-3.ttf", 60, false, false, true} };
-    Font* m_pFont2{ new Font{L"Resources\\DIN-Light.otf", 60, false, false, true}};
-    Audio* M_pAudio{ new Audio{L"C:\\Users\\jelle\\Documents\\DAE-GD\\Semester-3\\Programming-3\\Castlevania_III\\Resources\\Spaceship.mp3", true} };
-    Audio* M_pAudio2{ new Audio{L"C:\\Users\\jelle\\Documents\\DAE-GD\\Semester-3\\Programming-3\\Castlevania_III\\Resources\\saw_sfx1.mp3", true} };
+
+    enum class Clips
+    {
+        Spaceship,
+        Saw,
+        EnemyPopped
+    };
+
+    Texture* m_Texture{ new Texture{ L"Wesley.png"} };
+    Font* m_pFont{ new Font{L"castlevania-3.ttf", 60, false, false, true} };
+    Font* m_pFont2{ new Font{L"DIN-Light.otf", 60, false, false, true}};
+    //Audio* M_pAudio{ new Audio{L"Resources\\Spaceship.mp3", false} };
+    //Audio* M_pAudio2{ new Audio{L"C:\\Users\\jelle\\Documents\\DAE-GD\\Semester-3\\Programming-3\\Castlevania_III\\Resources\\saw_sfx1.mp3", true} };
+    //Audio* M_pAudio3{ new Audio{L"C:\\Users\\jelle\\Documents\\DAE-GD\\Semester-4\\Programming-4\\Prog4Engine\\Data\\Sounds\\enemyPopped.wav", true} };
 };
 
 #endif // !GAME_H

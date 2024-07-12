@@ -7,47 +7,62 @@ Game::Game()
 Game::~Game()
 {
 	delete m_Texture;
+	delete m_pFont;
+	delete m_pFont2;
+	//delete M_pAudio;
+	//delete M_pAudio2;
+	//delete M_pAudio3;
 }
 void Game::Initialize()
 {
-	ENGINE->SetTitle(L"Game");
-	ENGINE->SetWindowDimensions(width, height);
-	ENGINE->SetBackGroundColor(RGB(0, 0, 0));
-	ENGINE->SetFrameRate(120);
+#ifndef NDEBUG
+	AudioLocator::RegisterAudioService(std::make_unique<LogAudio>(std::make_unique<Audio>()));
+#else
+	AudioLocator::RegisterAudioService(std::make_unique<Audio>());
+#endif // !NDEBUG
+
+
+	ENGINE.SetTitle(_T("Game"));
+	ENGINE.SetWindowDimensions(width, height);
+	ENGINE.SetBackGroundColor(RGB(0, 0, 0));
+	ENGINE.SetFrameRate(120);
+
+	AudioLocator::GetAudioService().AddSound(L"Spaceship.mp3", static_cast<SoundID>(Clips::Spaceship));
+	AudioLocator::GetAudioService().AddSound(L"saw_sfx1.wav", static_cast<SoundID>(Clips::Saw));
 }
 void Game::Draw() const
 {
-	ENGINE->SetColor(RGB(255, 255, 255));
-	ENGINE->DrawRectangle(0, 0, width - 1, height);
-	ENGINE->DrawLine(20, 20, width - 20, height - 20);
-	ENGINE->DrawLine(20, 20, width - 20, 20);
-	ENGINE->DrawLine(200, 100, 200, height);
+	ENGINE.SetColor(RGB(255, 255, 255));
+	ENGINE.DrawRectangle(0, 0, width - 1, height);
+	ENGINE.DrawLine(20, 20, width - 20, height - 20);
+	ENGINE.DrawLine(20, 20, width - 20, 20);
+	ENGINE.DrawLine(200, 100, 200, height);
 
-	ENGINE->Scale(1.25f,0,0);
-	ENGINE->Translate(200,100);
-	ENGINE->Rotate(angle, 200,100, false);
-	ENGINE->FillRectangle(0, 0, 230, 200);
-	ENGINE->FillRoundedRect(250, 0, 230, 200, 80, 80);
-	ENGINE->EndTransform();
+	ENGINE.Scale(1.25f,0,0);
+	ENGINE.Translate(200,100);
+	ENGINE.Rotate(angle, 200,100, false);
+	ENGINE.FillRectangle(0, 0, 230, 200);
+	ENGINE.FillRoundedRect(250, 0, 230, 200, 80, 80);
+	ENGINE.EndTransform();
 
-	ENGINE->FillEllipse(Point2Int{ width / 2, height - 100 }, 50, 60);
-	ENGINE->DrawRectangle(width / 2, 0, width, height);
+	ENGINE.FillEllipse(Point2Int{ width / 2, height - 100 }, 50, 60);
+	ENGINE.DrawRectangle(width / 2, 0, width, height);
 	
-	ENGINE->SetColor(RGB(255, 0, 0));
-	ENGINE->DrawLine(m_Y, height, m_Y, 0);
+	ENGINE.SetColor(RGB(255, 0, 0));
+	ENGINE.DrawLine(m_Y, height, m_Y, 0);
 
-	ENGINE->Scale(4.f, Point2Int{ width / 2,int(spritePos) });
-	ENGINE->Translate(200, 100);
-	ENGINE->Rotate(angle, Point2Int{ width / 2,int(spritePos) }, false);
-	ENGINE->DrawTexture(*m_Texture, Point2Int{ width / 2,int(spritePos) }, RectInt{ 24,0,12,27 });
-	ENGINE->EndTransform();
+	ENGINE.Scale(4.f, Point2Int{ width / 2,int(spritePos) });
+	ENGINE.Translate(200, 100);
+	ENGINE.Rotate(angle, Point2Int{ width / 2,int(spritePos) }, false);
+	ENGINE.DrawTexture(*m_Texture, Point2Int{ width / 2,int(spritePos) }, RectInt{ 24,0,12,27 });
+	ENGINE.EndTransform();
 
-	ENGINE->SetColor(RGB(23, 56, 233));
+	ENGINE.SetColor(RGB(23, 56, 233));
 
-	ENGINE->Rotate(angle, 0, 20, false);
-	ENGINE->DrawString(L"kaas",m_pFont,0,20,400,true);
-	ENGINE->EndTransform();
-	ENGINE->DrawString(L"kaas",m_pFont2, 400,20,400,true);
+	ENGINE.Rotate(angle, 0, 20, false);
+	ENGINE.DrawString(L"kaas",m_pFont,0,20,400,true);
+	ENGINE.EndTransform();
+	ENGINE.DrawString(L"kaas",m_pFont2, 400,20,400,true);
 }
 void Game::Tick(float elapsedSec)
 {
@@ -63,7 +78,7 @@ void Game::Tick(float elapsedSec)
 	}
 	velocity += acceleration * elapsedSec;
 	m_Y += velocity * elapsedSec;
-	if (ENGINE->IsKeyPressed('A')) spritevelocity = height;
+	if (ENGINE.IsKeyPressed('A')) spritevelocity = height;
 	//else spritevelocity = 0;
 	spritePos += spritevelocity * elapsedSec;
 	spritevelocity = 0;
@@ -81,8 +96,10 @@ void Game::KeyDown(int virtualKeycode)
 	// VK_MENU represents the 'Alt' key
 	//
 	// Click here for more information: https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
-	if (virtualKeycode == 'H') M_pAudio->DecrementVolume();
-	if (virtualKeycode == 'J') M_pAudio->IncrementVolume();
+
+	
+	if (virtualKeycode == 'H') AudioLocator::GetAudioService().DecrementMasterVolume();//M_pAudio->DecrementVolume();
+	if (virtualKeycode == 'J')  AudioLocator::GetAudioService().IncrementMasterVolume(); //M_pAudio->IncrementVolume();
 }
 void Game::KeyUp(int virtualKeycode)
 {
@@ -95,18 +112,25 @@ void Game::KeyUp(int virtualKeycode)
 	// VK_MENU represents the 'Alt' key
 	//
 	// Click here for more information: https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
-	
-	if (virtualKeycode == 'B') if(!M_pAudio->IsPlaying()) M_pAudio->Play(true);
-	if (virtualKeycode == 'Q') if(M_pAudio->IsPlaying()) M_pAudio->SetVolume(20);
-	if (virtualKeycode == 'W') if(M_pAudio->IsPlaying()) M_pAudio->SetVolume(80);
-	if (virtualKeycode == 'L') M_pAudio2->SetVolume(80);
-	if (virtualKeycode == 'V') M_pAudio2->Play(false);
-	if (virtualKeycode == 'C')
-	{
-		//M_pAudio->Pause();
-		delete M_pAudio;
-		M_pAudio = nullptr;
-	}
+	auto& locator = AudioLocator::GetAudioService();
+	if (virtualKeycode == 'B') locator.PlaySoundClip(static_cast<SoundID>(Clips::Spaceship), true);
+	if (virtualKeycode == 'N') locator.PauseSound(static_cast<SoundID>(Clips::Spaceship));
+	if (virtualKeycode == 'M') locator.ResumeSound(static_cast<SoundID>(Clips::Spaceship));
+	if (virtualKeycode == 'Z') locator.PlaySoundClip(static_cast<SoundID>(Clips::Saw), false);
+	if (virtualKeycode == 'X') locator.PauseSound(static_cast<SoundID>(Clips::Saw));
+	if (virtualKeycode == 'C') locator.ResumeSound(static_cast<SoundID>(Clips::Saw));
+	if (virtualKeycode == 'R') locator.RemoveSound(static_cast<SoundID>(Clips::Saw));
+	//if (virtualKeycode == 'M') if(!M_pAudio3->IsPlaying()) M_pAudio3->Play(false);
+	//if (virtualKeycode == 'Q') if(M_pAudio->IsPlaying()) M_pAudio->SetVolume(20);
+	//if (virtualKeycode == 'W') if(M_pAudio->IsPlaying()) M_pAudio->SetVolume(80);
+	//if (virtualKeycode == 'L') M_pAudio2->SetVolume(80);
+	//if (virtualKeycode == 'V') M_pAudio2->Play(false);
+	//if (virtualKeycode == 'C')
+	//{
+	//	M_pAudio->Pause();
+	//	//delete M_pAudio;
+	//	//M_pAudio = nullptr;
+	//}
 
 }
 void Game::MouseDown(bool isLeft, int x, int y)

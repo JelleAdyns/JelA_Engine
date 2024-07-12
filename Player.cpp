@@ -8,7 +8,6 @@
 #include "Player.h"
 #include "propvarutil.h"
 
-UINT32 CPlayer::m_NrOfSessions{};
 IMFSimpleAudioVolume* CPlayer::m_pMasterVolume{nullptr};
 
 template <class Q>
@@ -31,15 +30,15 @@ HRESULT GetEventObject(IMFMediaEvent* pEvent, Q** ppObject)
 HRESULT CreateMediaSource(IMFMediaSource** ppSource, const std::wstring& fileName);
 
 HRESULT CreatePlaybackTopology(IMFMediaSource* pSource,
-    IMFPresentationDescriptor* pPD, HWND hVideoWnd, IMFTopology** ppTopology);
+    IMFPresentationDescriptor* pPD, HWND hAudioWnd, IMFTopology** ppTopology);
 
 //  Static class method to create the CPlayer object.
 
-HRESULT CPlayer::CreateInstance(HWND hVideo, HWND hEvent, CPlayer** ppPlayer)          
+HRESULT CPlayer::CreateInstance(HWND hAudio, HWND hEvent, CPlayer** ppPlayer)          
 {
     if (ppPlayer == NULL) return E_POINTER;
 
-    CPlayer* pPlayer = new (std::nothrow) CPlayer(hVideo, hEvent);
+    CPlayer* pPlayer = new (std::nothrow) CPlayer(hAudio, hEvent);
     if (pPlayer == NULL) return E_OUTOFMEMORY;
 
     HRESULT hr = pPlayer->Initialize();
@@ -52,11 +51,8 @@ HRESULT CPlayer::CreateInstance(HWND hVideo, HWND hEvent, CPlayer** ppPlayer)
 
 HRESULT CPlayer::Initialize()
 {
-    // Start up Media Foundation platform.
+    // Start up Media Foundation platform. (replaced)
     HRESULT hr = S_OK;
-    
-    m_ChannelIndex = m_NrOfSessions;
-    ++m_NrOfSessions;
     
     m_hCloseEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (m_hCloseEvent == NULL) hr = HRESULT_FROM_WIN32(GetLastError());
@@ -64,18 +60,20 @@ HRESULT CPlayer::Initialize()
     return hr;
 }
 
-CPlayer::CPlayer(HWND hVideo, HWND hEvent) :
+CPlayer::CPlayer(HWND hAudio, HWND hEvent) :
     m_nRefCount(1),
     m_Repeat(false),
     m_pSession(NULL),
     m_pSource(NULL),
-    m_hwndAudio(hVideo),
+    m_hwndAudio(hAudio),
     m_hwndEvent(hEvent),
     m_state(PlayerState::Closed),
     m_hCloseEvent(NULL)
 {
- 
-      
+
+   /* UINT32 channelCount{};
+    if (m_pVolume) m_pVolume->GetChannelCount(&channelCount);
+    OutputDebugString((std::wstring{ std::to_wstring(channelCount).c_str() } + std::wstring{ L"\n" }).c_str());*/
 }
 
 CPlayer::~CPlayer()
@@ -120,7 +118,6 @@ ULONG CPlayer::Release()
     
     if (uCount == 0)
     {
-        --m_NrOfSessions;
         delete this;
     }
     return uCount;
@@ -134,7 +131,7 @@ HRESULT CPlayer::OpenURL(const std::wstring& fileName)
     // 3. Create the topology.
     // 4. Queue the topology [asynchronous]
     // 5. Start playback [asynchronous - does not happen in this method.]
-
+  
     IMFTopology* pTopology = NULL;
     IMFPresentationDescriptor* pSourcePD = NULL;
 
@@ -143,7 +140,7 @@ HRESULT CPlayer::OpenURL(const std::wstring& fileName)
 
     // Create the media source.
     if (SUCCEEDED(hr)) hr = CreateMediaSource(&m_pSource, fileName);
-
+    
     // Create the presentation descriptor for the media source.
     if (SUCCEEDED(hr)) hr = m_pSource->CreatePresentationDescriptor(&pSourcePD);
 
@@ -167,13 +164,15 @@ HRESULT CPlayer::OpenURL(const std::wstring& fileName)
 //  Pause playback.
 HRESULT CPlayer::Pause()
 {
-    if (m_state != PlayerState::Started) return MF_E_INVALIDREQUEST;
     
     if (m_pSession == NULL || m_pSource == NULL) return E_UNEXPECTED;
 
-    HRESULT hr = m_pSession->Pause();
-    if (SUCCEEDED(hr)) m_state = PlayerState::Paused;
-
+    HRESULT hr{ S_OK };
+    if (m_state == PlayerState::Started)
+    {
+        m_pSession->Pause();
+        if (SUCCEEDED(hr)) m_state = PlayerState::Paused;
+    }
     return hr;
 }
 
@@ -225,15 +224,19 @@ HRESULT CPlayer::Invoke(IMFAsyncResult* pResult)
 
     // Otherwise, post a private window message to the application. 
 
-    if (m_state != PlayerState::Closing)
+    if (SUCCEEDED(hr))
     {
-        // Leave a reference count on the event.
-        pEvent->AddRef();
+        if (m_state != PlayerState::Closing)
+        {
+            // Leave a reference count on the event.
+            pEvent->AddRef();
 
-        PostMessage(m_hwndEvent, CPlayer::WM_APP_PLAYER_EVENT,
-            (WPARAM)pEvent, (LPARAM)meType);
+            PostMessage(m_hwndEvent, CPlayer::WM_APP_PLAYER_EVENT,
+                (WPARAM)pEvent, (LPARAM)meType);
+        }
     }
 
+    SafeRelease(&pEvent);
     return hr;
 }
 
@@ -276,12 +279,11 @@ HRESULT CPlayer::HandleEvent(UINT_PTR pEventPtr)
             hr = OnNewPresentation(pEvent);
             break;
         case MESessionTopologySet:
-            //hr = MFGetService(m_pSession, MR_STREAM_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
             hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
             break;
          
         default:
-            hr = S_OK;
+            hr = OnSessionEvent(pEvent, meType);
             break;
         }
     }
@@ -290,16 +292,16 @@ HRESULT CPlayer::HandleEvent(UINT_PTR pEventPtr)
     return hr;
 }
 
-int CPlayer::GetVolume()
+uint8_t CPlayer::GetVolume()
 {
     float volume;
     m_pMasterVolume->GetMasterVolume(&volume); 
-    return static_cast<int>(volume * 100);
+    return static_cast<uint8_t>(volume * 100);
 }
 
-HRESULT CPlayer::SetVolume(int volumePercentage)
+HRESULT CPlayer::SetVolume(uint8_t volumePercentage)
 {
-    int newVolume{ volumePercentage };
+    int newVolume{ static_cast<int>(volumePercentage) };
     if (volumePercentage > 100) newVolume = 100;
     if (volumePercentage < 0) newVolume = 0;
     return m_pMasterVolume->SetMasterVolume(newVolume / 100.f);
@@ -433,14 +435,15 @@ HRESULT CPlayer::CloseSession()
 }
 
 //  Start playback from the current position. 
-HRESULT CPlayer::StartPlayback()
+HRESULT CPlayer::StartPlayback(bool resume)
 {
     assert(m_pSession != NULL);
 
     PROPVARIANT varStart;
 
     //https://stackoverflow.com/questions/66867668/media-foundation-looping-video-unstable-on-6th-run
-    InitPropVariantFromInt64(0, &varStart);
+    if (resume) PropVariantInit(&varStart);
+    else InitPropVariantFromInt64(0, &varStart);
 
     HRESULT hr = m_pSession->Start(&GUID_NULL, &varStart);
     if (SUCCEEDED(hr))
@@ -456,15 +459,15 @@ HRESULT CPlayer::StartPlayback()
 }
 
 //  Start playback from paused or stopped.
-HRESULT CPlayer::Play(bool repeat)
+HRESULT CPlayer::Play(bool repeat, bool resume)
 {
     m_Repeat = repeat;
-
+  
     if (m_state != PlayerState::Paused && m_state != PlayerState::Stopped) return MF_E_INVALIDREQUEST;
     
     if (m_pSession == NULL || m_pSource == NULL) return E_UNEXPECTED;
 
-    return StartPlayback();
+    return StartPlayback(resume);
 }
 
 
@@ -630,7 +633,7 @@ HRESULT AddBranchToPartialTopology(IMFTopology* pTopology, IMFMediaSource* pSour
 }
 
 //  Create a playback topology from a media source.
-HRESULT CreatePlaybackTopology(IMFMediaSource* pSource, IMFPresentationDescriptor* pPD, HWND hVideoWnd, IMFTopology** ppTopology)      
+HRESULT CreatePlaybackTopology(IMFMediaSource* pSource, IMFPresentationDescriptor* pPD, HWND hAudioWnd, IMFTopology** ppTopology)      
 {
     IMFTopology* pTopology = NULL;
     DWORD cSourceStreams = 0;

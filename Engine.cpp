@@ -2,35 +2,13 @@
 #include "Engine.h"
 #include "Game.h"
 #include <chrono>
-#include <algorithm>
 #include <thread>
 
-int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPTSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
-{
-    // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
-    // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
-    HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
-    int result = 0;
-    if (SUCCEEDED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
-    {
-        ENGINE->SetInstance(HINST_THISCOMPONENT);
-        result = ENGINE->Run();
-        CoUninitialize();
-        MFShutdown();
-    }
-    return result;
-}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    return ENGINE->HandleMessages(hWnd, message, wParam, lParam);
+    return ENGINE.HandleMessages(hWnd, message, wParam, lParam);
 }
-
-
-Engine* Engine::m_pEngine{ nullptr };
 
 Engine::Engine() :
     m_hWindow{ NULL },
@@ -38,9 +16,9 @@ Engine::Engine() :
     m_pDFactory{ NULL },
     m_pDRenderTarget{NULL},
     m_pDColorBrush{NULL},
-    m_DColorBackGround{ D2D1::ColorF(D2D1::ColorF::Black)},
+    m_DColorBackGround{ D2D1::ColorF::Black},
     m_pGame{ nullptr },
-    m_pTitle{ tstring{L"Standard Game"}},
+    m_Title{ tstring{L"Standard Game"}},
     m_Width{500},
     m_Height{500},
     m_MilliSecondsPerFrame{1.f/60.f},
@@ -56,12 +34,13 @@ Engine::~Engine()
     SafeRelease(&m_pDRenderTarget);
     SafeRelease(&m_pDColorBrush);
     delete m_pGame;
+
 }
 
-Engine* Engine::GetSingleton()
+Engine& Engine::GetSingleton()
 {
-    if (m_pEngine == nullptr) m_pEngine = new Engine();
-    return m_pEngine;
+    static std::unique_ptr<Engine> pEngine = std::unique_ptr<Engine>(new Engine{});
+    return *pEngine;
 }
 LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -73,7 +52,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         BaseGame* pBaseGame = (BaseGame*)pcs->lpCreateParams;
 
         ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pBaseGame));
-        // ENGINE->SetWindow(hWnd);
+        // ENGINE.SetWindow(hWnd);
         result = 1;
     }
     else
@@ -215,7 +194,7 @@ int Engine::Run()
 
     MSG msg;
     MakeWindow();       
-    CreateOurRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
+    CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
                              // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
     m_pGame = new Game{};
     m_pGame->Initialize();
@@ -314,13 +293,13 @@ HRESULT Engine::MakeWindow()
         wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wcex.lpszMenuName = NULL;
-        wcex.lpszClassName = m_pTitle.c_str();
+        wcex.lpszClassName = m_Title.c_str();
         wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MYOWNENGINEEXERCISE));
         wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
         RegisterClassEx(&wcex);
 
-        m_hWindow = CreateWindow(m_pTitle.c_str(), m_pTitle.c_str(), WS_OVERLAPPEDWINDOW,
+        m_hWindow = CreateWindow(m_Title.c_str(), m_Title.c_str(), WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, nullptr, nullptr, m_hInstance, this);
 
         if (m_hWindow) SetWindowPosition();
@@ -329,7 +308,7 @@ HRESULT Engine::MakeWindow()
     return hr;
    
 }
-HRESULT Engine::CreateOurRenderTarget()
+HRESULT Engine::CreateRenderTarget()
 {
     HRESULT hr = S_OK;
 
@@ -362,7 +341,7 @@ HRESULT Engine::OnRender()
 {
     HRESULT hr = S_OK;
 
-    CreateOurRenderTarget();
+    CreateRenderTarget();
     m_pDRenderTarget->BeginDraw();
 
     // Clear background
@@ -546,7 +525,7 @@ void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftBottom
 }
 void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
 {
-    RectInt wndwSize = ENGINE->GetWindowSize();
+    RectInt wndwSize = ENGINE.GetWindowSize();
 
     D2D1_RECT_F destination = D2D1::RectF(
         static_cast<FLOAT>(destRect.left),
@@ -576,7 +555,7 @@ void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const 
     }
 
     SetTransform();
-    ENGINE->getRenderTarget()->DrawBitmap(
+    ENGINE.getRenderTarget()->DrawBitmap(
         texture.GetBitmap(),
         destination,
         opacity,
@@ -835,7 +814,7 @@ void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const 
     }
 
     SetTransform();
-    ENGINE->getRenderTarget()->DrawBitmap(
+    ENGINE.getRenderTarget()->DrawBitmap(
         texture.GetBitmap(),
         destination,
         opacity,
@@ -923,8 +902,12 @@ void Engine::SetInstance(HINSTANCE hInst)
 }
 void Engine::SetTitle(const tstring& newTitle)
 {
-    m_pTitle.assign(newTitle);
+    m_Title.assign(newTitle);
     SetWindowText(m_hWindow, newTitle.c_str());
+}
+void Engine::SetResourcePath(const std::wstring& newTitle)
+{
+    m_ResourcePath = newTitle;
 }
 void Engine::SetWindowDimensions(int width, int height)
 {
@@ -1005,7 +988,7 @@ void Engine::SetTransform() const
             );
         }
 
-        m_TransformObserver.ClearFlag();
+        m_TransformChanged = false;
     }
 }
 void Engine::SetFrameRate(int FPS)
@@ -1123,6 +1106,10 @@ RectInt Engine::GetRenderTargetSize() const
     D2D1_SIZE_F size = m_pDRenderTarget->GetSize();
     return RectInt{ 0,0,static_cast<int>(size.width),static_cast<int>(size.height)};
 }
+const std::wstring& Engine::GetResourcePath() const
+{
+    return m_ResourcePath;
+}
 RectInt Engine::GetWindowSize() const
 {
     return RectInt{ 0, 0, m_Width, m_Height };
@@ -1147,7 +1134,7 @@ ID2D1HwndRenderTarget* Engine::getRenderTarget() const
 
 IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
 
-Texture::Texture(const tstring& filename):
+Texture::Texture(const std::wstring& filename) :
     m_pDBitmap{NULL},
     m_TextureWidth{0},
     m_TextureHeight{0}
@@ -1169,10 +1156,12 @@ Texture::Texture(const tstring& filename):
     IWICBitmapFrameDecode* pSource = NULL;
     IWICFormatConverter* pConverter = NULL;
 
+    std::wstring filePath = ENGINE.GetResourcePath() + filename;
+
     if (SUCCEEDED(creationResult))
     {
         creationResult = m_pWICFactory->CreateDecoderFromFilename(
-            filename.c_str(),
+            filePath.c_str(),
             NULL,
             GENERIC_READ,
             WICDecodeMetadataCacheOnLoad,
@@ -1205,7 +1194,7 @@ Texture::Texture(const tstring& filename):
 
     if (SUCCEEDED(creationResult))
     {
-        creationResult = ENGINE->getRenderTarget()->CreateBitmapFromWicBitmap(
+        creationResult = ENGINE.getRenderTarget()->CreateBitmapFromWicBitmap(
             pConverter,
             NULL,
             &m_pDBitmap
@@ -1221,7 +1210,7 @@ Texture::Texture(const tstring& filename):
  
     if (!SUCCEEDED(creationResult))
     {
-        tstring message = _T("ERROR! File \"") + filename + _T("\" couldn't load correctly");
+        tstring message = _T("ERROR! File \"") + filePath + _T("\" couldn't load correctly");
         OutputDebugString(message.c_str());
     }
     SafeRelease(&pDecoder);
@@ -1242,35 +1231,15 @@ Texture::~Texture()
 
 IDWriteFactory5* Font::m_pDWriteFactory{ nullptr };
 
-Font::Font(const tstring& fontName, bool fromFile)
+Font::Font(const std::wstring& fontName, bool fromFile):
+    Font{fontName, 20, false, false, fromFile}
+{}
+Font::Font(const std::wstring& fontName, int size ,bool bold, bool italic, bool fromFile)
 {
     if (fromFile)
     {
-        HRESULT hr = Initialize(fontName);
-        if (SUCCEEDED(hr))
-        {
-            SetTextFormat(20, false, false);
-        }
-    }
-    else
-    {
-        if (!m_pDWriteFactory)
-        {
-            DWriteCreateFactory(
-                DWRITE_FACTORY_TYPE_SHARED,
-                __uuidof(IDWriteFactory5),
-                reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
-        }
-        m_FontName = fontName;
-        SetTextFormat(20, false, false);
-    }
-    
-}
-Font::Font(const tstring& fontName, int size ,bool bold, bool italic, bool fromFile)
-{
-    if (fromFile)
-    {
-        HRESULT hr = Initialize(fontName);
+        std::wstring filePath = ENGINE.GetResourcePath() + fontName;
+        HRESULT hr = Initialize(filePath);
         if (SUCCEEDED(hr))
         {
             SetTextFormat(size, bold, italic);
@@ -1294,7 +1263,7 @@ Font::~Font()
     SafeRelease(&m_pFontCollection);
     SafeRelease(&m_pTextFormat);
 }
-HRESULT Font::Initialize(const tstring& fontName)
+HRESULT Font::Initialize(const std::wstring& fontName)
 {
     HRESULT hr = S_OK;
 
@@ -1399,148 +1368,3 @@ int Font::GetFontSize() const
     return m_FontSize;
 }
 
-
-//---------------------
-//Audio
-//---------------------
-
-
-Audio::Audio(const std::wstring& filename, bool absolutePath) :
-    m_pPlayer{ nullptr },
-    m_FileName{},
-    m_hWnd{}
-{
-    //next 3 lines are code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
-    m_hWnd = CreateWindow(TEXT("STATIC"), TEXT(""), 0, 0, 0, 0, 0, 0, 0, Engine::GetSingleton()->GetHInstance(), 0);
-    SetWindowLongPtr(m_hWnd, GWLA_WNDPROC, (LONG_PTR) AudioProc);	// set the custom message loop (subclassing)
-    SetWindowLongPtr(m_hWnd, GWLP_USERDATA, (LONG_PTR)this);		// set this object as the parameter for the Proc
-
-    HRESULT hr = CPlayer::CreateInstance(m_hWnd, m_hWnd, &m_pPlayer);
-    
-    std::wstring adjustedFileName{};
-    adjustedFileName.resize(filename.size());
-    std::replace_copy(filename.cbegin(), filename.cend(), adjustedFileName.begin(), '/', '\\');
-
-    if (absolutePath) m_FileName = adjustedFileName;
-    else
-    {
-        wchar_t pathOfThisFile[MAX_PATH]{};
-        GetCurrentDirectory(MAX_PATH, pathOfThisFile);
-        m_FileName = std::wstring{ pathOfThisFile } + std::wstring{ '\\' } + adjustedFileName;
-    }
-
-    if (SUCCEEDED(hr)) OpenFile(m_FileName);
-    else
-    {
-        NotifyError(m_hWnd, L"Could not initialize the player object.", hr);
-        m_pPlayer->Release();
-        return;
-    }
-    
-}
-
-Audio::~Audio()
-{
-    m_pPlayer->Stop();
-    m_pPlayer->Shutdown();
-    m_pPlayer->Release();
-}
-
-void Audio::Play(bool repeat) const
-{
-    HRESULT hr = m_pPlayer->Play(repeat);
-    if (FAILED(hr)) NotifyError(m_hWnd, L"Play reported on error.", hr);
-}
-
-void Audio::Stop() const
-{
-    HRESULT hr = m_pPlayer->Stop();
-    if (FAILED(hr)) NotifyError(m_hWnd, L"Stop reported on error.", hr);
-}
-
-void Audio::Pause() const
-{
-    HRESULT hr = m_pPlayer->Pause();
-    if (FAILED(hr)) NotifyError(m_hWnd, L"Pause reported on error.", hr);
-}
-
-bool Audio::IsPlaying() const
-{
-    return m_pPlayer->GetState() == CPlayer::PlayerState::Started;
-}
-
-bool Audio::IsStopped() const
-{
-    return m_pPlayer->GetState() == CPlayer::PlayerState::Stopped;
-}
-
-bool Audio::IsPaused() const
-{
-    return m_pPlayer->GetState() == CPlayer::PlayerState::Paused;
-}
-
-int Audio::GetVolume()
-{
-    return CPlayer::GetVolume();
-}
-
-void Audio::SetVolume(int volumePercentage)
-{
-    HRESULT hr = CPlayer::SetVolume(volumePercentage);
-    if (FAILED(hr)) NotifyError(NULL, L"SetVolume reported on error.", hr);
-}
-
-void Audio::IncrementVolume()
-{
-    int newVolume{ CPlayer::GetVolume() + 1 };
-    HRESULT hr = CPlayer::SetVolume(newVolume);
-    if (FAILED(hr)) NotifyError(NULL, L"IncrementVolume reported on error.", hr);
-}
-
-void Audio::DecrementVolume()
-{
-    int newVolume{ CPlayer::GetVolume() - 1 };
-    HRESULT hr = CPlayer::SetVolume(newVolume);
-    if (FAILED(hr)) NotifyError(NULL, L"IncrementVolume reported on error.", hr);
-}
-
-LRESULT Audio::AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    //next 3 lines are code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
-    #pragma warning(disable: 4312)
-    Audio* audio = reinterpret_cast<Audio*>(GetWindowLongPtr(hWnd, GWLA_USERDATA));
-    #pragma warning(default: 4312)
-
-    switch (message)
-    {
-    case CPlayer::WM_APP_PLAYER_EVENT:
-        audio->OnEvent(wParam);
-    default:
-        break;
-    };
-
-    return 0;
-}
-
-void Audio::OnEvent(WPARAM wParam)
-{
-    m_pPlayer->HandleEvent(wParam);
-}
-
-void Audio::OpenFile( const std::wstring& fileName) const
-{
-    HRESULT hr = m_pPlayer->OpenURL(fileName);
-    if (FAILED(hr)) NotifyError(m_hWnd, L"Could not open the file.", hr);
-}
-
-void Audio::NotifyError(HWND hWnd, const WCHAR* pszErrorMessage, HRESULT hrErr)
-{
-    const size_t MESSAGE_LEN = 512;
-    WCHAR message[MESSAGE_LEN];
-
-    if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, L"%s (HRESULT = 0x%X)",
-        pszErrorMessage, hrErr)))
-    {
-        MessageBox(hWnd, message, NULL, MB_OK | MB_ICONERROR);
-    }
-}

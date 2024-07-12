@@ -42,6 +42,12 @@
     <ClInclude Include="Player.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
+    <ClInclude Include="AudioService.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -55,6 +61,15 @@
     </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioService.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Game Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

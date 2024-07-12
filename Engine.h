@@ -6,6 +6,7 @@
 #include "BaseGame.h"
 #include "Structs.h"
 #include "player.h"
+#include "Audio.h"
 
 class Texture;
 class Font;
@@ -14,7 +15,6 @@ class Engine final
 {
 private:
     Engine();
-    static Engine* m_pEngine;
 public:
 
     Engine(const Engine& other) = delete;
@@ -24,7 +24,7 @@ public:
 
     ~Engine();
 
-    static Engine* GetSingleton();
+    static Engine& GetSingleton();
 
     int Run();
     LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -108,6 +108,7 @@ public:
     void SetBackGroundColor(COLORREF newColor);
     void SetInstance(HINSTANCE hInst);
     void SetTitle(const tstring& newTitle);
+    void SetResourcePath(const std::wstring& newTitle);
     void SetWindowDimensions(int width, int height);
     void SetFrameRate(int FPS);
 
@@ -121,11 +122,26 @@ public:
     void Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom);
     void Scale(float scale, const Point2Int& PointToScaleFrom);
 
+    const std::wstring& GetResourcePath() const;
     RectInt GetWindowSize() const;
     HWND GetWindow() const;
     HINSTANCE GetHInstance() const;
 
     ID2D1HwndRenderTarget* getRenderTarget() const;
+
+
+    static void NotifyError(HWND hWnd, const WCHAR* pszErrorMessage, HRESULT hrErr)
+    {
+        const size_t MESSAGE_LEN = 512;
+        WCHAR message[MESSAGE_LEN];
+
+        if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, L"%s (HRESULT = 0x%X)",
+            pszErrorMessage, hrErr)))
+        {
+            MessageBox(hWnd, message, NULL, MB_OK | MB_ICONERROR);
+        }
+    }
+
 private:
 
     void DrawBorders(int rtWidth, int rtHeight) const;
@@ -135,7 +151,7 @@ private:
     RectInt GetRenderTargetSize() const;
     HRESULT OnRender();
     HRESULT MakeWindow();
-    HRESULT CreateOurRenderTarget();
+    HRESULT CreateRenderTarget();
 
     //Win32
     HWND m_hWindow;
@@ -151,13 +167,6 @@ private:
     BaseGame* m_pGame;
 
     //Transform
-    class TransformObserver
-    {
-    public:
-        TransformObserver() = default;
-        void ClearFlag() const { Engine::GetSingleton()->m_TransformChanged = false; }
-    };
-
     FLOAT m_ViewPortTranslationX{};
     FLOAT m_ViewPortTranslationY{};
     FLOAT m_ViewPortScaling{};
@@ -175,11 +184,11 @@ private:
     FLOAT m_PivotPointY{};
 
     bool m_TranslationBeforeRotation{};
-    bool m_TransformChanged{};
-    const TransformObserver m_TransformObserver{};
+    mutable bool m_TransformChanged{};
 
     //General datamembers
-    tstring m_pTitle;
+    std::wstring m_ResourcePath;
+    tstring m_Title;
     int m_Width;
     int m_Height;
 
@@ -197,7 +206,7 @@ private:
 class Texture final
 {
 public:
-    explicit Texture(const tstring& filename);
+    explicit Texture(const std::wstring& filename);
 
     Texture(const Texture& other) = delete;
     Texture(Texture&& other) noexcept = delete;
@@ -227,8 +236,8 @@ private:
 class Font final
 {
 public:
-    Font(const tstring& fontname, bool fromFile = false);
-    Font(const tstring& fontname, int size, bool bold, bool italic, bool fromFile = false);
+    Font(const std::wstring& fontname, bool fromFile = false);
+    Font(const std::wstring& fontname, int size, bool bold, bool italic, bool fromFile = false);
 
     Font(const Font& other) = delete;
     Font(Font&& other) noexcept = delete;
@@ -242,7 +251,7 @@ public:
     int GetFontSize() const;
 
 private:
-    HRESULT Initialize(const tstring& filename);
+    HRESULT Initialize(const std::wstring& filename);
 
     static IDWriteFactory5* m_pDWriteFactory;
 
@@ -253,46 +262,5 @@ private:
     int m_FontSize;
 };
 
-
-
-
-
-class Audio
-{
-public:
-
-    Audio(const std::wstring& filename, bool absolutePath = false);
-    ~Audio();
-
-    Audio(const Audio& other) = delete;
-    Audio(Audio&& other) noexcept = delete;
-    Audio& operator=(const Audio& other) = delete;
-    Audio& operator=(Audio&& other) noexcept = delete;
-
-    void Play(bool repeat) const;
-    void Stop() const;
-    void Pause() const;
-
-    bool IsPlaying() const;
-    bool IsStopped() const;
-    bool IsPaused() const;
-
-    static int GetVolume();
-    static void SetVolume(int volumePercentage);
-    static void IncrementVolume();
-    static void DecrementVolume();
-
-private:
-
-    static LRESULT CALLBACK AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-    void OnEvent(WPARAM wParam);
-
-    void OpenFile(const std::wstring& fileName) const;
-    static void NotifyError(HWND hWnd, const WCHAR* pszErrorMessage, HRESULT hrErr);
-
-    CPlayer* m_pPlayer;
-    std::wstring m_FileName;
-    HWND m_hWnd;
-};
 
 #endif // !ENGINE_H
