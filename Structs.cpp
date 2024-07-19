@@ -1,11 +1,5 @@
 #include "Structs.h"
 
-Vector2Int::Vector2Int(int x, int y) :
-	x{ x },
-	y{ y }
-{}
-
-
 Point2Int::Point2Int(int x, int y):
 	x{x},
 	y{y}
@@ -41,7 +35,7 @@ Point2Int::Point2Int(int x, int y):
 
 
 EllipseInt::EllipseInt(int xCenter, int yCenter, int xRadius, int yRadius) :
-	center{ Point2Int{ xCenter,yCenter } },
+	center{ xCenter,yCenter },
 	radiusX{ xRadius },
 	radiusY{ yRadius }
 {}
@@ -51,3 +45,18 @@ EllipseInt::EllipseInt(const Point2Int& center, int xRadius, int yRadius) :
 	radiusX{xRadius},
 	radiusY{yRadius}
 {}
+
+
+CircleInt::CircleInt(int xCenter, int yCenter, int radius) :
+	center{ xCenter, yCenter },
+	rad{ radius }
+{
+}
+
+CircleInt::CircleInt(const Point2Int& center, int radius) :
+	center{ center},
+	rad{ radius }
+{
+}
+
+
