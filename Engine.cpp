@@ -382,9 +382,9 @@ void Engine::DrawLine(int firstX, int firstY, const Point2Int& secondPoint, floa
     DrawLine(Point2Int{ firstX,firstY }, secondPoint, lineThickness);
 }
 
-void Engine::DrawLine(const Point2Int& firstPoint, float secondX, float secondY, float lineThickness) const
+void Engine::DrawLine(const Point2Int& firstPoint, int secondX, int secondY, float lineThickness) const
 {
-    DrawLine(firstPoint, secondX, secondY, lineThickness);
+    DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness);
 }
 
 void Engine::DrawVector(const Point2Int& origin, const Vector2f& vector, float lineThickness) const

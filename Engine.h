@@ -7,6 +7,7 @@
 #include "player.h"
 #include "Audio.h"
 #include "framework.h"
+#include <vector>
 
 class Texture;
 class Font;
@@ -32,7 +33,7 @@ public:
 
     void DrawLine           (const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness = 1.f) const;
     void DrawLine           (int firstX, int firstY, const Point2Int& secondPoint, float lineThickness = 1.f) const;
-    void DrawLine           (const Point2Int& firstPoint, float secondX, float secondY, float lineThickness = 1.f) const;
+    void DrawLine           (const Point2Int& firstPoint, int secondX, int secondY, float lineThickness = 1.f) const;
     void DrawLine           (int firstX, int firstY, int secondX, int secondY, float lineThickness = 1.f) const;
 
     void DrawVector         (const Point2Int& origin, const Vector2f& vector, float lineThickness = 1.f) const;
@@ -163,48 +164,48 @@ private:
     HRESULT CreateRenderTarget();
 
     //Win32
-    HWND m_hWindow;
-    HINSTANCE m_hInstance;
+    HWND                        m_hWindow;
+    HINSTANCE                   m_hInstance;
 
     //Direct2D
-    ID2D1Factory* m_pDFactory;
-    ID2D1HwndRenderTarget*  m_pDRenderTarget;
-    ID2D1SolidColorBrush* m_pDColorBrush;
-    D2D1_COLOR_F m_DColorBackGround;
+    ID2D1Factory*               m_pDFactory;
+    ID2D1HwndRenderTarget*      m_pDRenderTarget;
+    ID2D1SolidColorBrush*       m_pDColorBrush;
+    D2D1_COLOR_F                m_DColorBackGround;
 
     //BaseGame
-    BaseGame* m_pGame;
+    BaseGame*                   m_pGame;
 
     //Transform
-    FLOAT m_ViewPortTranslationX{};
-    FLOAT m_ViewPortTranslationY{};
-    FLOAT m_ViewPortScaling{};
+    FLOAT                       m_ViewPortTranslationX{};
+    FLOAT                       m_ViewPortTranslationY{};
+    FLOAT                       m_ViewPortScaling{};
 
-    FLOAT m_ScalingX{ 1 };
-    FLOAT m_ScalingY{ 1 };
-    FLOAT m_PointToScaleFromX{};
-    FLOAT m_PointToScaleFromY{};
+    FLOAT                       m_ScalingX{ 1 };
+    FLOAT                       m_ScalingY{ 1 };
+    FLOAT                       m_PointToScaleFromX{};
+    FLOAT                       m_PointToScaleFromY{};
 
-    FLOAT m_TranslationX{};
-    FLOAT m_TranslationY{};
+    FLOAT                       m_TranslationX{};
+    FLOAT                       m_TranslationY{};
 
-    FLOAT m_Rotation{};
-    FLOAT m_PivotPointX{};
-    FLOAT m_PivotPointY{};
+    FLOAT                       m_Rotation{};
+    FLOAT                       m_PivotPointX{};
+    FLOAT                       m_PivotPointY{};
 
-    bool m_TranslationBeforeRotation{};
-    mutable bool m_TransformChanged{};
+    bool                        m_TranslationBeforeRotation{};
+    mutable bool                m_TransformChanged{};
 
     //General datamembers
-    std::wstring m_ResourcePath;
-    tstring m_Title;
-    int m_Width;
-    int m_Height;
+    std::wstring                m_ResourcePath;
+    tstring                     m_Title;
+    int                         m_Width;
+    int                         m_Height;
 
-    float m_MilliSecondsPerFrame;
+    float                       m_MilliSecondsPerFrame;
 
-    bool m_IsFullscreen;
-    bool m_KeyIsDown;
+    bool                        m_IsFullscreen;
+    bool                        m_KeyIsDown;
 
 };
 
@@ -268,6 +269,90 @@ private:
     int m_FontSize;
 };
 //---------------------------------------------------------------
+
+
+//---------------------------------------------------------------
+
+
+template <typename... Args>
+class Observer;
+template <typename... Args>
+class Subject final
+{
+public:
+    Subject() = default;
+    ~Subject()
+    {
+        for (auto& pObserver : m_pVecObservers)
+        {
+            pObserver->OnSubjectDestroy();
+        }
+    }
+
+    Subject(const Subject&) = delete;
+    Subject(Subject&&) noexcept = delete;
+    Subject& operator= (const Subject&) = delete;
+    Subject& operator= (Subject&&) noexcept = delete;
+
+    void AddObserver(Observer<Args...>* pObserver)
+    {
+        if (pObserver)
+        {
+            auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
+            if (pos == m_pVecObservers.cend())
+            {
+                m_pVecObservers.push_back(pObserver);
+            }
+            else throw std::runtime_error("Observer already subscribed to Subject");
+        }
+    }
+    void RemoveObserver(Observer<Args...>* pObserver)
+    {
+        if (m_pVecObservers.size() > 0)
+        {
+            auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
+            if (pos != m_pVecObservers.cend()) m_pVecObservers.erase(pos);
+#ifndef NDEBUG
+            else OutputDebugString(_T("Couldn't find Observer to remove in the vector. Continuing.\n"));
+#endif // !NDEBUG
+        }
+    }
+
+    void NotifyObservers(Args... pSubjectOwner)
+    {
+        for (auto& pObserver : m_pVecObservers)
+        {
+            pObserver->Notify(pSubjectOwner);
+        }
+    }
+private:
+    std::vector<Observer<Args...>*> m_pVecObservers;
+
+};
+
+
+
+template <typename... Args>
+class Observer
+{
+public:
+
+    virtual ~Observer() = default;
+
+    Observer(const Observer&) = delete;
+    Observer(Observer&&) noexcept = delete;
+    Observer& operator= (const Observer&) = delete;
+    Observer& operator= (Observer&&) noexcept = delete;
+
+    virtual void Notify(Args... args) = 0;
+    virtual void OnSubjectDestroy() = 0;
+
+protected:
+    Observer() = default;
+};
+//---------------------------------------------------------------
+
+
 
 
 //---------------------------------------------------------------
