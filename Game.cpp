@@ -63,12 +63,21 @@ void Game::Draw() const
 	ENGINE.DrawString(L"kaas",m_pFont,0,20,400,true);
 	ENGINE.EndTransform();
 	ENGINE.DrawString(L"kaas",m_pFont2, 400,20,400,true);
+
+
+	ENGINE.DrawRectangle(RectInt{ 20,30, 100, 150 });
+	ENGINE.DrawLine(Point2Int{ 10,40 }, Point2Int{ 200,179 });
+	ENGINE.DrawLine(Point2Int{ 0,0 }, Point2Int{ 20,20 });
+	ENGINE.DrawLine(Point2Int{ 10,10 }, Point2Int{ 40,40 });
+	ENGINE.SetColor(RGB(0, 255, 0));
+	ENGINE.DrawVector(Point2Int{ 10,40 }, Vector2f{ 700,700 });
 }
 void Game::Tick(float elapsedSec)
 {
 	if (GetKeyState(VK_RMENU) & 0x8000)
 	{
-		OutputDebugString(L"kaas\n");
+		bool testbool = utils::IsPointInRect(Point2Int{ 15,15 }, RectInt{ 0,10,20,20 });
+		OutputDebugString(to_tstring(testbool).c_str());
 	}
 	m_X += elapsedSec;
 	if (m_Y <= 0.f)
@@ -83,7 +92,18 @@ void Game::Tick(float elapsedSec)
 	spritePos += spritevelocity * elapsedSec;
 	spritevelocity = 0;
 
-	angle += 60*elapsedSec;
+	angle += 60 * elapsedSec;
+
+	std::pair<Point2Int, Point2Int> p{};
+	bool testbool = utils::IntersectRectLine(RectInt{ 20,30, 100, 150 }, Point2Int{ 10,40 }, Point2Int{ 200,179 }, p);
+
+	float la{};
+	float la2{};
+	bool crosstest = utils::IntersectLineSegments(Point2Int{ 0,0 }, Point2Int{ 20,20 }, Point2Int{ 10,10 }, Point2Int{ 40,40 }, la, la2);
+
+	Point2Int kruispunt = Point2Int{ 0,0 } + Vector2f{ Point2Int{ 0,0 } , Point2Int{ 20,20 } } * la;
+	Point2Int kruispunt2 = Point2Int{ 10,10 } + Vector2f{ Point2Int{ 10,10 } , Point2Int{ 40,40 } } * la2;
+
 }
 void Game::KeyDown(int virtualKeycode)
 {

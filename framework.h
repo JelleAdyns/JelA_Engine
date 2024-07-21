@@ -15,7 +15,8 @@
 #include <memory.h>
 
 // Math
-#include <math.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 // Own Defines
 #include "Defines.h"

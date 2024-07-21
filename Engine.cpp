@@ -3,6 +3,8 @@
 #include "Game.h"
 #include <chrono>
 #include <thread>
+#include <algorithm>
+
 
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -369,22 +371,71 @@ HRESULT Engine::OnRender()
 }
 
 //lines
-void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
+
+void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
 {
-    DrawLine(Point2Int{ firstX,firstY }, Point2Int{ secondX, secondY }, lineThickness);
+    DrawLine(firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y, lineThickness);
+   
+}
+void Engine::DrawLine(int firstX, int firstY, const Point2Int& secondPoint, float lineThickness) const
+{
+    DrawLine(Point2Int{ firstX,firstY }, secondPoint, lineThickness);
+}
+
+void Engine::DrawLine(const Point2Int& firstPoint, float secondX, float secondY, float lineThickness) const
+{
+    DrawLine(firstPoint, secondX, secondY, lineThickness);
+}
+
+void Engine::DrawVector(const Point2Int& origin, const Vector2f& vector, float lineThickness) const
+{
+    DrawVector(origin.x, origin.y, vector.x, vector.y, lineThickness);
+}
+void Engine::DrawVector(const Point2Int& origin, float vectorX, float vectorY, float lineThickness) const
+{
+    DrawVector(origin.x, origin.y, vectorX, vectorY, lineThickness);
+}
+void Engine::DrawVector(int originX, int originY, const Vector2f& vector, float lineThickness) const
+{
+    DrawVector(originX, originY, vector.x, vector.y, lineThickness);
+}
+void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, float lineThickness) const
+{
+    SetTransform();
+
+    const int endX = originX + static_cast<int>(vectorX);
+    const int endY = originY + static_cast<int>(vectorY);
+
+    const int arrowLineLength{ 30 };
+    const float desiredHeadAngle = float(M_PI / 6.f);
+    const float mirroredVectorAngle = atan2f(vectorY, vectorX) + float(M_PI) ;
+
+    const Point2Int arrowP2{ static_cast<int>(endX + cosf(mirroredVectorAngle - desiredHeadAngle) * arrowLineLength),
+                            static_cast<int>(endY + sinf(mirroredVectorAngle - desiredHeadAngle) * arrowLineLength) };
+
+    
+    const Point2Int arrowP3{ static_cast<int>(endX + cosf(mirroredVectorAngle + desiredHeadAngle) * arrowLineLength),
+                            static_cast<int>(endY + sinf(mirroredVectorAngle + desiredHeadAngle) * arrowLineLength) };
+
+    DrawLine(originX, originY, endX, endY, lineThickness);
+    DrawLine(endX, endY, arrowP2.x, arrowP2.y, lineThickness);
+    DrawLine(endX, endY, arrowP3.x, arrowP3.y, lineThickness);
 }
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
+void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
 {
-    SetTransform();
+     SetTransform();
     m_pDRenderTarget->DrawLine(
-        D2D1::Point2F(static_cast<FLOAT>(firstPoint.x), static_cast<FLOAT>(m_Height - firstPoint.y)),
-        D2D1::Point2F(static_cast<FLOAT>(secondPoint.x), static_cast<FLOAT>(m_Height - secondPoint.y)),
+        D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(m_Height - firstY)),
+        D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(m_Height - secondY)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness)
     );
 }
+
+
+
 
 //Rectangles
 void Engine::DrawRectangle(int left, int bottom, int width, int height, float lineThickness)const
@@ -452,6 +503,11 @@ void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
             static_cast<FLOAT>(ellipse.radiusY)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
+}
+
+void Engine::DrawCircle(const CircleInt& circle, float lineThickness) const
+{
+    DrawEllipse(circle.center, circle.rad, circle.rad, lineThickness);
 }
 
 // Strings
@@ -631,19 +687,24 @@ void Engine::FillEllipse(const EllipseInt& ellipse)const
             static_cast<FLOAT>(ellipse.radiusY)),
         m_pDColorBrush);
 }
+void Engine::FillCircle(const CircleInt& circle) const
+{
+    FillEllipse(circle.center, circle.rad, circle.rad);
+}
 #else
 
 //Lines
-void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
+void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
 {
     SetTransform();
     m_pDRenderTarget->DrawLine(
-        D2D1::Point2F(static_cast<FLOAT>(firstPoint.x), static_cast<FLOAT>(firstPoint.y)),
-        D2D1::Point2F(static_cast<FLOAT>(secondPoint.x), static_cast<FLOAT>(secondPoint.y)),
+        D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(firstY)),
+        D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(secondY)),
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness)
     );
 }
+
 
 //Rectangles
 void Engine::DrawRectangle(int left, int top, int width, int height, float lineThickness)const
@@ -1004,6 +1065,10 @@ void Engine::Translate(int xTranslation, int yTranslation)
 
     m_TransformChanged = true;
 }
+void Engine::Translate(const Vector2f& translation)
+{
+    Translate(static_cast<int>(translation.x), static_cast<int>(translation.y));
+}
 void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst)
 {
     m_Rotation = static_cast<FLOAT>(-angle);
@@ -1060,10 +1125,6 @@ void Engine::EndTransform()
 
     m_TransformChanged = true;  
     m_TranslationBeforeRotation = false;  
-}
-void Engine::Translate(const Vector2Int& translation)
-{
-    Translate(translation.x, translation.y);
 }
 void Engine::Rotate(float angle, const Point2Int& pivotPoint, bool translationFirst)
 {
@@ -1127,7 +1188,7 @@ ID2D1HwndRenderTarget* Engine::getRenderTarget() const
     return m_pDRenderTarget;
 }
 
-
+//---------------------------------------------------------------------------------------------------------------------------------
 //---------------------
 //TEXTURE
 //---------------------
@@ -1222,9 +1283,11 @@ Texture::~Texture()
 {
     SafeRelease(&m_pDBitmap);
 };
+//---------------------------------------------------------------------------------------------------------------------------------
 
 
 
+//---------------------------------------------------------------------------------------------------------------------------------
 //---------------------
 //Font
 //---------------------
@@ -1367,4 +1430,231 @@ int Font::GetFontSize() const
 {
     return m_FontSize;
 }
+//---------------------------------------------------------------------------------------------------------------------------------
 
+
+//---------------------------------------------------------------------------------------------------------------------------------
+//---------------------
+// Utils
+//---------------------
+
+// Following functions originate from Koen Samyn, professor Game Development at Howest
+
+float utils::Distance(int x1, int y1, int x2, int y2)
+{
+    int b = x2 - x1;
+    int c = y2 - y1;
+    return sqrt(static_cast<float>(b * b + c * c));
+}
+
+float utils::Distance(const Point2Int& p1, const Point2Int& p2)
+{
+    return Distance(p1.x, p1.y, p2.x, p2.y);
+}
+
+bool utils::IsPointInRect(const Point2Int& p, const RectInt& r)
+{
+    return p.x > r.left and
+        p.x < (r.left + r.width) and
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+        p.y > r.bottom and
+        p.y < (r.bottom + r.height);
+#else
+        p.y > r.top and
+        p.y < (r.top + r.height);
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+}
+
+bool utils::IsPointInCircle(const Point2Int& p, const CircleInt& c)
+{
+    int x = c.center.x - p.x;
+    int y = c.center.y - p.y;
+    return x * x + y * y < c.rad * c.rad;
+}
+
+bool utils::IsPointInEllipse(const Point2Int& p, const EllipseInt& e)
+{
+    int lhs = (p.x * p.x) * (e.radiusY * e.radiusY) + (p.y * p.y) * (e.radiusX * e.radiusX);
+    int rhs = (e.radiusX * e.radiusX) * (e.radiusY * e.radiusY);
+    return lhs <= rhs;
+}
+
+bool utils::IsOverlapping(const Point2Int& a, const Point2Int& b, const CircleInt& c)
+{
+    return DistPointLineSegment(c.center, a, b) <= c.rad;
+}
+
+bool utils::IsOverlapping(const Point2Int& a, const Point2Int& b, const EllipseInt& e)
+{
+    return IsPointInEllipse(ClosestPointOnLine(e.center, a, b), e);
+}
+
+bool utils::IsOverlapping(const Point2Int& a, const Point2Int& b, const RectInt& r)
+{
+    std::pair<Point2Int, Point2Int> p{};
+    return utils::IntersectRectLine(r, a, b, p);
+}
+
+bool utils::IsOverlapping(const RectInt& r1, const RectInt& r2)
+{
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+    if ((r1.left + r1.width) < r2.left || (r2.left + r2.width) < r1.left ||
+        r1.bottom > (r2.bottom + r2.height) || r2.bottom > (r1.bottom + r1.height))
+    {
+        return false;
+    }
+#else
+    if ((r1.left + r1.width) < r2.left || (r2.left + r2.width) < r1.left ||
+        (r1.top + r1.height) < r2.top || (r2.top + r2.height) < r1.top)
+    {
+        return false;
+    }
+#endif // MATHEMATICAL_COORDINATESYSTEM    
+
+    return true;
+}
+
+bool utils::IsOverlapping(const RectInt& r, const CircleInt& c)
+{
+    if (IsPointInRect(c.center, r)) return true;
+
+    int right = r.left + r.width;
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+    int top = r.bottom + r.height;
+    if (DistPointLineSegment(c.center, Point2Int{ r.left, r.bottom }, Point2Int{ r.left, top }) <= c.rad) return true;
+    
+    if (DistPointLineSegment(c.center, Point2Int{ r.left, r.bottom }, Point2Int{ right, r.bottom }) <= c.rad) return true;
+    
+    if (DistPointLineSegment(c.center, Point2Int{ r.left, top }, Point2Int{ right, top }) <= c.rad) return true;
+    
+    if (DistPointLineSegment(c.center, Point2Int{ right, top }, Point2Int{ right, r.bottom }) <= c.rad) return true;
+#else
+    int bottom = r.top + r.height;
+    if (DistPointLineSegment(c.center, Point2Int{ r.left, r.top }, Point2Int{ r.left, bottom }) <= c.rad) return true;
+    
+    if (DistPointLineSegment(c.center, Point2Int{ r.left, r.top }, Point2Int{ right, r.top }) <= c.rad) return true;
+    
+    if (DistPointLineSegment(c.center, Point2Int{ r.left, bottom }, Point2Int{ right, bottom }) <= c.rad) return true;
+    
+    if (DistPointLineSegment(c.center, Point2Int{ right, bottom }, Point2Int{ right, r.top }) <= c.rad) return true;
+    
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+    return false;
+}
+
+bool utils::IsOverlapping(const CircleInt& c1, const CircleInt& c2)
+{
+    return (c2.center - c1.center).SquaredLength() < (c1.rad + c2.rad) * (c1.rad + c2.rad);
+}
+
+
+Point2Int utils::ClosestPointOnLine(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB)
+{
+    Vector2f aToB{ linePointA, linePointB };
+    Vector2f aToPoint{ linePointA, point };
+    Vector2f abNorm{ aToB.Normalized() };
+    float pointProjectionOnLine{ Vector2f::Dot(abNorm, aToPoint) };
+
+    // If pointProjectionOnLine is negative, then the closest point is A
+    if (pointProjectionOnLine < 0) return linePointA;
+
+    // If pointProjectionOnLine is > than dist(linePointA,linePointB) then the closest point is B
+    float distAB{ aToB.Length() };
+    if (pointProjectionOnLine > distAB) return linePointB;
+
+    // Closest point is between A and B, calc intersection point
+    Point2Int intersection{ linePointA + pointProjectionOnLine * abNorm };
+    return intersection;
+}
+
+float utils::DistPointLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB)
+{
+    return (point - ClosestPointOnLine(point, linePointA, linePointB)).Length();
+}
+
+bool utils::IsPointOnLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB)
+{
+    Vector2f aToPoint{ linePointA, point };
+    Vector2f bToPoint{ linePointB, point };
+
+    // If not on same line, return false
+    if (abs(Vector2f::Cross(aToPoint, bToPoint)) > 0.0001f) return false;
+
+    // Both vectors must point in opposite directions if p is between a and b
+    if (Vector2f::Dot(aToPoint, bToPoint) > 0) return false;
+
+    return true;
+}
+
+bool utils::IntersectLineSegments(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2, float& outLambda1, float& outLambda2)
+{
+    bool intersecting{ false };
+
+    Vector2f firstLine{ p1, p2 };
+    Vector2f secondLine{ q1, q2 };
+
+    float denom = Vector2f::Cross(firstLine,secondLine);
+
+    if (std::abs(denom) > 0.0001f)
+    {
+        intersecting = true;
+
+        Vector2f p1q1{ p1, q1 };
+
+        float num1 = Vector2f::Cross( p1q1, secondLine);
+        float num2 = Vector2f::Cross( p1q1, firstLine);
+        
+        outLambda1 = num1 / denom;
+        outLambda2 = num2 / denom;
+    }
+    else // are parallel
+    {
+        Vector2f p1q1{ p1, q1 };
+
+        if (std::abs(Vector2f::Cross(p1q1,secondLine)) > 0.0001f) return false;
+
+        outLambda1 = 0;
+        outLambda2 = 0;
+        if (utils::IsPointOnLineSegment(p1, q1, q2) ||
+            utils::IsPointOnLineSegment(p2, q1, q2))
+        {
+            intersecting = true;
+        }
+    }
+    return intersecting;
+}
+
+bool utils::IntersectRectLine(const RectInt& r, const Point2Int& p1, const Point2Int& p2, std::pair<Point2Int, Point2Int>& intersections)
+{
+    float xDenom{ static_cast<float>(p2.x - p1.x) };
+    float x1{ (r.left - p1.x) / xDenom};
+    float x2{ (r.left + r.width - p1.x) / xDenom };
+
+    float yDenom{ static_cast<float>(p2.y - p1.y) };
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+    float y1{ (r.bottom - p1.y  ) / yDenom };
+    float y2{ (r.bottom + r.height - p1.y ) / yDenom };
+#else  
+    float y1{ (r.top - p1.y) / yDenom };
+    float y2{ (r.top + r.height- p1.y) / yDenom };
+#endif // !MATHEMATICAL_COORDINATESYSTEM
+    
+
+    float tMin{ std::max<float>(std::min<float>(x1,x2), std::min<float>(y1,y2)) };
+    float tMax{ std::min<float>(std::max<float>(x1,x2), std::max<float>(y1,y2)) };
+
+    if (tMin > tMax) return false;
+
+    Vector2f lineDirection{ p1, p2 };
+    intersections.first = p1 + lineDirection * tMin;
+    intersections.second = p1 + lineDirection * tMax;
+
+    return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------------------

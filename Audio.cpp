@@ -175,7 +175,7 @@ void Audio::AudioImpl::AddSoundImpl(const std::wstring& filename, SoundID id)
 void Audio::AudioImpl::RemoveSoundImpl(SoundID id)
 {
 	if (m_pMapMusicClips.contains(id)) m_pMapMusicClips.erase(id);
-	else OutputDebugString((_T("Trying to remove sound that isn't present. ID:") + to_tstring(id)).c_str());
+	else OutputDebugString((_T("Trying to remove sound that isn't present. ID: ") + to_tstring(id)).c_str());
 }
 void Audio::AudioImpl::PlaySoundClipImpl(SoundID id, bool repeat)
 {
@@ -188,7 +188,7 @@ void Audio::AudioImpl::PlaySoundClipImpl(SoundID id, bool repeat)
 			if (audioFile->IsPlaying()) audioFile->Stop();
 			audioFile->Play(repeat);
 		}
-		else OutputDebugString((_T("Trying to play sound that isn't present. ID:") + to_tstring(id) + _T("Repeat: ") + to_tstring(repeat)).c_str());
+		else OutputDebugString((_T("Trying to play sound that isn't present. ID: ") + to_tstring(id) + _T(" Repeat: ") + to_tstring(repeat)).c_str());
 	}
 		
 }
@@ -242,7 +242,7 @@ void Audio::AudioImpl::ResumeSoundImpl(SoundID id) const
 		AudioFile* audioFile = m_pMapMusicClips.at(id).pAudioFile.get();
 		if(audioFile->IsPaused()) audioFile->Play(m_pMapMusicClips.at(id).repeat, true);
 	}
-	else OutputDebugString((_T("Trying to resume sound that isn't present. ID:") + to_tstring(id)).c_str());
+	else OutputDebugString((_T("Trying to resume sound that isn't present. ID: ") + to_tstring(id)).c_str());
 }
 void Audio::AudioImpl::ResumeAllSoundsImpl() const
 {
@@ -258,7 +258,7 @@ void Audio::AudioImpl::StopSoundImpl(SoundID id) const
 	{
 		m_pMapMusicClips.at(id).pAudioFile->Stop();
 	}
-	else OutputDebugString((_T("Trying to stop sound that isn't present. ID:") + to_tstring(id)).c_str());
+	else OutputDebugString((_T("Trying to stop sound that isn't present. ID: ") + to_tstring(id)).c_str());
 }
 void Audio::AudioImpl::StopAllSoundsImpl() const
 {

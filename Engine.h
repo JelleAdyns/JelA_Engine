@@ -2,11 +2,11 @@
 #define ENGINE_H
 
 #include "resource.h"
-#include "framework.h"
 #include "BaseGame.h"
 #include "Structs.h"
 #include "player.h"
 #include "Audio.h"
+#include "framework.h"
 
 class Texture;
 class Font;
@@ -30,8 +30,15 @@ public:
     LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
-    void DrawLine           (int firstX, int firstY, int secondX, int secondY, float lineThickness = 1.f) const;
     void DrawLine           (const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness = 1.f) const;
+    void DrawLine           (int firstX, int firstY, const Point2Int& secondPoint, float lineThickness = 1.f) const;
+    void DrawLine           (const Point2Int& firstPoint, float secondX, float secondY, float lineThickness = 1.f) const;
+    void DrawLine           (int firstX, int firstY, int secondX, int secondY, float lineThickness = 1.f) const;
+
+    void DrawVector         (const Point2Int& origin, const Vector2f& vector, float lineThickness = 1.f) const;
+    void DrawVector         (const Point2Int& origin, float vectorX, float vectorY, float lineThickness = 1.f) const;
+    void DrawVector         (int originX, int originY, const Vector2f& vector, float lineThickness = 1.f) const;
+    void DrawVector         (int originX, int originY, float vectorX, float vectorY, float lineThickness = 1.f) const;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
     void DrawRectangle      (int left, int bottom, int width, int height, float lineThickness = 1.f)const;
@@ -96,10 +103,12 @@ public:
     void DrawEllipse        (int centerX, int centerY, int radiusX, int radiusY, float lineThickness = 1.f)const;
     void DrawEllipse        (const Point2Int& center, int radiusX, int radiusY, float lineThickness = 1.f)const;
     void DrawEllipse        (const EllipseInt& ellipse, float lineThickness = 1.f)const;
+    void DrawCircle         (const CircleInt& circle, float lineThickness = 1.f)const;
 
     void FillEllipse        (int centerX, int centerY, int radiusX, int radiusY)const;
     void FillEllipse        (const Point2Int& center, int radiusX, int radiusY)const;
     void FillEllipse        (const EllipseInt& ellipse)const;
+    void FillCircle         (const CircleInt& circle)const;
 
     //Use CAPITAL letters or the virtual keycodes
     bool IsKeyPressed(int virtualKeycode) const;
@@ -114,7 +123,7 @@ public:
 
     void EndTransform();
     void Translate(int xTranslation, int yTranslation);
-    void Translate(const Vector2Int& translation);
+    void Translate(const Vector2f& translation);
     void Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst) ;
     void Rotate(float angle, const Point2Int& pivotPoint, bool translationFirst) ;
     void Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom);
@@ -200,9 +209,7 @@ private:
 };
 
 
-
-
-
+//---------------------------------------------------------------
 class Texture final
 {
 public:
@@ -227,11 +234,10 @@ private:
     float m_TextureWidth;
     float m_TextureHeight;
 };
+//---------------------------------------------------------------
 
 
-
-
-
+//---------------------------------------------------------------
 //https://stackoverflow.com/questions/37572961/c-directwrite-load-font-from-file-at-runtime
 class Font final
 {
@@ -261,6 +267,34 @@ private:
     tstring m_FontName;
     int m_FontSize;
 };
+//---------------------------------------------------------------
 
+
+//---------------------------------------------------------------
+namespace utils
+{
+    // Following functions originate from Koen Samyn, professor Game Development at Howest
+
+    float Distance(int x1, int y1, int x2, int y2);
+    float Distance(const Point2Int & p1, const Point2Int & p2);
+
+    bool IsPointInRect(const Point2Int & p, const RectInt & r);
+    bool IsPointInCircle(const Point2Int & p, const CircleInt & c);
+    bool IsPointInEllipse(const Point2Int & p, const EllipseInt & e);
+
+    bool IsOverlapping(const Point2Int & a, const Point2Int & b, const CircleInt & c);
+    bool IsOverlapping(const Point2Int & a, const Point2Int & b, const EllipseInt & e);
+    bool IsOverlapping(const Point2Int & a, const Point2Int & b, const RectInt & r);
+    bool IsOverlapping(const RectInt & r1, const RectInt & r2);
+    bool IsOverlapping(const RectInt& r, const CircleInt& c);
+    bool IsOverlapping(const CircleInt& c1, const CircleInt& c2);
+
+    Point2Int ClosestPointOnLine(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB);
+    float DistPointLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB);
+    bool IsPointOnLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB);
+    bool IntersectLineSegments(const Point2Int & p1, const Point2Int & p2, const Point2Int & q1, const Point2Int & q2, float& outLambda1, float& outLambda2);
+    bool IntersectRectLine(const RectInt & r, const Point2Int & p1, const Point2Int & p2, std::pair<Point2Int, Point2Int>& intersections);
+}
+//---------------------------------------------------------------
 
 #endif // !ENGINE_H
