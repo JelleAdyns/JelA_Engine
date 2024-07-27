@@ -149,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AudioService.cpp" />
+    <ClCompile Include="BaseGame.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />

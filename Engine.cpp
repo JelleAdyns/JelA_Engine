@@ -123,6 +123,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 {
                     if (m_IsFullscreen) SetWindowPosition();
                     else SetFullscreen();
+
                     m_IsFullscreen = !m_IsFullscreen;
                 }
                 
@@ -1011,8 +1012,7 @@ void Engine::SetFullscreen()
     DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
     DWORD dwNewStyle = dwStyle & ~dwRemove;
     ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
-    ::SetWindowPos(m_hWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
-        | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    ::SetWindowPos(m_hWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     HDC hDC = ::GetWindowDC(m_hWindow);
     ::SetWindowPos(m_hWindow, NULL, 0, 0,
         ::GetDeviceCaps(hDC, HORZRES),
@@ -1021,7 +1021,7 @@ void Engine::SetFullscreen()
 
     if (m_pGame)
     {
-        ShowWindow(m_hWindow, SW_SHOWNORMAL);
+        ShowWindow(m_hWindow, SW_DENORMAL);
         UpdateWindow(m_hWindow);
     }
 }
