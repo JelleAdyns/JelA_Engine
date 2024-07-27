@@ -18,14 +18,8 @@
     <ClInclude Include="framework.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Engine Files</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Application.h">
-      <Filter>Game Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine.h">
       <Filter>Engine Files</Filter>
@@ -33,13 +27,49 @@
     <ClInclude Include="Defines.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Structs.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseGame.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioService.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.cpp">
-      <Filter>Game Files</Filter>
-    </ClCompile>
     <ClCompile Include="Engine.cpp">
       <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Structs.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioService.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Game Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
