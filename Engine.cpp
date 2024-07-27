@@ -514,15 +514,15 @@ void Engine::DrawCircle(const CircleInt& circle, float lineThickness) const
 }
 
 // Strings
-void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int bottom, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, int height, bool showRect)const
 {
     DrawString(textToDisplay, font, RectInt{ left, bottom, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftBottom, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftBottom, int width, int height, bool showRect)const
 {
     DrawString(textToDisplay, font, RectInt{ leftBottom.x, leftBottom.y, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, RectInt destRect, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
@@ -539,23 +539,23 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRe
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32) textToDisplay.length(),
-        font->GetFormat(),
+        font.GetFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
         DWRITE_MEASURING_MODE_NATURAL);
 }
 
-void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int bottom, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, bool showRect)const
 {
     DrawString(textToDisplay, font, Point2Int{ left, bottom }, width, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftBottom, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftBottom, int width, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(leftBottom.x),
-        static_cast<FLOAT>(m_Height - (leftBottom.y + font->GetFontSize())),
+        static_cast<FLOAT>(m_Height - (leftBottom.y + font.GetFontSize())),
         static_cast<FLOAT>(leftBottom.x + width),
         static_cast<FLOAT>(m_Height - leftBottom.y));
     if (showRect)
@@ -566,7 +566,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32) textToDisplay.length(),
-        font->GetFormat(),
+        font.GetFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -776,15 +776,15 @@ void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
-void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int top, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left, int top, int width, int height, bool showRect)const
 {
     DrawString(textToDisplay, font, RectInt{ left, top, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftTop, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftTop, int width, int height, bool showRect)const
 {
     DrawString(textToDisplay, font, RectInt{ leftTop.x, leftTop.y, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRect, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, RectInt destRect, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
@@ -801,7 +801,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRe
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32) textToDisplay.length(),
-        font->GetFormat(),
+        font.GetFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -809,19 +809,19 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, RectInt destRe
 }
 
 //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-void Engine::DrawString(const tstring& textToDisplay, Font* font, int left, int top, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left, int top, int width, bool showRect)const
 {
     DrawString(textToDisplay, font, Point2Int{ left,top }, width, showRect);
 }
 //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int leftTop, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftTop, int width, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(leftTop.x),
         static_cast<FLOAT>(leftTop.y),
         static_cast<FLOAT>(leftTop.x + width),
-        static_cast<FLOAT>(leftTop.y + font->GetFontSize()));
+        static_cast<FLOAT>(leftTop.y + font.GetFontSize()));
 
     if (showRect)
     {
@@ -831,7 +831,7 @@ void Engine::DrawString(const tstring& textToDisplay, Font* font, Point2Int left
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32) textToDisplay.length(),
-        font->GetFormat(),
+        font.GetFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
