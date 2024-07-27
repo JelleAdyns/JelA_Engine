@@ -5,8 +5,8 @@
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 
-#ifndef PLAYER_H
-#define PLAYER_H
+#ifndef CPLAYER_H
+#define CPLAYER_H
 
 #include <windows.h>
 #include <shobjidl.h> 
@@ -93,4 +93,4 @@ protected:
     static IMFSimpleAudioVolume*   m_pMasterVolume;
 };
 
-#endif PLAYER_H
+#endif CPLAYER_H
