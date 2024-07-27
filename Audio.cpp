@@ -1,5 +1,5 @@
 #include "Engine.h"
-#include "Player.h"
+#include "CPlayer.h"
 #include "framework.h"
 #include <map>
 #include <queue>

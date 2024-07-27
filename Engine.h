@@ -4,7 +4,7 @@
 #include "resource.h"
 #include "BaseGame.h"
 #include "Structs.h"
-#include "player.h"
+#include "CPlayer.h"
 #include "Audio.h"
 #include "framework.h"
 #include <vector>

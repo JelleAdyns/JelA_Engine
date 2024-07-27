@@ -39,7 +39,7 @@
     <ClInclude Include="BaseGame.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
-    <ClInclude Include="Player.h">
+    <ClInclude Include="CPlayer.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
     <ClInclude Include="AudioService.h">
@@ -59,7 +59,7 @@
     <ClCompile Include="Game.cpp">
       <Filter>Game Files</Filter>
     </ClCompile>
-    <ClCompile Include="Player.cpp">
+    <ClCompile Include="CPlayer.cpp">
       <Filter>Engine Files</Filter>
     </ClCompile>
     <ClCompile Include="AudioService.cpp">
@@ -69,6 +69,9 @@
       <Filter>Engine Files</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseGame.cpp">
       <Filter>Game Files</Filter>
     </ClCompile>
   </ItemGroup>

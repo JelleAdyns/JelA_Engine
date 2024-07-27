@@ -5,7 +5,7 @@
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 
-#include "Player.h"
+#include "CPlayer.h"
 #include "propvarutil.h"
 
 IMFSimpleAudioVolume* CPlayer::m_pMasterVolume{nullptr};
