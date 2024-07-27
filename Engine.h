@@ -136,6 +136,8 @@ public:
     RectInt GetWindowSize() const;
     HWND GetWindow() const;
     HINSTANCE GetHInstance() const;
+    float GetDeltaTime() const;
+    float GetTotalTime() const;
 
     ID2D1HwndRenderTarget* getRenderTarget() const;
 
@@ -158,6 +160,7 @@ private:
     void SetWindowPosition();
     void SetFullscreen();
     void SetTransform() const;
+    void SetDeltaTime(float elapsedSec);
     RectInt GetRenderTargetSize() const;
     HRESULT OnRender();
     HRESULT MakeWindow();
@@ -203,6 +206,8 @@ private:
     int                         m_Height;
 
     float                       m_MilliSecondsPerFrame;
+    float                       m_DeltaTime;
+    float                       m_TotalTime;
 
     bool                        m_IsFullscreen;
     bool                        m_KeyIsDown;

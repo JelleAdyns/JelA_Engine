@@ -70,29 +70,42 @@ void Game::Draw() const
 	ENGINE.DrawLine(Point2Int{ 0,0 }, Point2Int{ 20,20 });
 	ENGINE.DrawLine(Point2Int{ 10,10 }, Point2Int{ 40,40 });
 	ENGINE.SetColor(RGB(0, 255, 0));
-	ENGINE.DrawVector(Point2Int{ 10,40 }, Vector2f{ 700,700 });
+
+
+	ENGINE.DrawVector(Point2Int{ 100,400 }, Vector2f{ 100,-20 });
+	ENGINE.DrawVector(Point2Int{ 100,400 } + Vector2f{ 100,-20 }, Vector2f{ 100,-120 });
+	ENGINE.DrawVector(Point2Int{ 100,400 }, Vector2f{ 100,-20 } + Vector2f{ 100,-120 });
+	
+	ENGINE.DrawVector(origin, dot);
+	ENGINE.DrawVector(origin, toDot);
+
+	ENGINE.SetColor(RGB(255, 56, 233));
+	ENGINE.DrawVector(origin, first);
+
+
+
 }
-void Game::Tick(float elapsedSec)
+void Game::Tick()
 {
 	if (GetKeyState(VK_RMENU) & 0x8000)
 	{
 		bool testbool = utils::IsPointInRect(Point2Int{ 15,15 }, RectInt{ 0,10,20,20 });
 		OutputDebugString(to_tstring(testbool).c_str());
 	}
-	m_X += elapsedSec;
+	m_X += ENGINE.GetDeltaTime();
 	if (m_Y <= 0.f)
 	{
 		maxVelocity -= 5;
 		velocity = maxVelocity;
 	}
-	velocity += acceleration * elapsedSec;
-	m_Y += velocity * elapsedSec;
+	velocity += acceleration * ENGINE.GetDeltaTime();
+	m_Y += velocity * ENGINE.GetDeltaTime();
 	if (ENGINE.IsKeyPressed('A')) spritevelocity = height;
 	//else spritevelocity = 0;
-	spritePos += spritevelocity * elapsedSec;
+	spritePos += spritevelocity * ENGINE.GetDeltaTime();
 	spritevelocity = 0;
 
-	angle += 60 * elapsedSec;
+	angle += 60 * ENGINE.GetDeltaTime();
 
 	std::pair<Point2Int, Point2Int> p{};
 	bool testbool = utils::IntersectRectLine(RectInt{ 20,30, 100, 150 }, Point2Int{ 10,40 }, Point2Int{ 200,179 }, p);
@@ -103,6 +116,14 @@ void Game::Tick(float elapsedSec)
 
 	Point2Int kruispunt = Point2Int{ 0,0 } + Vector2f{ Point2Int{ 0,0 } , Point2Int{ 20,20 } } * la;
 	Point2Int kruispunt2 = Point2Int{ 10,10 } + Vector2f{ Point2Int{ 10,10 } , Point2Int{ 40,40 } } * la2;
+
+
+	toDot.x = cos(angle * float(std::numbers::pi) / 180) * 100;
+	toDot.y = sin(angle * float(std::numbers::pi) / 180) * 100;
+
+	Vector2f norm = toDot.Normalized();
+	float dotPr = Vector2f::Dot(toDot, first);
+	dot = norm * dotPr;
 
 }
 void Game::KeyDown(int virtualKeycode)

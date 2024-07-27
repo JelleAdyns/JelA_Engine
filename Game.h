@@ -2,7 +2,7 @@
 #define GAME_H
 
 #include "Engine.h"
-
+#include <numbers>
 class Game final: public BaseGame
 {
 public:
@@ -16,7 +16,7 @@ public:
 
     virtual void Initialize() override;
     virtual void Draw() const override;
-    virtual void Tick(float elapsedSec) override;
+    virtual void Tick() override;
     virtual void KeyDown(int virtualKeycode) override;
     virtual void KeyUp(int virtualKeycode) override;
     virtual void MouseDown(bool isLeft, int x, int y) override;
@@ -35,7 +35,10 @@ private:
     float angle{};
     float spritePos{};
     int spritevelocity{};
-
+    Vector2f first{ cosf(160 * float(std::numbers::pi) / 180)*200, sinf(160 * float(std::numbers::pi) / 180)*200 };
+    Vector2f dot{};
+    Vector2f toDot{};
+    Point2Int origin{ 400, 200 };
 
     enum class Clips
     {

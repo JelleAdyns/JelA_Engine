@@ -225,10 +225,12 @@ int Engine::Run()
             std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
             float elapsedSec{ std::chrono::duration<float>(t2 - t1).count() };
-            
+
+            ENGINE.SetDeltaTime(elapsedSec);
+
             t1 = t2;
 
-            m_pGame->Tick(elapsedSec);
+            m_pGame->Tick();
             InvalidateRect(m_hWindow, NULL, FALSE);
             
             const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>( m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
@@ -407,7 +409,7 @@ void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, 
     const int endY = originY + static_cast<int>(vectorY);
 
     const int arrowLineLength{ 30 };
-    const float desiredHeadAngle = float(M_PI / 6.f);
+    const float desiredHeadAngle = float(M_PI / 12.f);
     const float mirroredVectorAngle = atan2f(vectorY, vectorX) + float(M_PI) ;
 
     const Point2Int arrowP2{ static_cast<int>(endX + cosf(mirroredVectorAngle - desiredHeadAngle) * arrowLineLength),
@@ -1052,6 +1054,11 @@ void Engine::SetTransform() const
         m_TransformChanged = false;
     }
 }
+void Engine::SetDeltaTime(float elapsedSec)
+{
+    m_DeltaTime = elapsedSec;
+    m_TotalTime += elapsedSec;
+}
 void Engine::SetFrameRate(int FPS)
 {
     m_MilliSecondsPerFrame = 1000.0f / FPS;
@@ -1182,6 +1189,14 @@ HWND Engine::GetWindow() const
 HINSTANCE Engine::GetHInstance() const
 {
     return m_hInstance;
+}
+float Engine::GetDeltaTime() const
+{
+    return m_DeltaTime;
+}
+float Engine::GetTotalTime() const
+{
+    return m_TotalTime;
 }
 ID2D1HwndRenderTarget* Engine::getRenderTarget() const
 {

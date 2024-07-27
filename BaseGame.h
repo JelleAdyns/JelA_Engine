@@ -15,7 +15,7 @@ public:
 
 	virtual void Initialize() = 0;
 	virtual void Draw() const = 0;
-	virtual void Tick(float elapsedSec) = 0;
+	virtual void Tick() = 0;
     virtual void KeyDown(int virtualKeycode) = 0;
     virtual void KeyUp(int virtualKeycode) = 0;
     virtual void MouseDown(bool isLeft, int x, int y) = 0;
