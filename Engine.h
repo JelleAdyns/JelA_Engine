@@ -122,7 +122,8 @@ public:
     void SetWindowDimensions(int width, int height);
     void SetFrameRate(int FPS);
 
-    void EndTransform();
+    void PushTransform();
+    void PopTransform();
     void Translate(int xTranslation, int yTranslation);
     void Translate(const Vector2f& translation);
     void Rotate(float angle, int xPivotPoint, int yPivotPoint) ;
@@ -167,40 +168,40 @@ private:
     HRESULT CreateRenderTarget();
 
     //Win32
-    HWND                        m_hWindow;
-    HINSTANCE                   m_hInstance;
+    HWND                            m_hWindow;
+    HINSTANCE                       m_hInstance;
 
     //Direct2D
-    ID2D1Factory*               m_pDFactory;
-    ID2D1HwndRenderTarget*      m_pDRenderTarget;
-    ID2D1SolidColorBrush*       m_pDColorBrush;
-    D2D1_COLOR_F                m_DColorBackGround;
+    ID2D1Factory*                   m_pDFactory;
+    ID2D1HwndRenderTarget*          m_pDRenderTarget;
+    ID2D1SolidColorBrush*           m_pDColorBrush;
+    D2D1_COLOR_F                    m_DColorBackGround;
 
     //BaseGame
-    BaseGame*                   m_pGame;
+    BaseGame*                       m_pGame;
 
     //Transform
-    FLOAT                       m_ViewPortTranslationX{};
-    FLOAT                       m_ViewPortTranslationY{};
-    FLOAT                       m_ViewPortScaling{};
+    FLOAT                           m_ViewPortTranslationX{};
+    FLOAT                           m_ViewPortTranslationY{};
+    FLOAT                           m_ViewPortScaling{};
 
-    D2D1::Matrix3x2F            m_Matrix{};
+    std::vector<D2D1::Matrix3x2F>   m_VecTransformMatrices{};
 
-    bool                        m_TranslationBeforeRotation{};
-    mutable bool                m_TransformChanged{};
+    bool                            m_TranslationBeforeRotation{};
+    mutable bool                    m_TransformChanged{};
 
     //General datamembers
-    std::wstring                m_ResourcePath;
-    tstring                     m_Title;
-    int                         m_Width;
-    int                         m_Height;
+    std::wstring                    m_ResourcePath;
+    tstring                         m_Title;
+    int                             m_Width;
+    int                             m_Height;
 
-    float                       m_MilliSecondsPerFrame;
-    float                       m_DeltaTime;
-    float                       m_TotalTime;
+    float                           m_MilliSecondsPerFrame;
+    float                           m_DeltaTime;
+    float                           m_TotalTime;
 
-    bool                        m_IsFullscreen;
-    bool                        m_KeyIsDown;
+    bool                            m_IsFullscreen;
+    bool                            m_KeyIsDown;
 
 };
 

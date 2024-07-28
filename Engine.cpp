@@ -25,8 +25,7 @@ Engine::Engine() :
     m_Height{500},
     m_MilliSecondsPerFrame{1.f/60.f},
     m_IsFullscreen{false},
-    m_KeyIsDown{false},
-    m_Matrix{D2D1::Matrix3x2F::Identity()}
+    m_KeyIsDown{false}
 {
     
 }
@@ -1029,8 +1028,14 @@ void Engine::SetTransform() const
 {
     if (m_TransformChanged)
     {
+        D2D1::Matrix3x2F combinedMatrix{D2D1::Matrix3x2F::Identity()};
+        for (auto& matrix : m_VecTransformMatrices)
+        {
+            combinedMatrix = matrix * combinedMatrix;
+        }
+
         m_pDRenderTarget->SetTransform(
-            m_Matrix *
+            combinedMatrix *
             D2D1::Matrix3x2F::Scale(m_ViewPortScaling, m_ViewPortScaling) *
             D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY)
 
@@ -1052,41 +1057,84 @@ void Engine::SetFrameRate(int FPS)
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 void Engine::Translate(int xTranslation, int yTranslation)
 {
-    m_Matrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(-yTranslation)) * m_Matrix ;
+    if (!m_VecTransformMatrices.empty())
+    {
+        auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
+        lastMatrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(-yTranslation)) * lastMatrix;
+    }
+    else OutputDebugString(_T("Vector of matrices was empty while trying to add a Translation matrix."));
+
     m_TransformChanged = true;
 }
 
 void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint)
 {
-    m_Matrix =  D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(-angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(m_Height - yPivotPoint))) * m_Matrix;
+    if (!m_VecTransformMatrices.empty())
+    {
+        auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
+        lastMatrix = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(-angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(m_Height - yPivotPoint))) * lastMatrix;
+    }
+    else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
+
     m_TransformChanged = true;
 }
 void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
 {
-    m_Matrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale), D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(m_Height - yPointToScaleFrom))) * m_Matrix;
+    if (!m_VecTransformMatrices.empty())
+    {
+        auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
+        lastMatrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale),
+            D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(m_Height - yPointToScaleFrom)))
+            * lastMatrix;
+    }
+    else OutputDebugString(_T("Vector of matrices was empty while trying to add a Scaling matrix."));
+
     m_TransformChanged = true;
 }
 #else
 void Engine::Translate(int xTranslation, int yTranslation)
 {
-    m_Matrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(yTranslation)) * m_Matrix;
+    if (!m_VecTransformMatrices.empty())
+    {
+        auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
+        lastMatrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(yTranslation)) * lastMatrix;
+    }
+    else OutputDebugString(_T("Vector of matrices was empty while trying to add a Translation matrix."));
+
     m_TransformChanged = true;
 }
 void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint)
 {
-    m_Matrix = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(yPivotPoint))) * m_Matrix;
+    if (!m_VecTransformMatrices.empty())
+    {
+        auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
+        lastMatrix = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(yPivotPoint))) * lastMatrix;
+    }
+    else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
+
     m_TranslationBeforeRotation = translationFirst;
 }
 void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
 {
-    m_Matrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale), D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(yPointToScaleFrom))) * m_Matrix;
+    if (!m_VecTransformMatrices.empty())
+    {
+        auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
+        lastMatrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale), D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(yPointToScaleFrom))) * lastMatrix;
+    }
+    else OutputDebugString(_T("Vector of matrices was empty while trying to add a Scaling matrix."));
+
     m_TransformChanged = true;
 }
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-void Engine::EndTransform()
+void Engine::PushTransform()
 {
-    m_Matrix = D2D1::Matrix3x2F::Identity();
+    m_VecTransformMatrices.push_back(D2D1::Matrix3x2F::Identity());
+}
+
+void Engine::PopTransform()
+{
+    m_VecTransformMatrices.pop_back();
 
     m_TransformChanged = true;  
     m_TranslationBeforeRotation = false;  
