@@ -4,8 +4,8 @@
 class BaseGame
 {
 public:
-    BaseGame() {}
-    virtual ~BaseGame() {};
+    BaseGame() = default;
+    virtual ~BaseGame() = default;
 
     BaseGame(const BaseGame& other) = delete;
     BaseGame(BaseGame&& other) noexcept = delete;

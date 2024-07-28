@@ -125,8 +125,8 @@ public:
     void EndTransform();
     void Translate(int xTranslation, int yTranslation);
     void Translate(const Vector2f& translation);
-    void Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst) ;
-    void Rotate(float angle, const Point2Int& pivotPoint, bool translationFirst) ;
+    void Rotate(float angle, int xPivotPoint, int yPivotPoint) ;
+    void Rotate(float angle, const Point2Int& pivotPoint) ;
     void Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom);
     void Scale(float scale, int xPointToScaleFrom, int yPointToScaleFrom);
     void Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom);
@@ -184,17 +184,7 @@ private:
     FLOAT                       m_ViewPortTranslationY{};
     FLOAT                       m_ViewPortScaling{};
 
-    FLOAT                       m_ScalingX{ 1 };
-    FLOAT                       m_ScalingY{ 1 };
-    FLOAT                       m_PointToScaleFromX{};
-    FLOAT                       m_PointToScaleFromY{};
-
-    FLOAT                       m_TranslationX{};
-    FLOAT                       m_TranslationY{};
-
-    FLOAT                       m_Rotation{};
-    FLOAT                       m_PivotPointX{};
-    FLOAT                       m_PivotPointY{};
+    D2D1::Matrix3x2F            m_Matrix{};
 
     bool                        m_TranslationBeforeRotation{};
     mutable bool                m_TransformChanged{};

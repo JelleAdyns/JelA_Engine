@@ -25,7 +25,8 @@ Engine::Engine() :
     m_Height{500},
     m_MilliSecondsPerFrame{1.f/60.f},
     m_IsFullscreen{false},
-    m_KeyIsDown{false}
+    m_KeyIsDown{false},
+    m_Matrix{D2D1::Matrix3x2F::Identity()}
 {
     
 }
@@ -202,6 +203,7 @@ int Engine::Run()
     m_pGame = new Game{};
     m_pGame->Initialize();
 
+    SetWindowPosition();
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     
@@ -977,8 +979,6 @@ void Engine::SetWindowDimensions(int width, int height)
 {
     m_Width = width;
     m_Height = height;
-
-    SetWindowPosition();
 }
 void Engine::SetWindowPosition()
 {
@@ -1029,27 +1029,12 @@ void Engine::SetTransform() const
 {
     if (m_TransformChanged)
     {
-        if(m_TranslationBeforeRotation)
-        {
-             m_pDRenderTarget->SetTransform(
-                D2D1::Matrix3x2F::Scale(m_ScalingX, m_ScalingY, D2D1::Point2F(m_PointToScaleFromX, m_PointToScaleFromY)) *
-                D2D1::Matrix3x2F::Translation(m_TranslationX, m_TranslationY) *
-                D2D1::Matrix3x2F::Rotation(m_Rotation, D2D1::Point2F(m_PivotPointX , m_PivotPointY))*
-                D2D1::Matrix3x2F::Scale(m_ViewPortScaling, m_ViewPortScaling)*
-                D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY) 
-               
-            );
-        }
-        else
-        {
-           m_pDRenderTarget->SetTransform(
-               D2D1::Matrix3x2F::Scale(m_ScalingX, m_ScalingY, D2D1::Point2F(m_PointToScaleFromX, m_PointToScaleFromY)) *
-               D2D1::Matrix3x2F::Rotation(m_Rotation, D2D1::Point2F(m_PivotPointX, m_PivotPointY)) *
-               D2D1::Matrix3x2F::Translation(m_TranslationX, m_TranslationY) *
-               D2D1::Matrix3x2F::Scale(m_ViewPortScaling, m_ViewPortScaling) *
-               D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY)
-            );
-        }
+        m_pDRenderTarget->SetTransform(
+            m_Matrix *
+            D2D1::Matrix3x2F::Scale(m_ViewPortScaling, m_ViewPortScaling) *
+            D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY)
+
+        );
 
         m_TransformChanged = false;
     }
@@ -1067,75 +1052,52 @@ void Engine::SetFrameRate(int FPS)
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 void Engine::Translate(int xTranslation, int yTranslation)
 {
-    m_TranslationX = static_cast<FLOAT>(xTranslation);
-    m_TranslationY = static_cast<FLOAT>(-yTranslation);
-
+    m_Matrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(-yTranslation)) * m_Matrix ;
     m_TransformChanged = true;
 }
-void Engine::Translate(const Vector2f& translation)
-{
-    Translate(static_cast<int>(translation.x), static_cast<int>(translation.y));
-}
-void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst)
-{
-    m_Rotation = static_cast<FLOAT>(-angle);
-    m_PivotPointX = static_cast<FLOAT>(xPivotPoint);
-    m_PivotPointY = static_cast<FLOAT>(m_Height - yPivotPoint);
 
+void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint)
+{
+    m_Matrix =  D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(-angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(m_Height - yPivotPoint))) * m_Matrix;
     m_TransformChanged = true;
-    m_TranslationBeforeRotation = translationFirst;
 }
 void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
 {
-    m_ScalingX = static_cast<FLOAT>(xScale);
-    m_ScalingY = static_cast<FLOAT>(yScale);
-    m_PointToScaleFromX = static_cast<FLOAT>(xPointToScaleFrom);
-    m_PointToScaleFromY = static_cast<FLOAT>(m_Height - yPointToScaleFrom);
-
+    m_Matrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale), D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(m_Height - yPointToScaleFrom))) * m_Matrix;
     m_TransformChanged = true;
 }
 #else
 void Engine::Translate(int xTranslation, int yTranslation)
 {
-    m_TranslationX = static_cast<FLOAT>(xTranslation);
-    m_TranslationY = static_cast<FLOAT>(yTranslation);
-
+    m_Matrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(yTranslation)) * m_Matrix;
     m_TransformChanged = true;
 }
-void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint, bool translationFirst)
+void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint)
 {
-    m_Rotation = static_cast<FLOAT>(angle);
-    m_PivotPointX = static_cast<FLOAT>(xPivotPoint);
-    m_PivotPointY = static_cast<FLOAT>(yPivotPoint);
-
-    m_TransformChanged = true;
+    m_Matrix = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(yPivotPoint))) * m_Matrix;
     m_TranslationBeforeRotation = translationFirst;
 }
 void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
 {
-    m_ScalingX = static_cast<FLOAT>(xScale);
-    m_ScalingY = static_cast<FLOAT>(yScale);
-    m_PointToScaleFromX = static_cast<FLOAT>(xPointToScaleFrom);
-    m_PointToScaleFromY = static_cast<FLOAT>(yPointToScaleFrom);
-
+    m_Matrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale), D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(yPointToScaleFrom))) * m_Matrix;
     m_TransformChanged = true;
 }
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
 void Engine::EndTransform()
 {
-    m_ScalingX = 1;
-    m_ScalingY = 1;
-    m_TranslationX = 0;
-    m_TranslationY = 0;
-    m_Rotation = 0;
+    m_Matrix = D2D1::Matrix3x2F::Identity();
 
     m_TransformChanged = true;  
     m_TranslationBeforeRotation = false;  
 }
-void Engine::Rotate(float angle, const Point2Int& pivotPoint, bool translationFirst)
+void Engine::Translate(const Vector2f& translation)
 {
-    Rotate(angle, pivotPoint.x, pivotPoint.y, translationFirst);
+    Translate(static_cast<int>(round(translation.x)), static_cast<int>(round(translation.y)));
+}
+void Engine::Rotate(float angle, const Point2Int& pivotPoint)
+{
+    Rotate(angle, pivotPoint.x, pivotPoint.y);
 }
 void Engine::Scale(float scale, int xPointToScaleFrom, int yPointToScaleFrom)
 {
