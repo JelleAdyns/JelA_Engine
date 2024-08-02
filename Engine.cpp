@@ -1479,14 +1479,14 @@ float utils::Distance(const Point2Int& p1, const Point2Int& p2)
 
 bool utils::IsPointInRect(const Point2Int& p, const RectInt& r)
 {
-    return p.x > r.left and
-        p.x < (r.left + r.width) and
+    return p.x >= r.left and
+        p.x <= (r.left + r.width) and
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-        p.y > r.bottom and
-        p.y < (r.bottom + r.height);
+        p.y >= r.bottom and
+        p.y <= (r.bottom + r.height);
 #else
-        p.y > r.top and
-        p.y < (r.top + r.height);
+        p.y >= r.top and
+        p.y <= (r.top + r.height);
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
 }
