@@ -120,6 +120,7 @@ public:
     void SetTitle(const tstring& newTitle);
     void SetResourcePath(const std::wstring& newTitle);
     void SetWindowDimensions(int width, int height);
+    void SetWindowScale(float scale);
     void SetFrameRate(int FPS);
 
     void PushTransform();
@@ -134,7 +135,8 @@ public:
     void Scale(float scale, const Point2Int& PointToScaleFrom);
 
     const std::wstring& GetResourcePath() const;
-    RectInt GetWindowSize() const;
+    RectInt GetWindowRect() const;
+    float GetWindowScale() const;
     HWND GetWindow() const;
     HINSTANCE GetHInstance() const;
     float GetDeltaTime() const;
@@ -172,13 +174,13 @@ private:
     HINSTANCE                       m_hInstance;
 
     //Direct2D
-    ID2D1Factory*                   m_pDFactory;
-    ID2D1HwndRenderTarget*          m_pDRenderTarget;
-    ID2D1SolidColorBrush*           m_pDColorBrush;
-    D2D1_COLOR_F                    m_DColorBackGround;
+    ID2D1Factory*                   m_pDFactory{};
+    ID2D1HwndRenderTarget*          m_pDRenderTarget{};
+    ID2D1SolidColorBrush*           m_pDColorBrush{};
+    D2D1_COLOR_F                    m_DColorBackGround{};
 
     //BaseGame
-    BaseGame*                       m_pGame;
+    BaseGame*                       m_pGame{};
 
     //Transform
     FLOAT                           m_ViewPortTranslationX{};
@@ -190,18 +192,21 @@ private:
     bool                            m_TranslationBeforeRotation{};
     mutable bool                    m_TransformChanged{};
 
+
     //General datamembers
-    std::wstring                    m_ResourcePath;
-    tstring                         m_Title;
-    int                             m_Width;
-    int                             m_Height;
+    std::wstring                    m_ResourcePath{};
+    tstring                         m_Title{};
 
-    float                           m_MilliSecondsPerFrame;
-    float                           m_DeltaTime;
-    float                           m_TotalTime;
+    float                           m_WindowScale{1};
+    int                             m_Width{};
+    int                             m_Height{};
 
-    bool                            m_IsFullscreen;
-    bool                            m_KeyIsDown;
+    float                           m_MilliSecondsPerFrame{};
+    float                           m_DeltaTime{};
+    float                           m_TotalTime{};
+
+    bool                            m_IsFullscreen{};
+    bool                            m_KeyIsDown{};
 
 };
 

@@ -77,12 +77,12 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     int rendertargetWidth{ GetRenderTargetSize().width };
                     int rendertargetHeight{ GetRenderTargetSize().height };
 
-                    float scaleX{ rendertargetWidth / static_cast<float>(m_Width) };
-                    float scaleY{ rendertargetHeight / static_cast<float>(m_Height) };
+                    float scaleX{ rendertargetWidth / (m_Width * m_WindowScale) };
+                    float scaleY{ rendertargetHeight / (m_Height * m_WindowScale) };
                     float minScale{ std::min<float>(scaleX,scaleY) };
 
-                    float translationX{ (rendertargetWidth - m_Width * minScale) / 2.f };
-                    float translationY{ (rendertargetHeight - m_Height * minScale) / 2.f };
+                    float translationX{ (rendertargetWidth - (m_Width * m_WindowScale) * minScale) / 2.f };
+                    float translationY{ (rendertargetHeight - (m_Height * m_WindowScale) * minScale) / 2.f };
 
                     m_ViewPortTranslationX = translationX;
                     m_ViewPortTranslationY = translationY;
@@ -104,6 +104,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
             case WM_PAINT:
             {
+               
                 HRESULT hr = OnRender();
 
                 if (hr == D2DERR_RECREATE_TARGET)
@@ -360,7 +361,17 @@ HRESULT Engine::OnRender()
     SetTransform();
 
     // User Draw Calls
+    ENGINE.PushTransform();
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+    ENGINE.Scale(m_WindowScale, Point2Int{ 0,m_Height });
+#else
+    ENGINE.Scale(m_WindowScale, Point2Int{ 0,0 });
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
     m_pGame->Draw();
+
+    ENGINE.PopTransform();
 
     // Dont show more than the the scaled window size given by the user
     m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
@@ -585,7 +596,7 @@ void Engine::DrawTexture(const Texture& texture, const Point2Int& destLeftBottom
 }
 void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
 {
-    RectInt wndwSize = ENGINE.GetWindowSize();
+    RectInt wndwSize = ENGINE.GetWindowRect();
 
     D2D1_RECT_F destination = D2D1::RectF(
         static_cast<FLOAT>(destRect.left),
@@ -979,6 +990,10 @@ void Engine::SetWindowDimensions(int width, int height)
     m_Width = width;
     m_Height = height;
 }
+void Engine::SetWindowScale(float scale)
+{
+    m_WindowScale = scale;
+}
 void Engine::SetWindowPosition()
 {
     DWORD dwAdd = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
@@ -986,9 +1001,9 @@ void Engine::SetWindowPosition()
 
     UINT dpi = GetDpiForWindow(m_hWindow);
 
-    int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + m_Width + 10) };
+    int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + static_cast<int>(m_Width * m_WindowScale) + 10) };
     int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
-                        GetSystemMetrics(SM_CYCAPTION) + m_Height + 10) };
+                        GetSystemMetrics(SM_CYCAPTION) + static_cast<int>(m_Height * m_WindowScale) + 10) };
 
     windowWidth = static_cast<int>(windowWidth * dpi / 96.f);
     windowHeight = static_cast<int>(windowHeight * dpi / 96.f);
@@ -1188,9 +1203,13 @@ const std::wstring& Engine::GetResourcePath() const
 {
     return m_ResourcePath;
 }
-RectInt Engine::GetWindowSize() const
+RectInt Engine::GetWindowRect() const
 {
     return RectInt{ 0, 0, m_Width, m_Height };
+}
+float Engine::GetWindowScale() const
+{
+    return m_WindowScale;
 }
 HWND Engine::GetWindow() const
 {
