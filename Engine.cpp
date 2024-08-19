@@ -200,6 +200,9 @@ int Engine::Run()
     MakeWindow();       
     CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
                              // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
+
+    srand(static_cast<unsigned int>(time(nullptr)));
+
     m_pGame = new Game{};
     m_pGame->Initialize();
 
@@ -362,15 +365,15 @@ HRESULT Engine::OnRender()
 
     // User Draw Calls
     ENGINE.PushTransform();
-
 #ifdef MATHEMATICAL_COORDINATESYSTEM
+
     ENGINE.Scale(m_WindowScale, Point2Int{ 0,m_Height });
 #else
     ENGINE.Scale(m_WindowScale, Point2Int{ 0,0 });
+
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
     m_pGame->Draw();
-
     ENGINE.PopTransform();
 
     // Dont show more than the the scaled window size given by the user
@@ -608,21 +611,20 @@ void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const 
     if (srcRect.width <= 0 || srcRect.height <= 0)
     {
         source = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(destRect.bottom),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(destRect.bottom + destRect.height)
+            0.F,
+            0.F,
+            static_cast<FLOAT>(texture.GetWidth()),
+            static_cast<FLOAT>(texture.GetHeight())
         );
     }
     else
     {
+        float sliceMargin{ 0.07f };
         source = D2D1::RectF(
-            static_cast<FLOAT>(srcRect.left),
-            static_cast<FLOAT>(srcRect.bottom),
-            static_cast<FLOAT>(srcRect.left + srcRect.width),
-            static_cast<FLOAT>(srcRect.bottom + srcRect.height));
-        destination.right = destination.left + srcRect.width;
-        destination.top = destination.bottom - srcRect.height;
+            static_cast<FLOAT>(srcRect.left + sliceMargin),
+            static_cast<FLOAT>(srcRect.bottom + sliceMargin),
+            static_cast<FLOAT>(srcRect.left + srcRect.width - sliceMargin),
+            static_cast<FLOAT>(srcRect.bottom + srcRect.height - sliceMargin));
     }
 
     SetTransform();
@@ -872,21 +874,20 @@ void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const 
     if (srcRect.width <= 0 || srcRect.height <= 0)
     {
         source = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(destRect.top),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(destRect.top + destRect.height)
+            0.F,
+            0.F,
+            static_cast<FLOAT>(texture.GetWidth()),
+            static_cast<FLOAT>(texture.GetHeight())
         );
     }
     else
     {
+        float sliceMargin{ 0.07f };
         source = D2D1::RectF(
-            static_cast<FLOAT>(srcRect.left),
-            static_cast<FLOAT>(srcRect.top),
-            static_cast<FLOAT>(srcRect.left + srcRect.width),
-            static_cast<FLOAT>(srcRect.top + srcRect.height));
-        destination.right = destination.left + srcRect.width;
-        destination.bottom = destination.top + srcRect.height;
+            static_cast<FLOAT>(srcRect.left + sliceMargin),
+            static_cast<FLOAT>(srcRect.top + sliceMargin),
+            static_cast<FLOAT>(srcRect.left + srcRect.width - sliceMargin),
+            static_cast<FLOAT>(srcRect.top + srcRect.height - sliceMargin));
     }
 
     SetTransform();
