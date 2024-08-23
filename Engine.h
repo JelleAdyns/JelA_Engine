@@ -8,6 +8,7 @@
 #include "Audio.h"
 #include "framework.h"
 #include <vector>
+#include <chrono>
 
 class Texture;
 class Font;
@@ -207,7 +208,10 @@ private:
 
     bool                            m_IsFullscreen{};
     bool                            m_KeyIsDown{};
-
+    bool                            m_WindowIsActive{true};
+    
+    std::chrono::high_resolution_clock::time_point m_T1;
+   
 };
 
 

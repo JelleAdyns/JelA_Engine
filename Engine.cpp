@@ -65,6 +65,24 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         {
             switch (message)
             {
+            case WM_ENTERSIZEMOVE:
+            case WM_KILLFOCUS:
+            case WM_EXITSIZEMOVE:
+            case WM_SETFOCUS:
+            {
+                m_T1 = std::chrono::high_resolution_clock::now();
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+            case WM_ACTIVATE:
+            {
+                if (LOWORD(wParam) == WA_INACTIVE) m_WindowIsActive = false;
+                else if (LOWORD(wParam) == WA_CLICKACTIVE || LOWORD(wParam) == WA_ACTIVE) m_WindowIsActive = true;
+            }
+            result = 0;
+            wasHandled = true;
+            break;
             case WM_SIZE:
             {              
                 UINT width = LOWORD(lParam);
@@ -208,9 +226,8 @@ int Engine::Run()
 
     SetWindowPosition();
 
-    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    m_T1 = std::chrono::high_resolution_clock::now();
     
-   
     // Main message loop:
     while (true)
     {
@@ -222,25 +239,27 @@ int Engine::Run()
                 DestroyWindow(m_hWindow);
                 break;
             }
+     
             TranslateMessage(&msg);
             DispatchMessage(&msg);
+            
         }
         else
         {
-           
-            std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+            const std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-            float elapsedSec{ std::chrono::duration<float>(t2 - t1).count() };
+            float elapsedSec{ std::chrono::duration<float>(t2 - m_T1).count() };
 
             ENGINE.SetDeltaTime(elapsedSec);
 
-            t1 = t2;
+            m_T1 = t2;
 
             m_pGame->Tick();
             InvalidateRect(m_hWindow, NULL, FALSE);
-            
-            const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>( m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
+
+            const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>(m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
             std::this_thread::sleep_for(sleepTime);
+  
         }
     }
     
@@ -971,7 +990,7 @@ void Engine::FillEllipse(const EllipseInt& ellipse)const
 
 bool Engine::IsKeyPressed(int virtualKeycode) const
 {
-    return GetKeyState(virtualKeycode) < 0;
+    return GetKeyState(virtualKeycode) < 0 and m_WindowIsActive;
 }
 void Engine::SetInstance(HINSTANCE hInst)
 {
