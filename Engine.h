@@ -166,6 +166,7 @@ private:
     void SetTransform() const;
     void SetDeltaTime(float elapsedSec);
     RectInt GetRenderTargetSize() const;
+    void Paint();
     HRESULT OnRender();
     HRESULT MakeWindow();
     HRESULT CreateRenderTarget();

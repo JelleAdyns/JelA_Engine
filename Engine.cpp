@@ -122,16 +122,7 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
             case WM_PAINT:
             {
-               
-                HRESULT hr = OnRender();
-
-                if (hr == D2DERR_RECREATE_TARGET)
-                {
-                    hr = S_OK;
-                    SafeRelease(&m_pDRenderTarget);
-                    SafeRelease(&m_pDColorBrush);
-                }
-                ValidateRect(hWnd, NULL);   
+                Paint();
             }
             result = 0;
             wasHandled = true;
@@ -214,7 +205,6 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 int Engine::Run()
 {
 
-    MSG msg;
     MakeWindow();       
     CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
                              // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
@@ -226,6 +216,7 @@ int Engine::Run()
 
     SetWindowPosition();
 
+    MSG msg;
     m_T1 = std::chrono::high_resolution_clock::now();
     
     // Main message loop:
@@ -255,7 +246,7 @@ int Engine::Run()
             m_T1 = t2;
 
             m_pGame->Tick();
-            InvalidateRect(m_hWindow, NULL, FALSE);
+            Paint();
 
             const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>(m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
             std::this_thread::sleep_for(sleepTime);
@@ -268,13 +259,13 @@ int Engine::Run()
 void Engine::DrawBorders(int rtWidth, int rtHeight) const
 {
 
-
+     
     int reserveSpace{ 5 };
     m_pDRenderTarget->FillRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(-reserveSpace),
             static_cast<FLOAT>(-reserveSpace),
-            static_cast<FLOAT>(m_ViewPortTranslationX - 1),
+            static_cast<FLOAT>(m_ViewPortTranslationX),
             static_cast<FLOAT>(rtHeight + reserveSpace)),
         m_pDColorBrush);
 
@@ -291,13 +282,13 @@ void Engine::DrawBorders(int rtWidth, int rtHeight) const
             static_cast<FLOAT>(-reserveSpace),
             static_cast<FLOAT>(-reserveSpace),
             static_cast<FLOAT>(rtWidth + reserveSpace),
-            static_cast<FLOAT>(m_ViewPortTranslationY - 1)),
+            static_cast<FLOAT>(m_ViewPortTranslationY)),
         m_pDColorBrush);
 
     m_pDRenderTarget->FillRectangle(
         D2D1::RectF(
             static_cast<FLOAT>(-reserveSpace),
-            static_cast<FLOAT>(rtHeight - m_ViewPortTranslationY + 1),
+            static_cast<FLOAT>(rtHeight - m_ViewPortTranslationY),
             static_cast<FLOAT>(rtWidth + reserveSpace),
             static_cast<FLOAT>(rtHeight + reserveSpace)),
         m_pDColorBrush);
@@ -1218,6 +1209,19 @@ RectInt Engine::GetRenderTargetSize() const
 {
     D2D1_SIZE_F size = m_pDRenderTarget->GetSize();
     return RectInt{ 0,0,static_cast<int>(size.width),static_cast<int>(size.height)};
+}
+void Engine::Paint()
+{
+    InvalidateRect(m_hWindow, NULL, TRUE);
+    HRESULT hr = OnRender();
+
+    if (hr == D2DERR_RECREATE_TARGET)
+    {
+        hr = S_OK;
+        SafeRelease(&m_pDRenderTarget);
+        SafeRelease(&m_pDColorBrush);
+    }
+    ValidateRect(m_hWindow, NULL);
 }
 const std::wstring& Engine::GetResourcePath() const
 {
