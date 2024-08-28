@@ -1137,8 +1137,6 @@ void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint)
         lastMatrix = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(yPivotPoint))) * lastMatrix;
     }
     else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
-
-    m_TranslationBeforeRotation = translationFirst;
 }
 void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
 {
@@ -1163,7 +1161,6 @@ void Engine::PopTransform()
     m_VecTransformMatrices.pop_back();
 
     m_TransformChanged = true;  
-    m_TranslationBeforeRotation = false;  
 }
 void Engine::Translate(const Vector2f& translation)
 {
@@ -1463,7 +1460,6 @@ HRESULT Font::Initialize(const std::wstring& fontName)
     else
     {
         m_FontName = name;
-
     }
 
     SafeRelease(&pFontSetBuilder);
@@ -1487,8 +1483,41 @@ void Font::SetTextFormat(int size, bool bold, bool italic)
         static_cast<FLOAT>(size),
         L"en-us",
         &m_pTextFormat);
-
+   
     m_FontSize = size;
+}
+void Font::SetHorizontalAllignment(HorAllignment allignment)
+{
+    switch (allignment)
+    {
+    case HorAllignment::Left:
+        if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+        break;
+    case HorAllignment::Center:
+        if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+        break;
+    case HorAllignment::Right:
+        if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+        break;
+    case HorAllignment::Justified:
+        if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+        break;
+    }
+}
+void Font::SetVerticalAllignment(VertAllignment allignment)
+{
+    switch (allignment)
+    {
+    case Font::VertAllignment::Top:
+        if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+        break;
+    case Font::VertAllignment::Center:
+        if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+        break;
+    case Font::VertAllignment::Bottom:
+        if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+        break;
+    }
 }
 IDWriteTextFormat* Font::GetFormat() const
 {

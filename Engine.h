@@ -191,7 +191,6 @@ private:
 
     std::vector<D2D1::Matrix3x2F>   m_VecTransformMatrices{};
 
-    bool                            m_TranslationBeforeRotation{};
     mutable bool                    m_TransformChanged{};
 
 
@@ -246,6 +245,7 @@ private:
 
 //---------------------------------------------------------------
 //https://stackoverflow.com/questions/37572961/c-directwrite-load-font-from-file-at-runtime
+
 class Font final
 {
 public:
@@ -259,7 +259,23 @@ public:
 
     ~Font();
 
+    enum class HorAllignment
+    {
+        Left,
+        Center,
+        Right,
+        Justified
+    };
+    enum class VertAllignment
+    {
+        Top,
+        Center,
+        Bottom,
+    };
+
     void SetTextFormat(int size, bool bold, bool italic);
+    void SetHorizontalAllignment(HorAllignment allignment);
+    void SetVerticalAllignment(VertAllignment allignment);
     IDWriteTextFormat* GetFormat() const;
     int GetFontSize() const;
 
