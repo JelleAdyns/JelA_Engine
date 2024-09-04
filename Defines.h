@@ -7,8 +7,10 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <regex>
 
 #ifdef _UNICODE								
+	#define tchar			wchar_t
 	#define tstring			std::wstring
 	#define tcin			std::wcin
 	#define tcout			std::wcout
@@ -18,7 +20,14 @@
 	#define tfstream		std::wfstream
 	#define tostream		std::wostream
 	#define to_tstring		std::to_wstring
+
+	#define tregex			std::wregex
+	#define tcmatch			std::wcmatch
+	#define tsmatch			std::wsmatch
+	#define tcsub_match		std::wcsub_match
+	#define tssub_match		std::wssub_match
 #else
+	#define tchar			char
 	#define tstring			std::string
 	#define tcin			std::cin
 	#define tcout			std::cout
@@ -28,6 +37,12 @@
 	#define tfstream		std::fstream
 	#define tostream		std::ostream
 	#define to_tstring		std::to_string
+
+	#define tregex			std::regex
+	#define tcmatch			std::cmatch
+	#define tsmatch			std::smatch
+	#define tcsub_match		std::csub_match
+	#define tssub_match		std::ssub_match
 #endif
 
 //next ifdef is code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
