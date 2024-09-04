@@ -230,9 +230,9 @@ void Audio::AudioImpl::PauseSoundImpl(SoundID id) const
 }
 void Audio::AudioImpl::PauseAllSoundsImpl() const
 {
-	for (auto& audioInfo : m_pMapMusicClips)
+	for (auto& [soundId, audioInfo] : m_pMapMusicClips)
 	{
-		audioInfo.second.pAudioFile->Pause();
+		audioInfo.pAudioFile->Pause();
 	}
 }
 void Audio::AudioImpl::ResumeSoundImpl(SoundID id) const
@@ -246,10 +246,10 @@ void Audio::AudioImpl::ResumeSoundImpl(SoundID id) const
 }
 void Audio::AudioImpl::ResumeAllSoundsImpl() const
 {
-	for (auto& audioInfo : m_pMapMusicClips)
+	for (auto& [soundId, audioInfo] : m_pMapMusicClips)
 	{
-		AudioFile* audioFile = audioInfo.second.pAudioFile.get();
-		if (audioFile->IsPaused()) audioFile->Play(audioInfo.first, true);
+		AudioFile* audioFile = audioInfo.pAudioFile.get();
+		if (audioFile->IsPaused()) audioFile->Play(soundId, true);
 	}
 }
 void Audio::AudioImpl::StopSoundImpl(SoundID id) const
@@ -262,9 +262,9 @@ void Audio::AudioImpl::StopSoundImpl(SoundID id) const
 }
 void Audio::AudioImpl::StopAllSoundsImpl() const
 {
-	for (auto& audioInfo : m_pMapMusicClips)
+	for (auto& [soundId, audioInfo] : m_pMapMusicClips)
 	{
-		audioInfo.second.pAudioFile->Stop();
+		audioInfo.pAudioFile->Stop();
 	}
 }
 
