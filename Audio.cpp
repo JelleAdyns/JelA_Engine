@@ -9,18 +9,19 @@
 #include <mutex>
 #include <iostream>
 #include <algorithm>
+#include <thread>
 
 class Audio::AudioFile
 {
 public:
 
-	AudioFile(const std::wstring & filename);
+	AudioFile(const std::wstring& filename);
 	~AudioFile();
 
-	AudioFile(const AudioFile & other) = delete;
-	AudioFile(AudioFile && other) noexcept = delete;
-	AudioFile& operator=(const AudioFile & other) = delete;
-	AudioFile& operator=(AudioFile && other) noexcept = delete;
+	AudioFile(const AudioFile& other) = delete;
+	AudioFile(AudioFile&& other) noexcept = delete;
+	AudioFile& operator=(const AudioFile& other) = delete;
+	AudioFile& operator=(AudioFile&& other) noexcept = delete;
 
 	void Play(bool repeat, bool resume = false) const
 	{
@@ -49,7 +50,16 @@ public:
 	{
 		return m_pPlayer->GetState() == CPlayer::PlayerState::Paused;
 	}
-	
+	bool IsCreated() const 
+	{
+		return m_pPlayer != nullptr;
+	}
+	bool IsReadyToPlay() const 
+	{
+		return IsCreated() && (m_pPlayer->GetState() == CPlayer::PlayerState::ReadyToStart || IsPlaying() || IsStopped());
+	}
+	void CreateSound();
+
 private:
 
 	static LRESULT CALLBACK AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -66,9 +76,21 @@ private:
 
 Audio::AudioFile::AudioFile(const std::wstring& filename) :
 	m_pPlayer{ nullptr },
-	m_FilePath{},
+	m_FilePath{ ENGINE.GetResourcePath() + filename },
 	m_hAudioWnd{},
 	m_hEventWnd{}
+{
+	
+	CreateSound();
+}
+Audio::AudioFile::~AudioFile()
+{
+	m_pPlayer->Stop();
+	m_pPlayer->Shutdown();
+	m_pPlayer->Release();
+}
+
+void Audio::AudioFile::CreateSound()
 {
 	//next 3 lines are code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
 	m_hEventWnd = CreateWindow(TEXT("STATIC"), TEXT(""), 0, 0, 0, 0, 0, 0, 0, ENGINE.GetHInstance(), 0);
@@ -77,7 +99,7 @@ Audio::AudioFile::AudioFile(const std::wstring& filename) :
 
 	HRESULT hr = CPlayer::CreateInstance(m_hAudioWnd, m_hEventWnd, &m_pPlayer);
 
-	m_FilePath = ENGINE.GetResourcePath() + filename;
+	//m_FilePath = ENGINE.GetResourcePath() + filename;
 
 	if (SUCCEEDED(hr)) OpenFile(m_FilePath);
 	else
@@ -86,13 +108,6 @@ Audio::AudioFile::AudioFile(const std::wstring& filename) :
 		m_pPlayer->Release();
 		return;
 	}
-
-}
-Audio::AudioFile::~AudioFile()
-{
-	m_pPlayer->Stop();
-	m_pPlayer->Shutdown();
-	m_pPlayer->Release();
 }
 
 LRESULT Audio::AudioFile::AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -116,7 +131,7 @@ LRESULT Audio::AudioFile::AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 
 void Audio::AudioFile::OnEvent(WPARAM wParam)
 {
-	m_pPlayer->HandleEvent(wParam);
+	//m_pPlayer->HandleEvent(wParam);
 }
 
 void Audio::AudioFile::OpenFile(const std::wstring& fileName) const
@@ -129,142 +144,253 @@ void Audio::AudioFile::OpenFile(const std::wstring& fileName) const
 class Audio::AudioImpl
 {
 public:
-	AudioImpl() = default;
-	~AudioImpl() = default;
+	AudioImpl() { m_Thread = std::jthread{ &Audio::AudioImpl::HandleRequests, this }; }
+	~AudioImpl() { m_ServiceIsActive = false; }
 
 	AudioImpl(const AudioImpl&) = delete;
 	AudioImpl(AudioImpl&&) noexcept = delete;
 	AudioImpl& operator= (const AudioImpl&) = delete;
 	AudioImpl& operator= (AudioImpl&&) noexcept = delete;
 
-	void AddSoundImpl(const std::wstring& filename, SoundID id);
-	void RemoveSoundImpl(SoundID id);
-	void PlaySoundClipImpl(SoundID id, bool repeat);
-	uint8_t GetMasterVolumeImpl() const;
-	void SetMasterVolumeImpl(uint8_t newVolume);
-	void IncrementMasterVolumeImpl();
-	void DecrementMasterVolumeImpl();
-	void ToggleMuteImpl();
-	void PauseSoundImpl(SoundID id) const;
-	void PauseAllSoundsImpl() const;
-	void ResumeSoundImpl(SoundID id) const;
-	void ResumeAllSoundsImpl() const;
-	void StopSoundImpl(SoundID id) const;
-	void StopAllSoundsImpl() const;
+	void AddSoundImpl(const std::wstring& filename, SoundID id)
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{filename}});
+	}
+	void RemoveSoundImpl(SoundID id)
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Remove} });
+	}
+	void PlaySoundClipImpl(SoundID id, bool repeat)
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .repeat{repeat}, .id{id}, .playBackEvent{Event::Play}});
+	}
+	uint8_t GetMasterVolumeImpl() const
+	{
+		return CPlayer::GetVolume();
+	}
+	void SetMasterVolumeImpl(uint8_t volumePercentage)
+	{
+		HRESULT hr = CPlayer::SetVolume(volumePercentage);
+		if (FAILED(hr)) Engine::NotifyError(NULL, L"SetVolume reported on error.", hr);
+	}
+	void IncrementMasterVolumeImpl()
+	{
+		int newVolume{ CPlayer::GetVolume() + 1 };
+		HRESULT hr = CPlayer::SetVolume(newVolume);
+		if (FAILED(hr)) Engine::NotifyError(NULL, L"IncrementVolume reported on error.", hr);
+	}
+	void DecrementMasterVolumeImpl()
+	{
+		int newVolume{ CPlayer::GetVolume() - 1 };
+		HRESULT hr = CPlayer::SetVolume(newVolume);
+		if (FAILED(hr)) Engine::NotifyError(NULL, L"IncrementVolume reported on error.", hr);
+	}
+	void ToggleMuteImpl()
+	{
+		m_IsMute = !m_IsMute;
+		if (m_IsMute) PauseAllSoundsImpl();
+		else ResumeAllSoundsImpl();
+	}
+	void PauseSoundImpl(SoundID id) 
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Pause} });
+	}
+	void PauseAllSoundsImpl()
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .allSounds{true}, .playBackEvent{ Event::Pause }});
+	}
+	void ResumeSoundImpl(SoundID id)
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Resume} });
+	}
+	void ResumeAllSoundsImpl()
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .allSounds{true}, .playBackEvent{ Event::Resume } });
+	}
+	void StopSoundImpl(SoundID id)
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Stop} });
+	}
+	void StopAllSoundsImpl()
+	{
+		std::lock_guard<std::mutex> lck{ m_EventsMutex };
+		m_Events.push(QueueInfo{ .allSounds{true}, .playBackEvent{ Event::Stop } });
+	}
 
 private:
+	 
+	// PRIVATE DATA
+	enum class Event 
+	{
+		Add,
+		Remove,
+		Play,
+		Pause,
+		Resume,
+		Stop
+	};
 
 	struct AudioInfo
 	{
 		std::unique_ptr<AudioFile> pAudioFile;
-		bool repeat;
+		bool repeat{};
 	};
 
-	std::map<SoundID,AudioInfo> m_pMapMusicClips{};
+	struct QueueInfo
+	{
+		bool repeat{false};
+		bool allSounds{false};
+		SoundID id{};
+		Event playBackEvent{};
+		std::wstring filename{};
+	};
 
+	//std::map<SoundID,AudioInfo> m_pMapMusicClips{};
+	std::queue<QueueInfo> m_Events{};
+	std::jthread m_Thread;
+	mutable std::mutex m_EventsMutex;
+
+	bool m_ServiceIsActive{ true };
 	bool m_IsMute{ false };
 
+
+	// PRIVATE FUNCTIONS
+	void HandleRequests();
+	void Add(const std::wstring& filename, SoundID id, std::map<SoundID, AudioInfo>& audioMap)
+	{
+		if (not audioMap.contains(id))
+			audioMap[id].pAudioFile = std::make_unique<Audio::AudioFile>(filename);
+	}
+	void Remove(SoundID id, std::map<SoundID, AudioInfo>& audioMap)
+	{
+		if (audioMap.contains(id)) audioMap.erase(id);
+		else OutputDebugString((_T("Trying to remove sound that isn't present. ID: ") + to_tstring(id)).c_str());
+	}
+	void Play(SoundID id, bool repeat, std::map<SoundID, AudioInfo>& audioMap)
+	{
+		if (!m_IsMute)
+		{
+			if (audioMap.contains(id))
+			{
+				audioMap.at(id).repeat = repeat;
+				AudioFile* audioFile = audioMap.at(id).pAudioFile.get();
+				if (audioFile->IsPlaying()) audioFile->Stop();
+				audioFile->Play(repeat);
+			}
+			else OutputDebugString((_T("Trying to play sound that isn't present. ID: ") + to_tstring(id) + _T(" Repeat: ") + to_tstring(repeat)).c_str());
+		}
+	}
+
+	void Pause(SoundID id, std::map<SoundID, AudioInfo>& audioMap) const
+	{
+		if (audioMap.contains(id))
+		{
+			audioMap.at(id).pAudioFile->Pause();
+		}
+		else OutputDebugString((_T("Trying to pause sound that isn't present. ID:") + to_tstring(id)).c_str());
+	}
+	void PauseAll(std::map<SoundID, AudioInfo>& audioMap) const
+	{
+		for (auto& [soundId, audioInfo] : audioMap)
+		{
+			audioInfo.pAudioFile->Pause();
+		}
+	}
+	void Resume(SoundID id, std::map<SoundID, AudioInfo>& audioMap) const
+	{
+		if (audioMap.contains(id))
+		{
+			AudioFile* audioFile = audioMap.at(id).pAudioFile.get();
+			if (audioFile->IsPaused()) audioFile->Play(audioMap.at(id).repeat, true);
+		}
+		else OutputDebugString((_T("Trying to resume sound that isn't present. ID: ") + to_tstring(id)).c_str());
+	}
+	void ResumeAll(std::map<SoundID, AudioInfo>& audioMap) const
+	{
+		for (auto& [soundId, audioInfo] : audioMap)
+		{
+			AudioFile* audioFile = audioInfo.pAudioFile.get();
+			if (audioFile->IsPaused()) audioFile->Play(soundId, true);
+		}
+	}
+	void Stop(SoundID id, std::map<SoundID, AudioInfo>& audioMap) const
+	{
+		if (audioMap.contains(id))
+		{
+			audioMap.at(id).pAudioFile->Stop();
+		}
+		else OutputDebugString((_T("Trying to stop sound that isn't present. ID: ") + to_tstring(id)).c_str());
+	}
+	void StopAll(std::map<SoundID, AudioInfo>& audioMap) const
+	{
+		for (auto& [soundId, audioInfo] : audioMap)
+		{
+			audioInfo.pAudioFile->Stop();
+		}
+	}
 };
 
-
-void Audio::AudioImpl::AddSoundImpl(const std::wstring& filename, SoundID id)
+void Audio::AudioImpl::HandleRequests()
 {
-	if(not m_pMapMusicClips.contains(id))
-		m_pMapMusicClips[id].pAudioFile = std::make_unique<Audio::AudioFile>(filename);
-}
-void Audio::AudioImpl::RemoveSoundImpl(SoundID id)
-{
-	if (m_pMapMusicClips.contains(id)) m_pMapMusicClips.erase(id);
-	else OutputDebugString((_T("Trying to remove sound that isn't present. ID: ") + to_tstring(id)).c_str());
-}
-void Audio::AudioImpl::PlaySoundClipImpl(SoundID id, bool repeat)
-{
-	if(!m_IsMute)
+	std::map<SoundID, AudioInfo> pMapMusicClips{};
+	while (m_ServiceIsActive)
 	{
-		if (m_pMapMusicClips.contains(id))
+		QueueInfo info{};
+		////////////
+		// Events lock
+		std::unique_lock<std::mutex> eventsLock{ m_EventsMutex };
+
+		if (m_Events.empty())
 		{
-			m_pMapMusicClips.at(id).repeat = repeat;
-			AudioFile* audioFile = m_pMapMusicClips.at(id).pAudioFile.get();
-			if (audioFile->IsPlaying()) audioFile->Stop();
-			audioFile->Play(repeat);
+			eventsLock.unlock();
+			////////////
+			continue;
 		}
-		else OutputDebugString((_T("Trying to play sound that isn't present. ID: ") + to_tstring(id) + _T(" Repeat: ") + to_tstring(repeat)).c_str());
-	}
-		
-}
-uint8_t Audio::AudioImpl::GetMasterVolumeImpl() const
-{
-	return CPlayer::GetVolume();
-}
-void Audio::AudioImpl::SetMasterVolumeImpl(uint8_t volumePercentage)
-{
-	HRESULT hr = CPlayer::SetVolume(volumePercentage);
-	if (FAILED(hr)) Engine::NotifyError(NULL, L"SetVolume reported on error.", hr);
-}
-void Audio::AudioImpl::IncrementMasterVolumeImpl()
-{
-	int newVolume{ CPlayer::GetVolume() + 1 };
-	HRESULT hr = CPlayer::SetVolume(newVolume);
-	if (FAILED(hr)) Engine::NotifyError(NULL, L"IncrementVolume reported on error.", hr);
-}
-void Audio::AudioImpl::DecrementMasterVolumeImpl()
-{
-	int newVolume{ CPlayer::GetVolume() - 1 };
-	HRESULT hr = CPlayer::SetVolume(newVolume);
-	if (FAILED(hr)) Engine::NotifyError(NULL, L"IncrementVolume reported on error.", hr);
-}
+		info = m_Events.front();
 
-void Audio::AudioImpl::ToggleMuteImpl()
-{
-	m_IsMute = !m_IsMute;
-	if (m_IsMute) PauseAllSoundsImpl();
-	else ResumeAllSoundsImpl();
-}
-void Audio::AudioImpl::PauseSoundImpl(SoundID id) const
-{
-	if (m_pMapMusicClips.contains(id))
-	{
-		m_pMapMusicClips.at(id).pAudioFile->Pause();
-	}
-	else OutputDebugString((_T("Trying to pause sound that isn't present. ID:") + to_tstring(id)).c_str());
-}
-void Audio::AudioImpl::PauseAllSoundsImpl() const
-{
-	for (auto& [soundId, audioInfo] : m_pMapMusicClips)
-	{
-		audioInfo.pAudioFile->Pause();
-	}
-}
-void Audio::AudioImpl::ResumeSoundImpl(SoundID id) const
-{
-	if (m_pMapMusicClips.contains(id))
-	{
-		AudioFile* audioFile = m_pMapMusicClips.at(id).pAudioFile.get();
-		if(audioFile->IsPaused()) audioFile->Play(m_pMapMusicClips.at(id).repeat, true);
-	}
-	else OutputDebugString((_T("Trying to resume sound that isn't present. ID: ") + to_tstring(id)).c_str());
-}
-void Audio::AudioImpl::ResumeAllSoundsImpl() const
-{
-	for (auto& [soundId, audioInfo] : m_pMapMusicClips)
-	{
-		AudioFile* audioFile = audioInfo.pAudioFile.get();
-		if (audioFile->IsPaused()) audioFile->Play(soundId, true);
-	}
-}
-void Audio::AudioImpl::StopSoundImpl(SoundID id) const
-{
-	if (m_pMapMusicClips.contains(id))
-	{
-		m_pMapMusicClips.at(id).pAudioFile->Stop();
-	}
-	else OutputDebugString((_T("Trying to stop sound that isn't present. ID: ") + to_tstring(id)).c_str());
-}
-void Audio::AudioImpl::StopAllSoundsImpl() const
-{
-	for (auto& [soundId, audioInfo] : m_pMapMusicClips)
-	{
-		audioInfo.pAudioFile->Stop();
+		if (info.playBackEvent == Event::Play)
+		{
+			if (pMapMusicClips.at(info.id).pAudioFile->IsReadyToPlay()) m_Events.pop();
+		}
+		else m_Events.pop();
+		eventsLock.unlock();
+		////////////
+		
+		
+		switch (info.playBackEvent)
+		{
+		case Event::Add:
+			Add(info.filename, info.id, pMapMusicClips);
+			break;
+		case Event::Remove:
+			Remove(info.id, pMapMusicClips);
+			break;
+		case Event::Play:
+			if (pMapMusicClips.at(info.id).pAudioFile->IsReadyToPlay())
+				Play(info.id, info.repeat, pMapMusicClips);
+			break;
+		case Event::Pause:
+			if (info.allSounds) PauseAll(pMapMusicClips);
+			else Pause(info.id, pMapMusicClips);
+			break;
+		case Event::Resume:
+			if (info.allSounds) ResumeAll(pMapMusicClips);
+			else Resume(info.id, pMapMusicClips);
+			break;
+		case Event::Stop:
+			if (info.allSounds) StopAll(pMapMusicClips);
+			else Stop(info.id, pMapMusicClips);
+			break;
+
+		}
 	}
 }
 

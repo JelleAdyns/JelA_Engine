@@ -24,8 +24,9 @@ public:
     enum class PlayerState
     {
         Closed = 0,     // No session.
-        Ready,          // Session was created, ready to open a file. 
+        ReadyToOpen,    // Session was created, ready to open a file. 
         OpenPending,    // Session is opening a file.
+        ReadyToStart,   // Opened file
         Started,        // Session is playing a file.
         Paused,         // Session is paused.
         Stopped,        // Session is stopped (ready to play). 
