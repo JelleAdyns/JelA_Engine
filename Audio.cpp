@@ -46,17 +46,17 @@ public:
 	void Play(bool repeat, bool resume = false) const
 	{
 		HRESULT hr = m_pPlayer->Play(repeat, resume);
-		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"\"Play\" reported on error.", hr);
+		if (FAILED(hr)) OutputDebugStringW((L"\n\"Play\" reported on error. Filename: " + m_FilePath + L'\n').c_str());
 	}
 	void Stop() const
 	{
 		HRESULT hr = m_pPlayer->Stop();
-		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"\"Stop\" reported on error.", hr);
+		if (FAILED(hr)) OutputDebugStringW((L"\n\"Stop\" reported on error. Filename: " + m_FilePath + L'\n').c_str());
 	}
 	void Pause() const
 	{
 		HRESULT hr = m_pPlayer->Pause();
-		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"\"Pause\" reported on error.", hr);
+		if (FAILED(hr)) OutputDebugStringW((L"\n\"Pause\" reported on error. Filename: " + m_FilePath + L'\n').c_str());
 	}
 	bool IsPlaying() const
 	{

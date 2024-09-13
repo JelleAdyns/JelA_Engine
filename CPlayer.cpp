@@ -178,12 +178,17 @@ HRESULT CPlayer::Pause()
 // Stop playback.
 HRESULT CPlayer::Stop()
 {
-    if (m_state != PlayerState::Started && m_state != PlayerState::Paused) return MF_E_INVALIDREQUEST;
+    if (m_state != PlayerState::Started && m_state != PlayerState::Paused && m_state != PlayerState::Stopped) return MF_E_INVALIDREQUEST;
     
     if (m_pSession == NULL) return E_UNEXPECTED;
 
-    HRESULT hr = m_pSession->Stop();
-    if (SUCCEEDED(hr)) m_state = PlayerState::Stopped;
+    m_Repeat = false;
+    HRESULT hr = S_OK;
+    if (m_state != PlayerState::Stopped)
+    {
+        hr = m_pSession->Stop();
+        if (SUCCEEDED(hr)) m_state = PlayerState::Stopped;
+    }
 
     return hr;
 }
