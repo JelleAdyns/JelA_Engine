@@ -15,8 +15,28 @@ class Audio::AudioFile
 {
 public:
 
-	AudioFile(const std::wstring& filename);
-	~AudioFile();
+	AudioFile(const std::wstring& filename) :
+		m_pPlayer{ nullptr },
+		m_FilePath{ ENGINE.GetResourcePath() + filename },
+		m_hAudioWnd{}
+	{
+		HRESULT hr = CPlayer::CreateInstance(m_hAudioWnd, &m_pPlayer);
+
+		if (SUCCEEDED(hr)) OpenFile(m_FilePath);
+		else
+		{
+			Engine::NotifyError(m_hAudioWnd, L"Could not initialize the player object.", hr);
+			m_pPlayer->Release();
+			return;
+		}
+	}
+
+	~AudioFile()
+	{
+		m_pPlayer->Stop();
+		m_pPlayer->Shutdown();
+		m_pPlayer->Release();
+	}
 
 	AudioFile(const AudioFile& other) = delete;
 	AudioFile(AudioFile&& other) noexcept = delete;
@@ -26,17 +46,17 @@ public:
 	void Play(bool repeat, bool resume = false) const
 	{
 		HRESULT hr = m_pPlayer->Play(repeat, resume);
-		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"Play reported on error.", hr);
+		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"\"Play\" reported on error.", hr);
 	}
 	void Stop() const
 	{
 		HRESULT hr = m_pPlayer->Stop();
-		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"Stop reported on error.", hr);
+		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"\"Stop\" reported on error.", hr);
 	}
 	void Pause() const
 	{
 		HRESULT hr = m_pPlayer->Pause();
-		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"Pause reported on error.", hr);
+		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"\"Pause\" reported on error.", hr);
 	}
 	bool IsPlaying() const
 	{
@@ -58,87 +78,21 @@ public:
 	{
 		return IsCreated() && (m_pPlayer->GetState() == CPlayer::PlayerState::ReadyToStart || IsPlaying() || IsStopped());
 	}
-	void CreateSound();
 
 private:
 
-	static LRESULT CALLBACK AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	void OnEvent(WPARAM wParam);
-
-	void OpenFile(const std::wstring & fileName) const;
+	void OpenFile(const std::wstring& fileName) const
+	{
+		HRESULT hr = m_pPlayer->OpenURL(fileName);
+		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"Could not open the file.", hr);
+	}
 
 
 	CPlayer* m_pPlayer;
 	std::wstring m_FilePath;
 	HWND m_hAudioWnd;
-	HWND m_hEventWnd;
 };
 
-Audio::AudioFile::AudioFile(const std::wstring& filename) :
-	m_pPlayer{ nullptr },
-	m_FilePath{ ENGINE.GetResourcePath() + filename },
-	m_hAudioWnd{},
-	m_hEventWnd{}
-{
-	
-	CreateSound();
-}
-Audio::AudioFile::~AudioFile()
-{
-	m_pPlayer->Stop();
-	m_pPlayer->Shutdown();
-	m_pPlayer->Release();
-}
-
-void Audio::AudioFile::CreateSound()
-{
-	//next 3 lines are code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
-	m_hEventWnd = CreateWindow(TEXT("STATIC"), TEXT(""), 0, 0, 0, 0, 0, 0, 0, ENGINE.GetHInstance(), 0);
-	SetWindowLongPtr(m_hEventWnd, GWLA_WNDPROC, (LONG_PTR)AudioProc);	// set the custom message loop (subclassing)
-	SetWindowLongPtr(m_hEventWnd, GWLP_USERDATA, (LONG_PTR)this);		// set this object as the parameter for the Proc
-
-	HRESULT hr = CPlayer::CreateInstance(m_hAudioWnd, m_hEventWnd, &m_pPlayer);
-
-	//m_FilePath = ENGINE.GetResourcePath() + filename;
-
-	if (SUCCEEDED(hr)) OpenFile(m_FilePath);
-	else
-	{
-		Engine::NotifyError(m_hAudioWnd, L"Could not initialize the player object.", hr);
-		m_pPlayer->Release();
-		return;
-	}
-}
-
-LRESULT Audio::AudioFile::AudioProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	//next 3 lines are code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
-#pragma warning(disable: 4312)
-	Audio::AudioFile* audio = reinterpret_cast<Audio::AudioFile*>(GetWindowLongPtr(hWnd, GWLA_USERDATA));
-#pragma warning(default: 4312)
-
-	switch (message)
-	{
-	case CPlayer::WM_APP_PLAYER_EVENT:
-		audio->OnEvent(wParam);
-		break;
-	default:
-		break;
-	};
-
-	return 0;
-}
-
-void Audio::AudioFile::OnEvent(WPARAM wParam)
-{
-	//m_pPlayer->HandleEvent(wParam);
-}
-
-void Audio::AudioFile::OpenFile(const std::wstring& fileName) const
-{
-	HRESULT hr = m_pPlayer->OpenURL(fileName);
-	if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"Could not open the file.", hr);
-}
 
 //Implementation
 class Audio::AudioImpl
@@ -268,11 +222,12 @@ private:
 	{
 		if (not audioMap.contains(id))
 			audioMap[id].pAudioFile = std::make_unique<Audio::AudioFile>(filename);
+		else OutputDebugString((_T("\nTrying to Add SoundID that is already present. ID: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void Remove(SoundID id, std::map<SoundID, AudioInfo>& audioMap)
 	{
 		if (audioMap.contains(id)) audioMap.erase(id);
-		else OutputDebugString((_T("Trying to remove sound that isn't present. ID: ") + to_tstring(id)).c_str());
+		else OutputDebugString((_T("Trying to remove sound that isn't present. ID: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void Play(SoundID id, bool repeat, std::map<SoundID, AudioInfo>& audioMap)
 	{
@@ -285,7 +240,7 @@ private:
 				if (audioFile->IsPlaying()) audioFile->Stop();
 				audioFile->Play(repeat);
 			}
-			else OutputDebugString((_T("Trying to play sound that isn't present. ID: ") + to_tstring(id) + _T(" Repeat: ") + to_tstring(repeat)).c_str());
+			else OutputDebugString((_T("\nTrying to play sound that isn't present. ID: ") + to_tstring(id) + _T(" Repeat: ") + to_tstring(repeat) + _T('\n')).c_str());
 		}
 	}
 
@@ -295,7 +250,7 @@ private:
 		{
 			audioMap.at(id).pAudioFile->Pause();
 		}
-		else OutputDebugString((_T("Trying to pause sound that isn't present. ID:") + to_tstring(id)).c_str());
+		else OutputDebugString((_T("\nTrying to pause sound that isn't present. ID:") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void PauseAll(std::map<SoundID, AudioInfo>& audioMap) const
 	{
@@ -311,7 +266,7 @@ private:
 			AudioFile* audioFile = audioMap.at(id).pAudioFile.get();
 			if (audioFile->IsPaused()) audioFile->Play(audioMap.at(id).repeat, true);
 		}
-		else OutputDebugString((_T("Trying to resume sound that isn't present. ID: ") + to_tstring(id)).c_str());
+		else OutputDebugString((_T("\nTrying to resume sound that isn't present. ID: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void ResumeAll(std::map<SoundID, AudioInfo>& audioMap) const
 	{
@@ -327,7 +282,7 @@ private:
 		{
 			audioMap.at(id).pAudioFile->Stop();
 		}
-		else OutputDebugString((_T("Trying to stop sound that isn't present. ID: ") + to_tstring(id)).c_str());
+		else OutputDebugString((_T("\nTrying to stop sound that isn't present. ID: ") + to_tstring(id) + _T('\n')).c_str() );
 	}
 	void StopAll(std::map<SoundID, AudioInfo>& audioMap) const
 	{

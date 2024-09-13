@@ -33,7 +33,7 @@ public:
         Closing         // Application has closed the session, but is waiting for MESessionClosed.
     };
 
-    static HRESULT CreateInstance(HWND hVideo, HWND hEvent, CPlayer** ppPlayer);
+    static HRESULT CreateInstance(HWND hVideo, CPlayer** ppPlayer);
 
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID iid, void** ppv);
@@ -60,7 +60,7 @@ public:
 protected:
 
     // Constructor is private. Use static CreateInstance method to instantiate.
-    CPlayer(HWND hVideo, HWND hEvent);
+    CPlayer(HWND hVideo);
 
     // Destructor is private. Caller should call Release.
     virtual ~CPlayer();
@@ -87,7 +87,6 @@ protected:
     IMFMediaSource*         m_pSource;
 
     HWND                    m_hwndAudio;        // Audio window.
-    HWND                    m_hwndEvent;        // App window to receive events.
     PlayerState             m_state;            // Current state of the media session.
     HANDLE                  m_hCloseEvent;      // Event to wait on while closing.
 

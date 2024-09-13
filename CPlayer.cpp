@@ -34,11 +34,11 @@ HRESULT CreatePlaybackTopology(IMFMediaSource* pSource,
 
 //  Static class method to create the CPlayer object.
 
-HRESULT CPlayer::CreateInstance(HWND hAudio, HWND hEvent, CPlayer** ppPlayer)          
+HRESULT CPlayer::CreateInstance(HWND hAudio, CPlayer** ppPlayer)          
 {
     if (ppPlayer == NULL) return E_POINTER;
 
-    CPlayer* pPlayer = new (std::nothrow) CPlayer(hAudio, hEvent);
+    CPlayer* pPlayer = new (std::nothrow) CPlayer(hAudio);
     if (pPlayer == NULL) return E_OUTOFMEMORY;
 
     HRESULT hr = pPlayer->Initialize();
@@ -60,13 +60,12 @@ HRESULT CPlayer::Initialize()
     return hr;
 }
 
-CPlayer::CPlayer(HWND hAudio, HWND hEvent) :
+CPlayer::CPlayer(HWND hAudio) :
     m_nRefCount(1),
     m_Repeat(false),
     m_pSession(NULL),
     m_pSource(NULL),
     m_hwndAudio(hAudio),
-    m_hwndEvent(hEvent),
     m_state(PlayerState::Closed),
     m_hCloseEvent(NULL)
 {
@@ -202,9 +201,27 @@ HRESULT CPlayer::Invoke(IMFAsyncResult* pResult)
     // Get the event type. 
     if(SUCCEEDED(hr)) hr = pEvent->GetType(&meType);
 
+    // Check the application state. 
+
+    // If a call to IMFMediaSession::Close is pending, it means the 
+    // application is waiting on the m_hCloseEvent event and
+    // the application's message loop is blocked. 
+
+    // Otherwise, post a private window message to the application. 
     if (SUCCEEDED(hr))
-    {
-        if (m_state != PlayerState::Closing)
+    { 
+        if (meType == MESessionClosed)
+        {
+            // The session was closed. The application is waiting on the m_hCloseEvent event handle. 
+            SetEvent(m_hCloseEvent);
+        }
+        else
+        {
+            // For all other events, get the next event in the queue.
+            hr = m_pSession->BeginGetEvent(this, NULL);
+        }
+
+        if (SUCCEEDED(hr) and m_state != PlayerState::Closing)
         {
             switch (meType)
             {
@@ -232,36 +249,7 @@ HRESULT CPlayer::Invoke(IMFAsyncResult* pResult)
                 break;
             }
         }
-        if (meType == MESessionClosed)
-        {
-            // The session was closed. The application is waiting on the m_hCloseEvent event handle. 
-            SetEvent(m_hCloseEvent);
-        }
-        else
-        {
-            // For all other events, get the next event in the queue.
-            hr = m_pSession->BeginGetEvent(this, NULL);
-        }
-    }
-
-    // Check the application state. 
-
-    // If a call to IMFMediaSession::Close is pending, it means the 
-    // application is waiting on the m_hCloseEvent event and
-    // the application's message loop is blocked. 
-
-    // Otherwise, post a private window message to the application. 
-
-    if (SUCCEEDED(hr))
-    {
-        if (m_state != PlayerState::Closing)
-        {
-            // Leave a reference count on the event.
-            /*pEvent->AddRef();
-
-            PostMessage(m_hwndEvent, CPlayer::WM_APP_PLAYER_EVENT,
-                (WPARAM)pEvent, (LPARAM)meType);*/
-        }
+       
     }
 
     SafeRelease(&pEvent);
