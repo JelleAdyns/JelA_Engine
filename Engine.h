@@ -344,7 +344,7 @@ public:
     {
         for (auto& pObserver : m_pVecObservers)
         {
-            pObserver->Notify(pSubjectOwner);
+            pObserver->Notify(pSubjectOwner...);
         }
     }
 private:
