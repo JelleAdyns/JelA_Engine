@@ -4,6 +4,15 @@ Point2Int::Point2Int(int x, int y):
 	x{x},
 	y{y}
 {}
+bool Point2Int::operator==(const Point2Int& rhs)
+{
+	return x == rhs.x and y == rhs.y;
+}
+bool Point2Int::operator!=(const Point2Int& rhs)
+{
+	return x != rhs.x or y != rhs.y;
+}
+
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 	RectInt::RectInt(int left, int bottom, int width, int height):
@@ -187,7 +196,7 @@ bool Vector2f::operator==(const Vector2f& rhs) const
 }
 bool Vector2f::operator!=(const Vector2f& rhs) const
 {
-	return !(*this == rhs);
+	return not (*this == rhs);
 }
 
 // non-member

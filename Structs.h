@@ -10,6 +10,9 @@ struct Point2Int
 	explicit Point2Int(int x, int y);
 	int x;
 	int y;
+
+	bool operator==(const Point2Int& rhs);
+	bool operator!=(const Point2Int& rhs);
 };
 
 
