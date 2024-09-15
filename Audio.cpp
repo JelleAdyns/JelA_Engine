@@ -227,7 +227,7 @@ private:
 	void Remove(SoundID id, std::map<SoundID, AudioInfo>& audioMap)
 	{
 		if (audioMap.contains(id)) audioMap.erase(id);
-		else OutputDebugString((_T("Trying to remove sound that isn't present. ID: ") + to_tstring(id) + _T('\n')).c_str());
+		else OutputDebugString((_T("\nTrying to remove sound that isn't present. ID: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void Play(SoundID id, bool repeat, std::map<SoundID, AudioInfo>& audioMap)
 	{
@@ -273,7 +273,7 @@ private:
 		for (auto& [soundId, audioInfo] : audioMap)
 		{
 			AudioFile* audioFile = audioInfo.pAudioFile.get();
-			if (audioFile->IsPaused()) audioFile->Play(soundId, true);
+			if (audioFile->IsPaused()) audioFile->Play(audioInfo.repeat, true);
 		}
 	}
 	void Stop(SoundID id, std::map<SoundID, AudioInfo>& audioMap) const
