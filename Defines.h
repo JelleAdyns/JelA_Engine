@@ -9,6 +9,7 @@
 #include <iostream>
 #include <regex>
 
+
 #ifdef _UNICODE								
 	#define tchar			wchar_t
 	#define tstring			std::wstring
@@ -45,6 +46,13 @@
 	#define tssub_match		std::ssub_match
 #endif
 
+//https://hashnode.com/post/converting-stdstring-to-stdwstring-cka1q0zj5020fbls1ml34841w
+static std::wstring to_wstring(const tstring& stringToConvert)
+{
+	return std::wstring{stringToConvert.cbegin(), stringToConvert.cend()};
+}
+
+
 //next ifdef is code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
 //64 bit defines
 #ifdef _WIN64
@@ -72,6 +80,7 @@
 #include <mferror.h>
 #include <MMSystem.h>
 #include <wincodec.h>
+
 
 template<typename Interface>
 inline void SafeRelease(

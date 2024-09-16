@@ -27,7 +27,7 @@ HRESULT GetEventObject(IMFMediaEvent* pEvent, Q** ppObject)
     return hr;
 }
 
-HRESULT CreateMediaSource(IMFMediaSource** ppSource, const std::wstring& fileName);
+HRESULT CreateMediaSource(IMFMediaSource** ppSource, const tstring& fileName);
 
 HRESULT CreatePlaybackTopology(IMFMediaSource* pSource,
     IMFPresentationDescriptor* pPD, HWND hAudioWnd, IMFTopology** ppTopology);
@@ -72,7 +72,7 @@ CPlayer::CPlayer(HWND hAudio) :
 
    /* UINT32 channelCount{};
     if (m_pVolume) m_pVolume->GetChannelCount(&channelCount);
-    OutputDebugString((std::wstring{ std::to_wstring(channelCount).c_str() } + std::wstring{ L"\n" }).c_str());*/
+    OutputDebugString((tstring{ std::to_wstring(channelCount).c_str() } + tstring{ L"\n" }).c_str());*/
 }
 
 CPlayer::~CPlayer()
@@ -123,7 +123,7 @@ ULONG CPlayer::Release()
 }
 
 //  Open a URL for playback.
-HRESULT CPlayer::OpenURL(const std::wstring& fileName)
+HRESULT CPlayer::OpenURL(const tstring& fileName)
 {
     // 1. Create a new media session.
     // 2. Create the media source.
@@ -497,7 +497,7 @@ HRESULT CPlayer::Play(bool repeat, bool resume)
 
 
 //  Create a media source from a URL.
-HRESULT CreateMediaSource(IMFMediaSource** ppSource, const std::wstring& fileName)
+HRESULT CreateMediaSource(IMFMediaSource** ppSource, const tstring& fileName)
 {
     MF_OBJECT_TYPE ObjectType = MF_OBJECT_INVALID;
 
@@ -511,7 +511,7 @@ HRESULT CreateMediaSource(IMFMediaSource** ppSource, const std::wstring& fileNam
     // the media source. However, creating a media source can take a noticeable
     // amount of time, especially for a network source. For a more responsive 
     // UI, use the asynchronous BeginCreateObjectFromURL method.
-    if (SUCCEEDED(hr)) hr = pSourceResolver->CreateObjectFromURL(fileName.c_str(), MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_READ, NULL, &ObjectType, &pSource);
+    if (SUCCEEDED(hr)) hr = pSourceResolver->CreateObjectFromURL(to_wstring( fileName ).c_str(), MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_READ, NULL, &ObjectType, &pSource);
 
     // Get the IMFMediaSource interface from the media source.
     if (SUCCEEDED(hr)) hr = pSource->QueryInterface(IID_PPV_ARGS(ppSource));

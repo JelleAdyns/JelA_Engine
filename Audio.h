@@ -15,7 +15,7 @@ public:
     Audio& operator= (const Audio&) = delete;
     Audio& operator= (Audio&&) noexcept = delete;
 
-    virtual void AddSound(const std::wstring& filename, SoundID id) override;
+    virtual void AddSound(const tstring& filename, SoundID id) override;
     virtual void RemoveSound(SoundID id) override;
     virtual void PlaySoundClip(SoundID id, bool repeat) const override;
     virtual uint8_t GetMasterVolume() const override;

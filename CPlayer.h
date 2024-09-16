@@ -46,7 +46,7 @@ public:
     STDMETHODIMP  Invoke(IMFAsyncResult* pAsyncResult);
 
     // Playback
-    HRESULT       OpenURL(const std::wstring& fileName);
+    HRESULT       OpenURL(const tstring& fileName);
     HRESULT       Play(bool repeat, bool resume = false);
     HRESULT       Pause();
     HRESULT       Stop();

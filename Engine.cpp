@@ -20,7 +20,7 @@ Engine::Engine() :
     m_pDColorBrush{NULL},
     m_DColorBackGround{ D2D1::ColorF::Black},
     m_pGame{ nullptr },
-    m_Title{ tstring{L"Standard Game"}},
+    m_Title{ _T("Standard Game")},
     m_Width{500},
     m_Height{500},
     m_MilliSecondsPerFrame{1.f/60.f},
@@ -562,7 +562,7 @@ void Engine::DrawString(const tstring& textToDisplay, const Font& font, RectInt 
     }
 
     m_pDRenderTarget->DrawText(
-        textToDisplay.c_str(),
+        to_wstring(textToDisplay).c_str(),
         (UINT32) textToDisplay.length(),
         font.GetFormat(),
         rect,
@@ -589,7 +589,7 @@ void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2In
     }
     
     m_pDRenderTarget->DrawText(
-        textToDisplay.c_str(),
+        to_wstring(textToDisplay).c_str(),
         (UINT32) textToDisplay.length(),
         font.GetFormat(),
         rect,
@@ -992,7 +992,7 @@ void Engine::SetTitle(const tstring& newTitle)
     m_Title.assign(newTitle);
     SetWindowText(m_hWindow, newTitle.c_str());
 }
-void Engine::SetResourcePath(const std::wstring& newTitle)
+void Engine::SetResourcePath(const tstring& newTitle)
 {
     m_ResourcePath = newTitle;
 }
@@ -1220,7 +1220,7 @@ void Engine::Paint()
     }
     ValidateRect(m_hWindow, NULL);
 }
-const std::wstring& Engine::GetResourcePath() const
+const tstring& Engine::GetResourcePath() const
 {
     return m_ResourcePath;
 }
@@ -1260,7 +1260,7 @@ ID2D1HwndRenderTarget* Engine::getRenderTarget() const
 
 IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
 
-Texture::Texture(const std::wstring& filename) :
+Texture::Texture(const tstring& filename) :
     m_pDBitmap{NULL},
     m_TextureWidth{0},
     m_TextureHeight{0}
@@ -1282,7 +1282,7 @@ Texture::Texture(const std::wstring& filename) :
     IWICBitmapFrameDecode* pSource = NULL;
     IWICFormatConverter* pConverter = NULL;
 
-    std::wstring filePath = ENGINE.GetResourcePath() + filename;
+    std::wstring filePath = to_wstring(ENGINE.GetResourcePath() + filename);
 
     if (SUCCEEDED(creationResult))
     {
@@ -1336,8 +1336,7 @@ Texture::Texture(const std::wstring& filename) :
  
     if (!SUCCEEDED(creationResult))
     {
-        tstring message = _T("ERROR! File \"") + filePath + _T("\" couldn't load correctly");
-        OutputDebugString(message.c_str());
+        OutputDebugStringW((L"ERROR! File \"" + filePath + L"\" couldn't load correctly").c_str());
     }
     SafeRelease(&pDecoder);
     SafeRelease(&pSource);
@@ -1359,14 +1358,14 @@ Texture::~Texture()
 
 IDWriteFactory5* Font::m_pDWriteFactory{ nullptr };
 
-Font::Font(const std::wstring& fontName, bool fromFile):
+Font::Font(const tstring& fontName, bool fromFile):
     Font{fontName, 20, false, false, fromFile}
 {}
-Font::Font(const std::wstring& fontName, int size ,bool bold, bool italic, bool fromFile)
+Font::Font(const tstring& fontName, int size ,bool bold, bool italic, bool fromFile)
 {
     if (fromFile)
     {
-        std::wstring filePath = ENGINE.GetResourcePath() + fontName;
+        std::wstring filePath = to_wstring(ENGINE.GetResourcePath() + fontName);
         HRESULT hr = Initialize(filePath);
         if (SUCCEEDED(hr))
         {
@@ -1382,7 +1381,7 @@ Font::Font(const std::wstring& fontName, int size ,bool bold, bool italic, bool 
                 __uuidof(IDWriteFactory5),
                 reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
         }
-        m_FontName = fontName;
+        m_FontName = to_wstring(fontName);
         SetTextFormat(size, bold, italic);
     }
 }
@@ -1431,7 +1430,7 @@ HRESULT Font::Initialize(const std::wstring& fontName)
     IDWriteLocalizedStrings* pStrings{ nullptr };
 
     UINT32 length;
-    tstring name{};
+    std::wstring name{};
 
     if (SUCCEEDED(hr))
     {
@@ -1455,7 +1454,7 @@ HRESULT Font::Initialize(const std::wstring& fontName)
 
     if (!SUCCEEDED(hr))
     {
-        OutputDebugString((_T("Something went wrong in the Font constructor using file ") + fontName).c_str());
+        OutputDebugStringW((L"Something went wrong in the Font constructor using file " + fontName).c_str());
     }
     else
     {

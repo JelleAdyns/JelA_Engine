@@ -15,7 +15,7 @@ class Audio::AudioFile
 {
 public:
 
-	AudioFile(const std::wstring& filename) :
+	AudioFile(const tstring& filename) :
 		m_pPlayer{ nullptr },
 		m_FilePath{ ENGINE.GetResourcePath() + filename },
 		m_hAudioWnd{}
@@ -46,17 +46,17 @@ public:
 	void Play(bool repeat, bool resume = false) const
 	{
 		HRESULT hr = m_pPlayer->Play(repeat, resume);
-		if (FAILED(hr)) OutputDebugStringW((L"\n\"Play\" reported on error. Filename: " + m_FilePath + L'\n').c_str());
+		if (FAILED(hr)) OutputDebugString((_T("\n\"Play\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
 	}
 	void Stop() const
 	{
 		HRESULT hr = m_pPlayer->Stop();
-		if (FAILED(hr)) OutputDebugStringW((L"\n\"Stop\" reported on error. Filename: " + m_FilePath + L'\n').c_str());
+		if (FAILED(hr)) OutputDebugString((_T("\n\"Stop\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
 	}
 	void Pause() const
 	{
 		HRESULT hr = m_pPlayer->Pause();
-		if (FAILED(hr)) OutputDebugStringW((L"\n\"Pause\" reported on error. Filename: " + m_FilePath + L'\n').c_str());
+		if (FAILED(hr)) OutputDebugString((_T("\n\"Pause\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
 	}
 	bool IsPlaying() const
 	{
@@ -81,15 +81,15 @@ public:
 
 private:
 
-	void OpenFile(const std::wstring& fileName) const
+	void OpenFile(const tstring& fileName) const
 	{
 		HRESULT hr = m_pPlayer->OpenURL(fileName);
-		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, L"Could not open the file.", hr);
+		if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, to_wstring(_T("Could not open the file.") + fileName).c_str(), hr);
 	}
 
 
 	CPlayer* m_pPlayer;
-	std::wstring m_FilePath;
+	tstring m_FilePath;
 	HWND m_hAudioWnd;
 };
 
@@ -106,7 +106,7 @@ public:
 	AudioImpl& operator= (const AudioImpl&) = delete;
 	AudioImpl& operator= (AudioImpl&&) noexcept = delete;
 
-	void AddSoundImpl(const std::wstring& filename, SoundID id)
+	void AddSoundImpl(const tstring& filename, SoundID id)
 	{
 		std::lock_guard<std::mutex> lck{ m_EventsMutex };
 		m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{filename}});
@@ -128,19 +128,19 @@ public:
 	void SetMasterVolumeImpl(uint8_t volumePercentage)
 	{
 		HRESULT hr = CPlayer::SetVolume(volumePercentage);
-		if (FAILED(hr)) Engine::NotifyError(NULL, L"SetVolume reported on error.", hr);
+		if (FAILED(hr)) Engine::NotifyError(NULL, to_wstring( _T("SetVolume reported on error.")).c_str() , hr);
 	}
 	void IncrementMasterVolumeImpl()
 	{
 		int newVolume{ CPlayer::GetVolume() + 1 };
 		HRESULT hr = CPlayer::SetVolume(newVolume);
-		if (FAILED(hr)) Engine::NotifyError(NULL, L"IncrementVolume reported on error.", hr);
+		if (FAILED(hr)) Engine::NotifyError(NULL, to_wstring( _T("IncrementVolume reported on error.")).c_str(), hr);
 	}
 	void DecrementMasterVolumeImpl()
 	{
 		int newVolume{ CPlayer::GetVolume() - 1 };
 		HRESULT hr = CPlayer::SetVolume(newVolume);
-		if (FAILED(hr)) Engine::NotifyError(NULL, L"IncrementVolume reported on error.", hr);
+		if (FAILED(hr)) Engine::NotifyError(NULL, to_wstring( _T("DecrementVolume reported on error.")).c_str(), hr);
 	}
 	void ToggleMuteImpl()
 	{
@@ -204,7 +204,7 @@ private:
 		bool allSounds{false};
 		SoundID id{};
 		Event playBackEvent{};
-		std::wstring filename{};
+		tstring filename{};
 	};
 
 	//std::map<SoundID,AudioInfo> m_pMapMusicClips{};
@@ -218,11 +218,11 @@ private:
 
 	// PRIVATE FUNCTIONS
 	void HandleRequests();
-	void Add(const std::wstring& filename, SoundID id, std::map<SoundID, AudioInfo>& audioMap)
+	void Add(const tstring& filename, SoundID id, std::map<SoundID, AudioInfo>& audioMap)
 	{
 		if (not audioMap.contains(id))
 			audioMap[id].pAudioFile = std::make_unique<Audio::AudioFile>(filename);
-		else OutputDebugString((_T("\nTrying to Add SoundID that is already present. ID: ") + to_tstring(id) + _T('\n')).c_str());
+		else OutputDebugString((_T("\nTrying to Add SoundID that is already present. Filename: ") + filename + _T("ID: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void Remove(SoundID id, std::map<SoundID, AudioInfo>& audioMap)
 	{
@@ -360,7 +360,7 @@ Audio::~Audio()
 	delete m_pImpl;
 	MFShutdown();
 }
-void Audio::AddSound(const std::wstring& filename, SoundID id)
+void Audio::AddSound(const tstring& filename, SoundID id)
 {
 	m_pImpl->AddSoundImpl(filename, id);
 }

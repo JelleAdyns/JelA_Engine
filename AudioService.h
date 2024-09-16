@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include "Defines.h"
 
 
 using SoundID = unsigned int;
@@ -18,7 +19,7 @@ public:
 	AudioService& operator= (const AudioService&) = delete;
 	AudioService& operator= (AudioService&&) noexcept = delete;
 
-	virtual void AddSound(const std::wstring& filename, SoundID id) = 0;
+	virtual void AddSound(const tstring& filename, SoundID id) = 0;
 	virtual void RemoveSound(SoundID id) = 0;
 	virtual void PlaySoundClip(SoundID id, bool repeat) const = 0;
 	virtual uint8_t GetMasterVolume() const = 0;
@@ -46,7 +47,7 @@ public:
 	NullAudio& operator= (const NullAudio&) = delete;
 	NullAudio& operator= (NullAudio&&) noexcept = delete;
 
-	virtual void AddSound(const std::wstring&, SoundID) override {}
+	virtual void AddSound(const tstring&, SoundID) override {}
 	virtual void RemoveSound(SoundID id) override {}
 	virtual void PlaySoundClip(SoundID, bool) const override {}
 	virtual uint8_t GetMasterVolume() const override { return 0; }
@@ -76,7 +77,7 @@ public:
 	LogAudio& operator= (const LogAudio&) = delete;
 	LogAudio& operator= (LogAudio&&) noexcept = delete;
 
-	virtual void AddSound(const std::wstring& filename, SoundID id) override;
+	virtual void AddSound(const tstring& filename, SoundID id) override;
 	virtual void RemoveSound(SoundID id) override;
 	virtual void PlaySoundClip(SoundID id, bool repeat) const override;
 	virtual uint8_t GetMasterVolume() const override;

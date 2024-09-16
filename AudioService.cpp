@@ -5,15 +5,15 @@
 
 std::unique_ptr<AudioService> AudioLocator::m_Instance{ std::make_unique<NullAudio>() };
 
-void LogAudio::AddSound(const std::wstring& path, SoundID id)
+void LogAudio::AddSound(const tstring& path, SoundID id)
 {
 	m_pRealService->AddSound(path, id);
-	OutputDebugString((_T("\nAddSound: path: ") + path + _T(", id: ") + std::to_wstring(id) + _T('\n')).c_str());
+	OutputDebugString((_T("\nAddSound: path: ") + path + _T(", id: ") + to_tstring(id) + _T('\n')).c_str());
 }
 void LogAudio::RemoveSound(SoundID id)
 {
 	m_pRealService->RemoveSound(id);
-	OutputDebugString((_T("\nRemoveSound: id: ") + std::to_wstring(id) + _T('\n')).c_str());
+	OutputDebugString((_T("\nRemoveSound: id: ") + to_tstring(id) + _T('\n')).c_str());
 }
 void LogAudio::PlaySoundClip(SoundID id, bool repeat) const
 {

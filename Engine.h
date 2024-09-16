@@ -119,7 +119,7 @@ public:
     void SetBackGroundColor(COLORREF newColor);
     void SetInstance(HINSTANCE hInst);
     void SetTitle(const tstring& newTitle);
-    void SetResourcePath(const std::wstring& newTitle);
+    void SetResourcePath(const tstring& newTitle);
     void SetWindowDimensions(int width, int height);
     void SetWindowScale(float scale);
     void SetFrameRate(int FPS);
@@ -135,7 +135,7 @@ public:
     void Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom);
     void Scale(float scale, const Point2Int& PointToScaleFrom);
 
-    const std::wstring& GetResourcePath() const;
+    const tstring& GetResourcePath() const;
     RectInt GetWindowRect() const;
     float GetWindowScale() const;
     HWND GetWindow() const;
@@ -151,10 +151,10 @@ public:
         const size_t MESSAGE_LEN = 512;
         WCHAR message[MESSAGE_LEN];
 
-        if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, L"%s (HRESULT = 0x%X)",
+        if (SUCCEEDED(StringCchPrintfW(message, MESSAGE_LEN, L"%s (HRESULT = 0x%X)",
             pszErrorMessage, hrErr)))
         {
-            MessageBox(hWnd, message, NULL, MB_OK | MB_ICONERROR);
+            MessageBoxW(hWnd, message, NULL, MB_OK | MB_ICONERROR);
         }
     }
 
@@ -195,7 +195,7 @@ private:
 
 
     //General datamembers
-    std::wstring                    m_ResourcePath{};
+    tstring                    m_ResourcePath{};
     tstring                         m_Title{};
 
     float                           m_WindowScale{1};
@@ -219,7 +219,7 @@ private:
 class Texture final
 {
 public:
-    explicit Texture(const std::wstring& filename);
+    explicit Texture(const tstring& filename);
 
     Texture(const Texture& other) = delete;
     Texture(Texture&& other) noexcept = delete;
@@ -249,8 +249,8 @@ private:
 class Font final
 {
 public:
-    Font(const std::wstring& fontname, bool fromFile = false);
-    Font(const std::wstring& fontname, int size, bool bold, bool italic, bool fromFile = false);
+    Font(const tstring& fontname, bool fromFile = false);
+    Font(const tstring& fontname, int size, bool bold, bool italic, bool fromFile = false);
 
     Font(const Font& other) = delete;
     Font(Font&& other) noexcept = delete;
@@ -287,7 +287,7 @@ private:
     IDWriteFontCollection1* m_pFontCollection;
     IDWriteTextFormat* m_pTextFormat;
 
-    tstring m_FontName;
+    std::wstring m_FontName;
     int m_FontSize;
 };
 //---------------------------------------------------------------
