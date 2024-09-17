@@ -1,8 +1,8 @@
-#ifndef NDEBUG
+#ifdef _DEBUG
 #if __has_include(<vld.h>)
 #include <vld.h>
 #endif
-#endif // !NDEBUG
+#endif // _DEBUG
 
 #include "Engine.h"
 
@@ -18,7 +18,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     if (SUCCEEDED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
     {
         ENGINE.SetInstance(HINST_THISCOMPONENT);
-        ENGINE.SetResourcePath(_T("../../Resources/"));
+        ResourceManager::GetInstance().Init(_T("../../Resources/"));
+
         result = ENGINE.Run();
         CoUninitialize();
     }

@@ -992,10 +992,6 @@ void Engine::SetTitle(const tstring& newTitle)
     m_Title.assign(newTitle);
     SetWindowText(m_hWindow, newTitle.c_str());
 }
-void Engine::SetResourcePath(const tstring& newTitle)
-{
-    m_ResourcePath = newTitle;
-}
 void Engine::SetWindowDimensions(int width, int height)
 {
     m_Width = width;
@@ -1220,10 +1216,7 @@ void Engine::Paint()
     }
     ValidateRect(m_hWindow, NULL);
 }
-const tstring& Engine::GetResourcePath() const
-{
-    return m_ResourcePath;
-}
+
 RectInt Engine::GetWindowRect() const
 {
     return RectInt{ 0, 0, m_Width, m_Height };
@@ -1282,7 +1275,7 @@ Texture::Texture(const tstring& filename) :
     IWICBitmapFrameDecode* pSource = NULL;
     IWICFormatConverter* pConverter = NULL;
 
-    std::wstring filePath = to_wstring(ENGINE.GetResourcePath() + filename);
+    std::wstring filePath = to_wstring(ResourceManager::GetInstance().GetDataPath() + filename);
 
     if (SUCCEEDED(creationResult))
     {
@@ -1365,7 +1358,7 @@ Font::Font(const tstring& fontName, int size ,bool bold, bool italic, bool fromF
 {
     if (fromFile)
     {
-        std::wstring filePath = to_wstring(ENGINE.GetResourcePath() + fontName);
+        std::wstring filePath = to_wstring(ResourceManager::GetInstance().GetDataPath() + fontName);
         HRESULT hr = Initialize(filePath);
         if (SUCCEEDED(hr))
         {
@@ -1527,6 +1520,69 @@ int Font::GetFontSize() const
     return m_FontSize;
 }
 //---------------------------------------------------------------------------------------------------------------------------------
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------------
+//---------------------
+// ResourceManager
+//---------------------
+
+void ResourceManager::Init(const tstring& dataPath)
+{
+    m_DataPath = dataPath;
+}
+
+Texture& ResourceManager::GetTexture(const tstring& file)
+{
+    if (not m_pMapTextures.contains(file))
+    {
+        m_pMapTextures[file] = std::make_unique<Texture>(file);
+    }
+
+    return *m_pMapTextures.at(file);
+}
+
+void ResourceManager::RemoveTexture(const tstring& file)
+{
+    if (m_pMapTextures.contains(file))
+    {
+        m_pMapTextures.erase(file);
+    }
+    else OutputDebugString((_T("Texture to remove is not present. File: ") + file).c_str());
+}
+
+void ResourceManager::RemoveAllTextures()
+{
+    m_pMapTextures.clear();
+}
+
+Font& ResourceManager::GetFont(const tstring& fontName, bool fromFile)
+{
+    if (not m_pMapFonts.contains(fontName))
+    {
+        m_pMapFonts[fontName] = std::make_unique<Font>(fontName, fromFile);
+    }
+
+    return *m_pMapFonts.at(fontName);
+}
+
+void ResourceManager::RemoveFont(const tstring& fontName)
+{
+    if (m_pMapFonts.contains(fontName))
+    {
+        m_pMapFonts.erase(fontName);
+    }
+    else OutputDebugString((_T("Font to remove is not present. File: ") + fontName).c_str());
+}
+
+void ResourceManager::RemoveAllFonts()
+{
+    m_pMapFonts.clear();
+}
+//---------------------------------------------------------------------------------------------------------------------------------
+
+
 
 
 //---------------------------------------------------------------------------------------------------------------------------------

@@ -17,7 +17,7 @@ public:
 
 	AudioFile(const tstring& filename) :
 		m_pPlayer{ nullptr },
-		m_FilePath{ ENGINE.GetResourcePath() + filename },
+		m_FilePath{ ResourceManager::GetInstance().GetDataPath() + filename},
 		m_hAudioWnd{}
 	{
 		HRESULT hr = CPlayer::CreateInstance(m_hAudioWnd, &m_pPlayer);

@@ -9,9 +9,11 @@
 #include "framework.h"
 #include <vector>
 #include <chrono>
+#include <map>
 
 class Texture;
 class Font;
+class ResourceManager;
 
 class Engine final
 {
@@ -115,15 +117,6 @@ public:
     //Use CAPITAL letters or the virtual keycodes
     bool IsKeyPressed(int virtualKeycode) const;
 
-    void SetColor(COLORREF newColor, float opacity = 1.F);
-    void SetBackGroundColor(COLORREF newColor);
-    void SetInstance(HINSTANCE hInst);
-    void SetTitle(const tstring& newTitle);
-    void SetResourcePath(const tstring& newTitle);
-    void SetWindowDimensions(int width, int height);
-    void SetWindowScale(float scale);
-    void SetFrameRate(int FPS);
-
     void PushTransform();
     void PopTransform();
     void Translate(int xTranslation, int yTranslation);
@@ -135,7 +128,14 @@ public:
     void Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom);
     void Scale(float scale, const Point2Int& PointToScaleFrom);
 
-    const tstring& GetResourcePath() const;
+    void SetColor(COLORREF newColor, float opacity = 1.F);
+    void SetBackGroundColor(COLORREF newColor);
+    void SetInstance(HINSTANCE hInst);
+    void SetTitle(const tstring& newTitle);
+    void SetWindowDimensions(int width, int height);
+    void SetWindowScale(float scale);
+    void SetFrameRate(int FPS);
+
     RectInt GetWindowRect() const;
     float GetWindowScale() const;
     HWND GetWindow() const;
@@ -195,7 +195,6 @@ private:
 
 
     //General datamembers
-    tstring                    m_ResourcePath{};
     tstring                         m_Title{};
 
     float                           m_WindowScale{1};
@@ -293,9 +292,48 @@ private:
 //---------------------------------------------------------------
 
 
+
+//---------------------------------------------------------------
+class ResourceManager final
+{
+public:
+    static ResourceManager& GetInstance()
+    {
+        static ResourceManager instance{};
+        return instance;
+    }
+    ~ResourceManager() = default;
+
+    ResourceManager(const ResourceManager&) = delete;
+    ResourceManager(ResourceManager&&) noexcept = delete;
+    ResourceManager& operator= (const ResourceManager&) = delete;
+    ResourceManager& operator= (ResourceManager&&) noexcept = delete;
+
+    void Init(const tstring& dataPath);
+
+    Texture& GetTexture(const tstring& file);
+    void RemoveTexture(const tstring& file);
+    void RemoveAllTextures();
+
+    Font& GetFont(const tstring& fontName, bool fromFile = false);
+    void RemoveFont(const tstring& fontName);
+    void RemoveAllFonts();
+
+    const tstring& GetDataPath() const { return m_DataPath; }
+    void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
+
+private:
+    ResourceManager() = default;
+    tstring m_DataPath;
+
+    std::map<tstring, std::unique_ptr<Texture>> m_pMapTextures{};
+    std::map<tstring, std::unique_ptr<Font>> m_pMapFonts{};
+};
 //---------------------------------------------------------------
 
 
+
+//---------------------------------------------------------------
 template <typename... Args>
 class Observer;
 template <typename... Args>
