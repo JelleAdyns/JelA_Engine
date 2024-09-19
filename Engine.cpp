@@ -32,10 +32,10 @@ Engine::Engine() :
 
 Engine::~Engine()
 {
+    delete m_pGame;
     SafeRelease(&m_pDFactory);
     SafeRelease(&m_pDRenderTarget);
     SafeRelease(&m_pDColorBrush);
-    delete m_pGame;
 
 }
 
@@ -254,6 +254,8 @@ int Engine::Run()
         }
     }
     
+    m_pGame->Cleanup();
+
     return (int)msg.wParam;
 }
 void Engine::DrawBorders(int rtWidth, int rtHeight) const
@@ -1467,17 +1469,17 @@ void Font::SetTextFormat(int size, bool bold, bool italic)
 {
     const auto& createTextFormat = [&]()
         {
-    m_pDWriteFactory->CreateTextFormat(
-        m_FontName.c_str(),
-        m_pFontCollection,
-        bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
-        italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL,
-        static_cast<FLOAT>(size),
-        L"en-us",
-        &m_pTextFormat);
-   
-    m_FontSize = size;
+            m_pDWriteFactory->CreateTextFormat(
+                m_FontName.c_str(),
+                m_pFontCollection,
+                bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
+                italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
+                DWRITE_FONT_STRETCH_NORMAL,
+                static_cast<FLOAT>(size),
+                L"en-us",
+                &m_pTextFormat);
+
+            m_FontSize = size;
         };
 
     if (not m_pTextFormat)

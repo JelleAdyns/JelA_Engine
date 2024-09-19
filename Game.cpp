@@ -1,16 +1,11 @@
 #include "Game.h"
 
-Game::Game()
-{
-
-}
-Game::~Game()
-{
-
-}
 void Game::Initialize()
 {
 	BaseGame::Initialize();
+}
+void Game::Cleanup()
+{
 }
 void Game::Draw() const
 {

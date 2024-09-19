@@ -6,8 +6,8 @@
 class Game final: public BaseGame
 {
 public:
-    Game();
-    virtual ~Game();
+    Game() = default;
+    virtual ~Game() = default;
 
     Game(const Game& other) = delete;
     Game(Game&& other) noexcept = delete;
@@ -15,6 +15,7 @@ public:
     Game& operator=(Game&& other) noexcept = delete;
 
     virtual void Initialize() override;
+    virtual void Cleanup() override;
     virtual void Draw() const override;
     virtual void Tick() override;
     virtual void KeyDown(int virtualKeycode) override;

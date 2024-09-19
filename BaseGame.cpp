@@ -9,3 +9,7 @@ void BaseGame::Initialize()
     ENGINE.SetBackGroundColor(RGB(0, 0, 0));
     ENGINE.SetFrameRate(60);
 }
+
+void BaseGame::Cleanup()
+{
+}
