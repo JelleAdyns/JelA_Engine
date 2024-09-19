@@ -254,7 +254,7 @@ int Engine::Run()
         }
     }
     
-    m_pGame->Cleanup();
+    m_pGame->Destroy();
 
     return (int)msg.wParam;
 }
@@ -1479,6 +1479,7 @@ void Font::SetTextFormat(int size, bool bold, bool italic)
                 L"en-us",
                 &m_pTextFormat);
 
+            assert((m_pTextFormat) && _T("TexFormat was not loaded correctly"));
             m_FontSize = size;
         };
 
@@ -1491,9 +1492,17 @@ void Font::SetTextFormat(int size, bool bold, bool italic)
        m_pTextFormat->GetFontWeight() != (bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL) or
        m_pTextFormat->GetFontStyle() != (italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL))
     {
+        const auto horAllign = m_pTextFormat->GetTextAlignment();
+        const auto vertAllign = m_pTextFormat->GetParagraphAlignment();
+
         SafeRelease(&m_pTextFormat);
+
         createTextFormat();
+
+        m_pTextFormat->SetTextAlignment(horAllign);
+        m_pTextFormat->SetParagraphAlignment(vertAllign);
     }
+
 }
 void Font::SetHorizontalAllignment(HorAllignment allignment)
 {
