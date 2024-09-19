@@ -1465,7 +1465,8 @@ HRESULT Font::Initialize(const std::wstring& fontName)
 
 void Font::SetTextFormat(int size, bool bold, bool italic)
 {
-    if (m_pTextFormat) SafeRelease(&m_pTextFormat);
+    const auto& createTextFormat = [&]()
+        {
     m_pDWriteFactory->CreateTextFormat(
         m_FontName.c_str(),
         m_pFontCollection,
@@ -1477,6 +1478,20 @@ void Font::SetTextFormat(int size, bool bold, bool italic)
         &m_pTextFormat);
    
     m_FontSize = size;
+        };
+
+    if (not m_pTextFormat)
+    {
+        createTextFormat();
+    }
+    else if(
+       m_pTextFormat->GetFontSize() != size or
+       m_pTextFormat->GetFontWeight() != (bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL) or
+       m_pTextFormat->GetFontStyle() != (italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL))
+    {
+        SafeRelease(&m_pTextFormat);
+        createTextFormat();
+    }
 }
 void Font::SetHorizontalAllignment(HorAllignment allignment)
 {
