@@ -417,20 +417,22 @@ void Engine::DrawLine(const Point2Int& firstPoint, int secondX, int secondY, flo
     DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness);
 }
 
-void Engine::DrawVector(const Point2Int& origin, const Vector2f& vector, float lineThickness) const
+void Engine::DrawVector(const Point2Int& origin, const Vector2f& vector, int headLineLength, float lineThickness) const
 {
-    DrawVector(origin.x, origin.y, vector.x, vector.y, lineThickness);
+    DrawVector(origin.x, origin.y, vector.x, vector.y, headLineLength, lineThickness);
 }
-void Engine::DrawVector(const Point2Int& origin, float vectorX, float vectorY, float lineThickness) const
+void Engine::DrawVector(const Point2Int& origin, float vectorX, float vectorY, int headLineLength, float lineThickness) const
 {
-    DrawVector(origin.x, origin.y, vectorX, vectorY, lineThickness);
+    DrawVector(origin.x, origin.y, vectorX, vectorY, headLineLength, lineThickness);
 }
-void Engine::DrawVector(int originX, int originY, const Vector2f& vector, float lineThickness) const
+void Engine::DrawVector(int originX, int originY, const Vector2f& vector, int headLineLength, float lineThickness) const
 {
-    DrawVector(originX, originY, vector.x, vector.y, lineThickness);
+    DrawVector(originX, originY, vector.x, vector.y, headLineLength, lineThickness);
 }
-void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, float lineThickness) const
+void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, int headLineLength, float lineThickness) const
 {
+    assert((headLineLength > 0));
+
     SetTransform();
 
     const int endX = originX + static_cast<int>(vectorX);
@@ -440,12 +442,12 @@ void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, 
     const float desiredHeadAngle = float(M_PI / 12.f);
     const float mirroredVectorAngle = atan2f(vectorY, vectorX) + float(M_PI) ;
 
-    const Point2Int arrowP2{ static_cast<int>(endX + cosf(mirroredVectorAngle - desiredHeadAngle) * arrowLineLength),
-                            static_cast<int>(endY + sinf(mirroredVectorAngle - desiredHeadAngle) * arrowLineLength) };
+    const Point2Int arrowP2{ static_cast<int>(endX + cosf(mirroredVectorAngle - desiredHeadAngle) * headLineLength),
+                            static_cast<int>(endY + sinf(mirroredVectorAngle - desiredHeadAngle) * headLineLength) };
 
     
-    const Point2Int arrowP3{ static_cast<int>(endX + cosf(mirroredVectorAngle + desiredHeadAngle) * arrowLineLength),
-                            static_cast<int>(endY + sinf(mirroredVectorAngle + desiredHeadAngle) * arrowLineLength) };
+    const Point2Int arrowP3{ static_cast<int>(endX + cosf(mirroredVectorAngle + desiredHeadAngle) * headLineLength),
+                            static_cast<int>(endY + sinf(mirroredVectorAngle + desiredHeadAngle) * headLineLength) };
 
     DrawLine(originX, originY, endX, endY, lineThickness);
     DrawLine(endX, endY, arrowP2.x, arrowP2.y, lineThickness);

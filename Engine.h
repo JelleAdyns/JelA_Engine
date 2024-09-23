@@ -39,10 +39,10 @@ public:
     void DrawLine           (const Point2Int& firstPoint, int secondX, int secondY, float lineThickness = 1.f) const;
     void DrawLine           (int firstX, int firstY, int secondX, int secondY, float lineThickness = 1.f) const;
 
-    void DrawVector         (const Point2Int& origin, const Vector2f& vector, float lineThickness = 1.f) const;
-    void DrawVector         (const Point2Int& origin, float vectorX, float vectorY, float lineThickness = 1.f) const;
-    void DrawVector         (int originX, int originY, const Vector2f& vector, float lineThickness = 1.f) const;
-    void DrawVector         (int originX, int originY, float vectorX, float vectorY, float lineThickness = 1.f) const;
+    void DrawVector         (const Point2Int& origin, const Vector2f& vector, int headLineLength = 30.f, float lineThickness = 1.f) const;
+    void DrawVector         (const Point2Int& origin, float vectorX, float vectorY, int headLineLength = 30.f, float lineThickness = 1.f) const;
+    void DrawVector         (int originX, int originY, const Vector2f& vector, int headLineLength = 30.f, float lineThickness = 1.f) const;
+    void DrawVector         (int originX, int originY, float vectorX, float vectorY, int headLineLength = 30.f, float lineThickness = 1.f) const;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
     void DrawRectangle      (int left, int bottom, int width, int height, float lineThickness = 1.f)const;
