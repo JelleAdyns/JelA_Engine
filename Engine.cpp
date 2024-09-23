@@ -138,13 +138,21 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 }
                 
                 m_pGame->KeyUp(static_cast<int>(wParam));
+
+                m_IsKeyboardActive = true;
             }
             result = 0;
             wasHandled = true;
             break;
             case WM_KEYDOWN:
             {
+                if ((lParam & (1 << 30)) == 0)
+                {
+                    m_pGame->KeyDownThisFrame(static_cast<int>(wParam));
+                }
                 m_pGame->KeyDown(static_cast<int>(wParam));
+
+                m_IsKeyboardActive = true;
             }
             result = 0;
             wasHandled = true;
@@ -245,6 +253,18 @@ int Engine::Run()
 
             m_T1 = t2;
 
+            if(ENGINE.IsAnyButtonPressed()) m_IsKeyboardActive = false;
+
+            for (auto& controller : m_pVecControllers)
+            {
+                controller->ProcessControllerInput();
+            }
+
+            if(not m_IsKeyboardActive)
+            {
+                m_pGame->HandleControllerInput();
+            }
+
             m_pGame->Tick();
             Paint();
 
@@ -254,7 +274,7 @@ int Engine::Run()
         }
     }
     
-    m_pGame->Destroy();
+    m_pGame->Cleanup();
 
     return (int)msg.wParam;
 }
@@ -438,7 +458,6 @@ void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, 
     const int endX = originX + static_cast<int>(vectorX);
     const int endY = originY + static_cast<int>(vectorY);
 
-    const int arrowLineLength{ 30 };
     const float desiredHeadAngle = float(M_PI / 12.f);
     const float mirroredVectorAngle = atan2f(vectorY, vectorX) + float(M_PI) ;
 
@@ -1183,6 +1202,51 @@ void Engine::Scale(float scale, const Point2Int& PointToScaleFrom)
     Scale(scale, scale, PointToScaleFrom.x, PointToScaleFrom.y);
 }
 
+void Engine::AddController()
+{
+    if (m_pVecControllers.size() < 4)
+    {
+        m_pVecControllers.emplace_back(std::make_unique<Controller>(static_cast<uint8_t>(m_pVecControllers.size())));
+    }
+#ifdef _DEBUG
+    else OutputDebugString(_T( "Max amount of controllers already reached.\n"));
+#endif // _DEBUG
+}
+
+void Engine::PopController()
+{
+    if (not m_pVecControllers.empty()) m_pVecControllers.pop_back();
+}
+
+void Engine::PopAllControllers()
+{
+    m_pVecControllers.clear();
+}
+
+bool Engine::IsAnyButtonPressed() const
+{
+    for (const auto& pController : m_pVecControllers)
+    {
+        if(pController->IsAnyButtonPressed()) return true;
+    }
+    return false;
+}
+
+bool Engine::ButtonDownThisFrame(Controller::Button button, uint8_t controllerIndex) const
+{
+    return m_pVecControllers.at(controllerIndex)->IsDownThisFrame(button);
+}
+
+bool Engine::ButtonUpThisFrame(Controller::Button button, uint8_t controllerIndex) const
+{
+    return m_pVecControllers.at(controllerIndex)->IsUpThisFrame(button);
+}
+
+bool Engine::ButtonPressed(Controller::Button button, uint8_t controllerIndex) const
+{
+    return m_pVecControllers.at(controllerIndex)->IsPressed(button);
+}
+
 void Engine::SetColor(COLORREF newColor, float opacity)
 {
     //if (m_pDColorBrush) SafeRelease(&m_pDColorBrush);
@@ -1244,6 +1308,10 @@ float Engine::GetDeltaTime() const
 float Engine::GetTotalTime() const
 {
     return m_TotalTime;
+}
+bool Engine::IsKeyBoardActive() const
+{
+    return m_IsKeyboardActive;
 }
 ID2D1HwndRenderTarget* Engine::getRenderTarget() const
 {

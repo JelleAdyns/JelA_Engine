@@ -18,7 +18,9 @@ public:
     virtual void Draw() const {}
 	virtual void Tick() {}
     virtual void KeyDown(int virtualKeycode) {}
+    virtual void KeyDownThisFrame(int virtualKeycode) {}
     virtual void KeyUp(int virtualKeycode) {}
+    virtual void HandleControllerInput() {}
     virtual void MouseDown(bool isLeft, int x, int y) {}
     virtual void MouseUp(bool isLeft, int x, int y) {}
     virtual void MouseMove(int x, int y, int keyDown) {}

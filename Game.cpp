@@ -41,6 +41,9 @@ void Game::KeyUp(int virtualKeycode)
 	// Click here for more information: https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
 
 }
+void Game::HandleControllerInput()
+{
+}
 void Game::MouseDown(bool isLeft, int x, int y)
 {
 

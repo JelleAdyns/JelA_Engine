@@ -7,6 +7,7 @@
 #include "CPlayer.h"
 #include "Audio.h"
 #include "framework.h"
+#include "Controller.h"
 #include <vector>
 #include <chrono>
 #include <map>
@@ -117,6 +118,18 @@ public:
     //Use CAPITAL letters or the virtual keycodes
     bool IsKeyPressed(int virtualKeycode) const;
 
+    // Controller stuff
+
+    void AddController();
+    void PopController();
+    void PopAllControllers();
+    bool IsAnyButtonPressed() const;
+    bool ButtonDownThisFrame(Controller::Button button, uint8_t controllerIndex) const;
+    bool ButtonUpThisFrame(Controller::Button button, uint8_t controllerIndex) const;
+    bool ButtonPressed(Controller::Button button, uint8_t controllerIndex)  const;
+
+    // Transform stuff
+
     void PushTransform();
     void PopTransform();
     void Translate(int xTranslation, int yTranslation);
@@ -128,6 +141,9 @@ public:
     void Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom);
     void Scale(float scale, const Point2Int& PointToScaleFrom);
 
+    
+    // Setters
+
     void SetColor(COLORREF newColor, float opacity = 1.F);
     void SetBackGroundColor(COLORREF newColor);
     void SetInstance(HINSTANCE hInst);
@@ -136,12 +152,15 @@ public:
     void SetWindowScale(float scale);
     void SetFrameRate(int FPS);
 
+    // Getters
+
     RectInt GetWindowRect() const;
     float GetWindowScale() const;
     HWND GetWindow() const;
     HINSTANCE GetHInstance() const;
     float GetDeltaTime() const;
     float GetTotalTime() const;
+    bool IsKeyBoardActive() const;
 
     ID2D1HwndRenderTarget* getRenderTarget() const;
 
@@ -208,7 +227,10 @@ private:
     bool                            m_IsFullscreen{};
     bool                            m_KeyIsDown{};
     bool                            m_WindowIsActive{true};
+    bool                            m_IsKeyboardActive{};
     
+    std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
+
     std::chrono::high_resolution_clock::time_point m_T1;
    
 };
