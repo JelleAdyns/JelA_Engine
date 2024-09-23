@@ -547,11 +547,11 @@ void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left
 {
     DrawString(textToDisplay, font, RectInt{ left, bottom, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftBottom, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, int height, bool showRect)const
 {
     DrawString(textToDisplay, font, RectInt{ leftBottom.x, leftBottom.y, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, const Font& font, RectInt destRect, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, const RectInt& destRect, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
@@ -579,7 +579,7 @@ void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left
 {
     DrawString(textToDisplay, font, Point2Int{ left, bottom }, width, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftBottom, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
@@ -808,11 +808,11 @@ void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left
 {
     DrawString(textToDisplay, font, RectInt{ left, top, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftTop, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftTop, int width, int height, bool showRect)const
 {
     DrawString(textToDisplay, font, RectInt{ leftTop.x, leftTop.y, width, height }, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, const Font& font, RectInt destRect, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, const RectInt& destRect, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
@@ -828,7 +828,7 @@ void Engine::DrawString(const tstring& textToDisplay, const Font& font, RectInt 
 
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
-        (UINT32) textToDisplay.length(),
+        (UINT32)textToDisplay.length(),
         font.GetFormat(),
         rect,
         m_pDColorBrush,
@@ -842,7 +842,7 @@ void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left
     DrawString(textToDisplay, font, Point2Int{ left,top }, width, showRect);
 }
 //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-void Engine::DrawString(const tstring& textToDisplay, const Font& font, Point2Int leftTop, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftTop, int width, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(

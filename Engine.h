@@ -54,13 +54,13 @@ public:
     void DrawRoundedRect    (const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
     void DrawString         (const tstring& textToDisplay, const Font& font, int left, int bottom, int width, int height, bool showRect = false)const;
-    void DrawString         (const tstring& textToDisplay, const Font& font, Point2Int leftBottom, int width, int height, bool showRect = false)const;
-    void DrawString         (const tstring& textToDisplay, const Font& font, RectInt destRect, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, int height, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, const Font& font, const RectInt& destRect, bool showRect = false)const;
 
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
     void DrawString         (const tstring& textToDisplay, const Font& font, int left, int bottom, int width, bool showRect = false)const;
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-    void DrawString         (const tstring& textToDisplay, const Font& font, Point2Int leftBottom, int width, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, bool showRect = false)const;
 
     void DrawTexture        (const Texture& texture, int destLeft, int destBottom, const RectInt& srcRect = {}, float opacity = 1.f)const;
     void DrawTexture        (const Texture& texture, const Point2Int& destLeftBottom = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
@@ -83,13 +83,13 @@ public:
     void DrawRoundedRect    (const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
     void DrawString         (const tstring& textToDisplay, const Font& font, int left, int top, int width, int height, bool showRect = false)const;
-    void DrawString         (const tstring& textToDisplay, const Font& font, Point2Int leftTop, int width, int height, bool showRect = false)const;
-    void DrawString         (const tstring& textToDisplay, const Font& font, RectInt destRect, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, const Font& font, const Point2Int& leftTop, int width, int height, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, const Font& font, const RectInt& destRect, bool showRect = false)const;
 
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
     void DrawString         (const tstring& textToDisplay, const Font& font, int left, int top, int width, bool showRect = false)const;
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-    void DrawString         (const tstring& textToDisplay, const Font& font, Point2Int leftTop, int width, bool showRect = false)const;
+    void DrawString         (const tstring& textToDisplay, const Font& font, const Point2Int& leftTop, int width, bool showRect = false)const;
 
     void DrawTexture        (const Texture& texture, int destLeft, int destTop, const RectInt& srcRect = {}, float opacity = 1.f)const;
     void DrawTexture        (const Texture& texture, const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
