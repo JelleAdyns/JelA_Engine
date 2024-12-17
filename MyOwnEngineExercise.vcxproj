@@ -148,7 +148,6 @@
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="CPlayer.h" />
-    <ClInclude Include="Resource.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -162,13 +161,6 @@
     <ClCompile Include="CPlayer.cpp" />
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="Structs.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="MyOwnEngineExercise.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="MyOwnEngineExercise.ico" />
-    <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

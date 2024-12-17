@@ -1,7 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "resource.h"
 #include "BaseGame.h"
 #include "Structs.h"
 #include "CPlayer.h"

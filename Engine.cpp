@@ -363,8 +363,8 @@ HRESULT Engine::MakeWindow()
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wcex.lpszMenuName = NULL;
         wcex.lpszClassName = m_Title.c_str();
-        wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MYOWNENGINEEXERCISE));
-        wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+        wcex.hIcon = 0;
+        wcex.hIconSm = 0;
 
         RegisterClassEx(&wcex);
 
