@@ -1,6 +1,5 @@
 
 #include "Engine.h"
-#include "Game.h"
 #include <chrono>
 #include <thread>
 #include <algorithm>
@@ -32,11 +31,9 @@ Engine::Engine() :
 
 Engine::~Engine()
 {
-    delete m_pGame;
     SafeRelease(&m_pDFactory);
     SafeRelease(&m_pDRenderTarget);
     SafeRelease(&m_pDColorBrush);
-
 }
 
 Engine& Engine::GetSingleton()
@@ -210,10 +207,10 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
     return result;
 }
 
-int Engine::Run()
+int Engine::Run(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game)
 {
     int result = 0;
-    bool ableToRun = Start();
+    bool ableToRun = Start(resourcePath, std::move(game));
 
     MSG msg;
 
@@ -274,7 +271,7 @@ int Engine::Run()
 
     return (int)msg.wParam;
 }
-bool Engine::Start()
+bool Engine::Start(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game)
 {
     // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
    // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
@@ -283,7 +280,7 @@ bool Engine::Start()
     if (SUCCEEDED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
     {
         ENGINE.SetInstance(HINST_THISCOMPONENT);
-        ResourceManager::GetInstance().Init(_T("../../Resources/"));
+        ResourceManager::GetInstance().Init(resourcePath);
 
         MakeWindow();
         CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
@@ -291,7 +288,7 @@ bool Engine::Start()
 
         srand(static_cast<unsigned int>(time(nullptr)));
 
-        m_pGame = new Game{};
+        m_pGame = std::move(game);
         m_pGame->Initialize();
 
         SetWindowPosition();

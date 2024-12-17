@@ -30,7 +30,7 @@ public:
 
     static Engine& GetSingleton();
 
-    int Run();
+    int Run(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game);
     LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
@@ -178,7 +178,7 @@ public:
 
 private:
 
-    bool Start();
+    bool Start(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game);
     void End();
 
     void DrawBorders(int rtWidth, int rtHeight) const;
@@ -203,7 +203,7 @@ private:
     D2D1_COLOR_F                    m_DColorBackGround{};
 
     //BaseGame
-    BaseGame*                       m_pGame{};
+    std::unique_ptr<BaseGame>       m_pGame{};
 
     //Transform
     FLOAT                           m_ViewPortTranslationX{};
