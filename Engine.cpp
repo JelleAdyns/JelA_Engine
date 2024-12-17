@@ -483,8 +483,6 @@ void Engine::DrawVector(int originX, int originY, const Vector2f& vector, int he
 }
 void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, int headLineLength, float lineThickness) const
 {
-    assert((headLineLength > 0));
-
     SetTransform();
 
     const int endX = originX + static_cast<int>(vectorX);
