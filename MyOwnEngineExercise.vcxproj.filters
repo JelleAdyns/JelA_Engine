@@ -48,6 +48,9 @@
     <ClInclude Include="Audio.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
+    <ClInclude Include="Controller.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -73,6 +76,9 @@
     </ClCompile>
     <ClCompile Include="BaseGame.cpp">
       <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller.cpp">
+      <Filter>Game Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

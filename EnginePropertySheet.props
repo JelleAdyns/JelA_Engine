@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>shlwapi.lib;Dwrite.lib;d2d1.lib;mf.lib;mfplat.lib;mfuuid.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>xinput.lib;shlwapi.lib;Dwrite.lib;d2d1.lib;mf.lib;mfplat.lib;mfuuid.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ClCompile>
       <LanguageStandard>stdcpp20</LanguageStandard>

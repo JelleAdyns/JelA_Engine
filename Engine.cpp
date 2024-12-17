@@ -41,8 +41,8 @@ Engine::~Engine()
 
 Engine& Engine::GetSingleton()
 {
-    static std::unique_ptr<Engine> pEngine = std::unique_ptr<Engine>(new Engine{});
-    return *pEngine;
+    static Engine pEngine{};
+    return pEngine;
 }
 LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
