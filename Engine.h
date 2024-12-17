@@ -179,6 +179,9 @@ public:
 
 private:
 
+    bool Start();
+    void End();
+
     void DrawBorders(int rtWidth, int rtHeight) const;
     void SetWindowPosition();
     void SetFullscreen();

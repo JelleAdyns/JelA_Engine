@@ -212,71 +212,98 @@ LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
 int Engine::Run()
 {
-
-    MakeWindow();       
-    CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
-                             // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
-
-    srand(static_cast<unsigned int>(time(nullptr)));
-
-    m_pGame = new Game{};
-    m_pGame->Initialize();
-
-    SetWindowPosition();
+    int result = 0;
+    bool ableToRun = Start();
 
     MSG msg;
-    m_T1 = std::chrono::high_resolution_clock::now();
-    
-    // Main message loop:
-    while (true)
+
+    if(ableToRun)
     {
-        
-        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+        m_T1 = std::chrono::high_resolution_clock::now();
+
+        // Main message loop:
+        while (true)
         {
-            if (msg.message == WM_QUIT)
+
+            if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
             {
-                DestroyWindow(m_hWindow);
-                break;
+                if (msg.message == WM_QUIT)
+                {
+                    DestroyWindow(m_hWindow);
+                    break;
+                }
+
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+
             }
-     
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-            
+            else
+            {
+                const std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+                float elapsedSec{ std::chrono::duration<float>(t2 - m_T1).count() };
+
+                ENGINE.SetDeltaTime(elapsedSec);
+
+                m_T1 = t2;
+
+                if (ENGINE.IsAnyButtonPressed()) m_IsKeyboardActive = false;
+
+                for (auto& controller : m_pVecControllers)
+                {
+                    controller->ProcessControllerInput();
+                }
+
+                if (not m_IsKeyboardActive)
+                {
+                    m_pGame->HandleControllerInput();
+                }
+
+                m_pGame->Tick();
+                Paint();
+
+                const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>(m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
+                std::this_thread::sleep_for(sleepTime);
+
+            }
         }
-        else
-        {
-            const std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-            float elapsedSec{ std::chrono::duration<float>(t2 - m_T1).count() };
-
-            ENGINE.SetDeltaTime(elapsedSec);
-
-            m_T1 = t2;
-
-            if(ENGINE.IsAnyButtonPressed()) m_IsKeyboardActive = false;
-
-            for (auto& controller : m_pVecControllers)
-            {
-                controller->ProcessControllerInput();
-            }
-
-            if(not m_IsKeyboardActive)
-            {
-                m_pGame->HandleControllerInput();
-            }
-
-            m_pGame->Tick();
-            Paint();
-
-            const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>(m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
-            std::this_thread::sleep_for(sleepTime);
-  
-        }
     }
-    
-    m_pGame->Cleanup();
+
+    End();
 
     return (int)msg.wParam;
+}
+bool Engine::Start()
+{
+    // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
+   // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
+    HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+
+    if (SUCCEEDED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
+    {
+        ENGINE.SetInstance(HINST_THISCOMPONENT);
+        ResourceManager::GetInstance().Init(_T("../../Resources/"));
+
+        MakeWindow();
+        CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
+        // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
+
+        srand(static_cast<unsigned int>(time(nullptr)));
+
+        m_pGame = new Game{};
+        m_pGame->Initialize();
+
+        SetWindowPosition();
+
+        return true;
+    }
+    return false;
+}
+void Engine::End()
+{
+    m_pGame->Cleanup();
+    CoUninitialize();
 }
 void Engine::DrawBorders(int rtWidth, int rtHeight) const
 {
