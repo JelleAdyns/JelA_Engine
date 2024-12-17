@@ -149,7 +149,6 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="Structs.h" />
-    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AudioService.cpp" />

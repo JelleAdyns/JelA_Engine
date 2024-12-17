@@ -24,9 +24,6 @@
     <ClInclude Include="Defines.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Engine Files</Filter>
-    </ClInclude>
     <ClInclude Include="Structs.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
