@@ -411,8 +411,13 @@ HRESULT Engine::OnRender()
     // Dont show more than the the scaled window size given by the user
     m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
     m_TransformChanged = true;
+
+
+    auto userColor = m_pDColorBrush->GetColor();
+
     SetColor(RGB(0, 0, 0));
     DrawBorders(GetRenderTargetSize().width, GetRenderTargetSize().height);
+    SetColor(RGB(userColor.r * 255, userColor.g * 255, userColor.b * 255), userColor.a * 255);
     
     
 
