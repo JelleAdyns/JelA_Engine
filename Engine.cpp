@@ -563,11 +563,11 @@ void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, 
 }
 
 //Ellipses
-void Engine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY, float lineThickness)const
+void Engine::DrawEllipse(int centerX, int centerY, float radiusX, float radiusY, float lineThickness)const
 {
     DrawEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY }, lineThickness);
 }
-void Engine::DrawEllipse(const Point2Int& center, int radiusX, int radiusY, float lineThickness)const
+void Engine::DrawEllipse(const Point2Int& center, float radiusX, float radiusY, float lineThickness)const
 {
     DrawEllipse(EllipseInt{ center, radiusX, radiusY }, lineThickness);
 }
@@ -744,26 +744,62 @@ void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)c
             static_cast<FLOAT>(radiusY)),
         m_pDColorBrush);
 }
-
-void Engine::DrawArc(int centerX, int centerY, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness) const
+void Engine::CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
 {
-}
+    if (angle >= 360.f)
+    {
+        angle = 359.9f;
+        OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
+    }
+    if (angle <= -360.f)
+    {
+        angle = -359.9f;
+        OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
+    }
+    while (startAngle >= 360.f) startAngle -= 360;
+    while (startAngle <= -360.f) startAngle += 360;
 
-void Engine::DrawArc(const Point2Int& center, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness) const
-{
-    /*ID2D1PathGeometry* geo{  };
-    geo. = D2D1::ArcSegment(D2D1_POINT_2F{}, D2D1_SIZE_F{}, 180.f, D2D1_SWEEP_DIRECTION::D2D1_SWEEP_DIRECTION_CLOCKWISE, D2D1_ARC_SIZE::D2D1_ARC_SIZE_LARGE)
-    m_pDRenderTarget->FillGeometry(
-        )
-    )*/
+    ID2D1GeometrySink* pSink;
+    m_pDFactory->CreatePathGeometry(pGeo);
+    (*pGeo)->Open(&pSink);
+
+    auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
+    auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
+
+    auto beginPoint = D2D1::Point2F(
+        static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
+        static_cast<FLOAT>(m_Height - (center.y + radiusY * std::sin(startRad)))
+    );
+    auto endPoint = D2D1::Point2F(
+        static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
+        static_cast<FLOAT>(m_Height - (center.y + radiusY * std::sin(endRad)))
+    );
+
+    D2D1_ARC_SEGMENT arcSegment{
+        endPoint,
+        D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
+        0,
+        D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+        std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
+    };
+
+
+
+    pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
+    pSink->AddArc(arcSegment);
+    if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(m_Height - center.y)));
+    pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+    pSink->Close();
+
+    SafeRelease(&pSink);
 }
 
 //Ellipses
-void Engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const
+void Engine::FillEllipse(int centerX, int centerY, float radiusX, float radiusY)const
 {
     FillEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY });
 }
-void Engine::FillEllipse(const Point2Int& center, int radiusX, int radiusY)const
+void Engine::FillEllipse(const Point2Int& center, float radiusX, float radiusY)const
 {
     FillEllipse(EllipseInt{ center, radiusX, radiusY });
 }
@@ -842,13 +878,61 @@ void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, 
         m_pDColorBrush,
         static_cast<FLOAT>(lineThickness));
 }
+void Engine::CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
+{
+    if (angle >= 360.f)
+    {
+        angle = 359.9f;
+        OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
+    }
+    if (angle <= -360.f)
+    {
+        angle = -359.9f;
+        OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
+    }
+    while (startAngle > 360.f) startAngle -= 360;
+    while (startAngle < -360.f) startAngle += 360;
 
+    ID2D1GeometrySink* pSink;
+    m_pDFactory->CreatePathGeometry(pGeo);
+    (*pGeo)->Open(&pSink);
+
+    auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
+    auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
+
+    auto beginPoint = D2D1::Point2F(
+        static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
+        static_cast<FLOAT>(center.y + radiusY * std::sin(startRad))
+    );
+    auto endPoint = D2D1::Point2F(
+        static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
+        static_cast<FLOAT>(center.y + radiusY * std::sin(endRad))
+    );
+
+    D2D1_ARC_SEGMENT arcSegment{
+        endPoint,
+        D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
+        0,
+        D2D1_SWEEP_DIRECTION_CLOCKWISE,
+        angle < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
+    };
+
+
+
+    pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
+    pSink->AddArc(arcSegment);
+    if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(center.y)));
+    pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+    pSink->Close();
+
+    SafeRelease(&pSink);
+}
 //Ellipse
-void Engine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY, float lineThickness)const
+void Engine::DrawEllipse(int centerX, int centerY, float radiusX, float radiusY, float lineThickness)const
 {
     DrawEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY }, lineThickness);
 }
-void Engine::DrawEllipse(const Point2Int& center, int radiusX, int radiusY, float lineThickness)const
+void Engine::DrawEllipse(const Point2Int& center, float radiusX, float radiusY, float lineThickness)const
 {
     DrawEllipse(EllipseInt{ center, radiusX, radiusY }, lineThickness);
 }
@@ -1022,11 +1106,11 @@ void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)c
 }
 
 //Ellipse
-void Engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const
+void Engine::FillEllipse(int centerX, int centerY, float radiusX, float radiusY)const
 {
     FillEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY });
 }
-void Engine::FillEllipse(const Point2Int& center, int radiusX, int radiusY)const
+void Engine::FillEllipse(const Point2Int& center, float radiusX, float radiusY)const
 {
     FillEllipse(EllipseInt{ center, radiusX, radiusY });
 }
@@ -1041,6 +1125,45 @@ void Engine::FillEllipse(const EllipseInt& ellipse)const
         m_pDColorBrush);
 }
 #endif // MATHEMATICAL_COORDINATSYSTEM
+
+void Engine::DrawArc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle, float lineThickness, bool closeSegment) const
+{
+    DrawArc(Point2Int{ centerX, centerY }, radiusX, radiusY, startAngle, angle, lineThickness, closeSegment);
+}
+
+void Engine::DrawArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, float lineThickness, bool closeSegment) const
+{
+    ID2D1PathGeometry* pGeo{};
+    CreateArc(&pGeo, center, radiusX, radiusY, startAngle, angle, closeSegment);
+
+    SetTransform();
+
+    m_pDRenderTarget->DrawGeometry(
+        pGeo,
+        m_pDColorBrush,
+        static_cast<FLOAT>(lineThickness)
+    );
+
+    SafeRelease(&pGeo);
+}
+
+void Engine::FillArc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle) const
+{
+    FillArc(Point2Int{ centerX, centerY }, radiusX, radiusY, startAngle, angle);
+}
+
+void Engine::FillArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle) const
+{
+    ID2D1PathGeometry* pGeo{};
+    CreateArc(&pGeo, center, radiusX, radiusY, startAngle, angle, true);
+
+    SetTransform();
+
+    m_pDRenderTarget->FillGeometry(pGeo, m_pDColorBrush);
+
+    SafeRelease(&pGeo);
+}
+
 
 bool Engine::IsKeyPressed(int virtualKeycode) const
 {
@@ -1134,6 +1257,7 @@ void Engine::SetDeltaTime(float elapsedSec)
     m_DeltaTime = elapsedSec;
     m_TotalTime += elapsedSec;
 }
+
 void Engine::SetFrameRate(int FPS)
 {
     m_MilliSecondsPerFrame = 1000.0f / FPS;
@@ -1763,8 +1887,8 @@ bool utils::IsPointInCircle(const Point2Int& p, const CircleInt& c)
 
 bool utils::IsPointInEllipse(const Point2Int& p, const EllipseInt& e)
 {
-    int lhs = (p.x * p.x) * (e.radiusY * e.radiusY) + (p.y * p.y) * (e.radiusX * e.radiusX);
-    int rhs = (e.radiusX * e.radiusX) * (e.radiusY * e.radiusY);
+    float lhs = (p.x * p.x) * (e.radiusY * e.radiusY) + (p.y * p.y) * (e.radiusX * e.radiusX);
+    float rhs = (e.radiusX * e.radiusX) * (e.radiusY * e.radiusY);
     return lhs <= rhs;
 }
 

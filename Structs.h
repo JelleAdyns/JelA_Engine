@@ -46,22 +46,22 @@ public:
 struct EllipseInt
 {
 	EllipseInt() = default;
-	explicit EllipseInt(int xCenter, int yCenter, int xRadius, int yRadius);
-	explicit EllipseInt(const Point2Int& center, int xRadius, int yRadius);
+	explicit EllipseInt(int xCenter, int yCenter, float xRadius, float yRadius);
+	explicit EllipseInt(const Point2Int& center, float xRadius, float yRadius);
 
 	Point2Int center;
-	int radiusX;
-	int radiusY;
+	float radiusX;
+	float radiusY;
 };
 
 struct CircleInt
 {
 	CircleInt() = default;
-	explicit CircleInt(int xCenter, int yCenter, int radius);
-	explicit CircleInt(const Point2Int& center, int radius);
+	explicit CircleInt(int xCenter, int yCenter, float radius);
+	explicit CircleInt(const Point2Int& center, float radius);
 
 	Point2Int center;
-	int rad;
+	float rad;
 };
 
 

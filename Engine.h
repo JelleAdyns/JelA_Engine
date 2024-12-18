@@ -104,16 +104,19 @@ public:
     void FillRoundedRect    (const RectInt& rect, float radiusX, float radiusY)const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-    void DrawArc            (int centerX, int centerY, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness = 1.f)const;
-    void DrawArc            (const Point2Int& center, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness = 1.f)const;
+    void DrawArc            (int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle, float lineThickness = 1.f, bool closeSegment = false)const;
+    void DrawArc            (const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, float lineThickness = 1.f, bool closeSegment = false)const;
+    
+    void FillArc            (int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle)const;
+    void FillArc            (const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle)const;
 
-    void DrawEllipse        (int centerX, int centerY, int radiusX, int radiusY, float lineThickness = 1.f)const;
-    void DrawEllipse        (const Point2Int& center, int radiusX, int radiusY, float lineThickness = 1.f)const;
+    void DrawEllipse        (int centerX, int centerY, float radiusX, float radiusY, float lineThickness = 1.f)const;
+    void DrawEllipse        (const Point2Int& center, float radiusX, float radiusY, float lineThickness = 1.f)const;
     void DrawEllipse        (const EllipseInt& ellipse, float lineThickness = 1.f)const;
     void DrawCircle         (const CircleInt& circle, float lineThickness = 1.f)const;
 
-    void FillEllipse        (int centerX, int centerY, int radiusX, int radiusY)const;
-    void FillEllipse        (const Point2Int& center, int radiusX, int radiusY)const;
+    void FillEllipse        (int centerX, int centerY, float radiusX, float radiusY)const;
+    void FillEllipse        (const Point2Int& center, float radiusX, float radiusY)const;
     void FillEllipse        (const EllipseInt& ellipse)const;
     void FillCircle         (const CircleInt& circle)const;
 
@@ -184,6 +187,7 @@ private:
     bool Start(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game);
     void End();
 
+    void CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const;
     void DrawBorders(int rtWidth, int rtHeight) const;
     void SetWindowPosition();
     void SetFullscreen();

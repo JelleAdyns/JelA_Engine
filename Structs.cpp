@@ -43,26 +43,26 @@ bool Point2Int::operator!=(const Point2Int& rhs)
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
 
-EllipseInt::EllipseInt(int xCenter, int yCenter, int xRadius, int yRadius) :
+EllipseInt::EllipseInt(int xCenter, int yCenter, float xRadius, float yRadius) :
 	center{ xCenter,yCenter },
 	radiusX{ xRadius },
 	radiusY{ yRadius }
 {}
 
-EllipseInt::EllipseInt(const Point2Int& center, int xRadius, int yRadius) :
+EllipseInt::EllipseInt(const Point2Int& center, float xRadius, float yRadius) :
 	center{center},
 	radiusX{xRadius},
 	radiusY{yRadius}
 {}
 
 
-CircleInt::CircleInt(int xCenter, int yCenter, int radius) :
+CircleInt::CircleInt(int xCenter, int yCenter, float radius) :
 	center{ xCenter, yCenter },
 	rad{ radius }
 {
 }
 
-CircleInt::CircleInt(const Point2Int& center, int radius) :
+CircleInt::CircleInt(const Point2Int& center, float radius) :
 	center{ center},
 	rad{ radius }
 {
