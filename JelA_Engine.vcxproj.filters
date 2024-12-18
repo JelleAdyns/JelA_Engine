@@ -72,7 +72,7 @@
       <Filter>Engine Files</Filter>
     </ClCompile>
     <ClCompile Include="Controller.cpp">
-      <Filter>Game Files</Filter>
+      <Filter>Engine Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -24,6 +24,7 @@
     <ProjectGuid>{3b45f7b6-e997-4553-b574-566ef7bf55e3}</ProjectGuid>
     <RootNamespace>MyOwnEngineExercise</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>JelA_Engine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

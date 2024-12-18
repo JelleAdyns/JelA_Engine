@@ -745,6 +745,19 @@ void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)c
         m_pDColorBrush);
 }
 
+void Engine::DrawArc(int centerX, int centerY, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness) const
+{
+}
+
+void Engine::DrawArc(const Point2Int& center, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness) const
+{
+    /*ID2D1PathGeometry* geo{  };
+    geo. = D2D1::ArcSegment(D2D1_POINT_2F{}, D2D1_SIZE_F{}, 180.f, D2D1_SWEEP_DIRECTION::D2D1_SWEEP_DIRECTION_CLOCKWISE, D2D1_ARC_SIZE::D2D1_ARC_SIZE_LARGE)
+    m_pDRenderTarget->FillGeometry(
+        )
+    )*/
+}
+
 //Ellipses
 void Engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)const
 {

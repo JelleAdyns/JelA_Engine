@@ -104,6 +104,9 @@ public:
     void FillRoundedRect    (const RectInt& rect, float radiusX, float radiusY)const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
+    void DrawArc            (int centerX, int centerY, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness = 1.f)const;
+    void DrawArc            (const Point2Int& center, int radiusX, int radiusY, float fromAngle, float tillAngle, float lineThickness = 1.f)const;
+
     void DrawEllipse        (int centerX, int centerY, int radiusX, int radiusY, float lineThickness = 1.f)const;
     void DrawEllipse        (const Point2Int& center, int radiusX, int radiusY, float lineThickness = 1.f)const;
     void DrawEllipse        (const EllipseInt& ellipse, float lineThickness = 1.f)const;
