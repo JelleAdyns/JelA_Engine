@@ -3,7 +3,7 @@
 
 #include "Engine.h"
 
-class Game final: public BaseGame
+class Game final: public jela::BaseGame
 {
 public:
     Game() = default;

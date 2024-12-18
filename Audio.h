@@ -3,42 +3,46 @@
 
 #include "AudioService.h"
 
-class Audio final : public AudioService
+namespace jela
 {
-public:
 
-    Audio();
-    virtual ~Audio();
+    class Audio final : public AudioService
+    {
+    public:
 
-    Audio(const Audio&) = delete;
-    Audio(Audio&&) noexcept = delete;
-    Audio& operator= (const Audio&) = delete;
-    Audio& operator= (Audio&&) noexcept = delete;
+        Audio();
+        virtual ~Audio();
 
-    virtual void AddSound(const tstring& filename, SoundID id) override;
-    virtual void RemoveSound(SoundID id) override;
-    virtual void PlaySoundClip(SoundID id, bool repeat) const override;
-    virtual uint8_t GetMasterVolume() const override;
-    virtual void SetMasterVolume(uint8_t newVolume) override;
-    virtual void IncrementMasterVolume() override;
-    virtual void DecrementMasterVolume() override;
-    virtual void ToggleMute() override;
-    virtual void PauseSound(SoundID id) const override;
-    virtual void PauseAllSounds() const override;
-    virtual void ResumeSound(SoundID id) const override;
-    virtual void ResumeAllSounds() const override;
-    virtual void StopSound(SoundID id) const override;
-    virtual void StopAllSounds() const override;
+        Audio(const Audio&) = delete;
+        Audio(Audio&&) noexcept = delete;
+        Audio& operator= (const Audio&) = delete;
+        Audio& operator= (Audio&&) noexcept = delete;
+
+        virtual void AddSound(const tstring& filename, SoundID id) override;
+        virtual void RemoveSound(SoundID id) override;
+        virtual void PlaySoundClip(SoundID id, bool repeat) const override;
+        virtual uint8_t GetMasterVolume() const override;
+        virtual void SetMasterVolume(uint8_t newVolume) override;
+        virtual void IncrementMasterVolume() override;
+        virtual void DecrementMasterVolume() override;
+        virtual void ToggleMute() override;
+        virtual void PauseSound(SoundID id) const override;
+        virtual void PauseAllSounds() const override;
+        virtual void ResumeSound(SoundID id) const override;
+        virtual void ResumeAllSounds() const override;
+        virtual void StopSound(SoundID id) const override;
+        virtual void StopAllSounds() const override;
 
 
 
-private:
+    private:
 
-    class AudioFile;
+        class AudioFile;
 
-    class AudioImpl;
-    AudioImpl* m_pImpl;
-};
+        class AudioImpl;
+        AudioImpl* m_pImpl;
+    };
 
+}
 
 #endif // !AUDIO_H

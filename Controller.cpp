@@ -5,6 +5,9 @@
 #include "Windows.h"
 #include <XInput.h>
 
+namespace jela
+{
+
 
 	//Implementation
 	class Controller::ControllerImpl
@@ -382,3 +385,4 @@
 	{
 		return ControllerImpl::AmountOfConnectedControllersImpl();
 	}
+}
