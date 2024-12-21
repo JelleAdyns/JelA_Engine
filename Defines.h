@@ -111,6 +111,6 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 //#include "Engine.h"
 
-#define ENGINE (jela::Engine::GetSingleton())
+#define ENGINE (jela::Engine::GetInstance())
 
 #endif // !DEFINES_H

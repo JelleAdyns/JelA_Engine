@@ -31,15 +31,27 @@ namespace jela
     
     Engine::~Engine()
     {
-        SafeRelease(&m_pDFactory);
-        SafeRelease(&m_pDRenderTarget);
+        m_pGame->Cleanup();
+
+        ResourceManager::ShutDown();
         SafeRelease(&m_pDColorBrush);
+        SafeRelease(&m_pDRenderTarget);
+        SafeRelease(&m_pDFactory);
+
+        CoUninitialize();
+        MFShutdown();
     }
     
-    Engine& Engine::GetSingleton()
+    Engine& Engine::GetInstance()
     {
-        static Engine pEngine{};
-        return pEngine;
+        if (!m_pInstance)
+            m_pInstance = new Engine{};
+        return *m_pInstance;
+    }
+    void Engine::Shutdown()
+    {
+        delete m_pInstance;
+        m_pInstance = nullptr;
     }
     LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
@@ -207,13 +219,18 @@ namespace jela
         return result;
     }
     
-    int Engine::Run(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game)
+    int Engine::Run(std::unique_ptr<BaseGame>&& game)
     {
         int result = 0;
-        bool ableToRun = Start(resourcePath, std::move(game));
-    
+        bool ableToRun = true;
+
+        m_pGame = std::move(game);
+        m_pGame->Initialize();
+
+        SetWindowPosition();
+
         MSG msg;
-    
+        
         if(ableToRun)
         {
             m_T1 = std::chrono::high_resolution_clock::now();
@@ -267,19 +284,17 @@ namespace jela
     
         }
     
-        End();
-    
         return (int)msg.wParam;
     }
-    bool Engine::Start(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game)
+    bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath)
     {
         // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
        // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
         HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
     
-        if (SUCCEEDED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
+        if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
         {
-            ENGINE.SetInstance(HINST_THISCOMPONENT);
+            ENGINE.SetInstance(hInstance);
             ResourceManager::GetInstance().Init(resourcePath);
     
             MakeWindow();
@@ -288,19 +303,9 @@ namespace jela
     
             srand(static_cast<unsigned int>(time(nullptr)));
     
-            m_pGame = std::move(game);
-            m_pGame->Initialize();
-    
-            SetWindowPosition();
-    
             return true;
         }
         return false;
-    }
-    void Engine::End()
-    {
-        m_pGame->Cleanup();
-        CoUninitialize();
     }
     void Engine::DrawBorders(int rtWidth, int rtHeight) const
     {
@@ -343,7 +348,7 @@ namespace jela
     {
         HRESULT hr = S_OK;
     
-        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDFactory);
+        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &m_pDFactory);
     
         if (SUCCEEDED(hr))
         {
@@ -366,9 +371,9 @@ namespace jela
             RegisterClassEx(&wcex);
     
             m_hWindow = CreateWindow(m_Title.c_str(), m_Title.c_str(), WS_OVERLAPPEDWINDOW,
-                CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, nullptr, nullptr, m_hInstance, this);
+                CW_USEDEFAULT, NULL, CW_USEDEFAULT, NULL, nullptr, nullptr, m_hInstance, nullptr);
     
-            if (m_hWindow) SetWindowPosition();
+            //if (m_hWindow) SetWindowPosition();
         }
     
         return hr;
@@ -1564,7 +1569,12 @@ namespace jela
     Texture::~Texture()
     {
         SafeRelease(&m_pDBitmap);
-    };
+    }
+    void Texture::DestroyFactory()
+    {
+        SafeRelease(&m_pWICFactory);
+    }
+    
     //---------------------------------------------------------------------------------------------------------------------------------
     
     
@@ -1768,6 +1778,10 @@ namespace jela
     {
         return m_FontSize;
     }
+    void Font::DestroyFactory()
+    {
+        SafeRelease(&m_pDWriteFactory);
+    }
     //---------------------------------------------------------------------------------------------------------------------------------
     
     
@@ -1776,7 +1790,7 @@ namespace jela
     //---------------------
     // ResourceManager
     //---------------------
-    
+
     void ResourceManager::Init(const tstring& dataPath)
     {
         m_DataPath = dataPath;

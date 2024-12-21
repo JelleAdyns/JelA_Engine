@@ -22,6 +22,8 @@ namespace jela
     {
     private:
         Engine();
+
+        static inline Engine* m_pInstance = nullptr;
     public:
 
         Engine(const Engine& other) = delete;
@@ -30,10 +32,11 @@ namespace jela
         Engine& operator=(Engine&& other) noexcept = delete;
 
         ~Engine();
+        static Engine& GetInstance();
+        static void Shutdown();
+        bool Init(HINSTANCE hInstance, const tstring& resourcePath);
 
-        static Engine& GetSingleton();
-
-        int Run(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game);
+        int Run(std::unique_ptr<BaseGame>&& game);
         LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
@@ -185,10 +188,9 @@ namespace jela
             }
         }
 
+      
     private:
 
-        bool Start(const tstring& resourcePath, std::unique_ptr<BaseGame>&& game);
-        void End();
 
         void CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const;
         void DrawBorders(int rtWidth, int rtHeight) const;
@@ -239,7 +241,7 @@ namespace jela
         bool                            m_IsFullscreen{};
         bool                            m_KeyIsDown{};
         bool                            m_WindowIsActive{ true };
-        bool                            m_IsKeyboardActive{};
+        bool                            m_IsKeyboardActive{true};
 
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 
@@ -264,6 +266,8 @@ namespace jela
         ID2D1Bitmap* const  GetBitmap() const { return m_pDBitmap; }
         float GetWidth() const { return m_TextureWidth; }
         float GetHeight() const { return m_TextureHeight; }
+        
+        static void DestroyFactory();
 
     private:
 
@@ -312,6 +316,7 @@ namespace jela
         IDWriteTextFormat* GetFormat() const;
         int GetFontSize() const;
 
+        static void DestroyFactory();
     private:
         HRESULT Initialize(const std::wstring& filename);
 
@@ -330,11 +335,24 @@ namespace jela
     //---------------------------------------------------------------
     class ResourceManager final
     {
+
+    private:
+        static inline ResourceManager* m_pInstance = nullptr ;
     public:
         static ResourceManager& GetInstance()
         {
-            static ResourceManager instance{};
-            return instance;
+            if (!m_pInstance)
+                m_pInstance = new ResourceManager{};
+            
+            return *m_pInstance;
+        }
+        static void ShutDown()
+        {
+            delete m_pInstance;
+            m_pInstance = nullptr;
+
+            Texture::DestroyFactory();
+            Font::DestroyFactory();
         }
         ~ResourceManager() = default;
 

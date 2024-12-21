@@ -7,11 +7,18 @@
 #include "Engine.h"
 #include "Game.h"
 
-int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
+int APIENTRY WINAPI _tWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_ LPTSTR    lpCmdLine,
     _In_ int       nCmdShow)
 {  
-    int result = ENGINE.Run(_T("../../Resources"), std::make_unique<Game>());
-    return result;
+    bool ok = jela::Engine::GetInstance().Init(hInstance, _T("Resources/"));
+    if (ok)
+    {
+        int result = jela::Engine::GetInstance().Run(std::make_unique<Game>());
+        jela::Engine::Shutdown();
+
+        return result;
+    }
+    return -1;
 }

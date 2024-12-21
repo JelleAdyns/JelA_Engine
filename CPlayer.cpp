@@ -346,7 +346,8 @@ namespace jela
             CloseHandle(m_hCloseEvent);
             m_hCloseEvent = NULL;
         }
-
+        SafeRelease(&m_pSource);
+        SafeRelease(&m_pSession);
         return hr;
     }
 
@@ -457,7 +458,7 @@ namespace jela
 
         SafeRelease(&m_pSource);
         SafeRelease(&m_pSession);
-        SafeRelease(&m_pMasterVolume);
+        //SafeRelease(&m_pMasterVolume);
         m_state = PlayerState::Closed;
         return hr;
     }
