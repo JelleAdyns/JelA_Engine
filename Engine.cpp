@@ -746,18 +746,6 @@ namespace jela
     }
     void Engine::CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
     {
-        if (angle >= 360.f)
-        {
-            angle = 359.9f;
-            OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
-        }
-        if (angle <= -360.f)
-        {
-            angle = -359.9f;
-            OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
-        }
-        while (startAngle >= 360.f) startAngle -= 360;
-        while (startAngle <= -360.f) startAngle += 360;
     
         ID2D1GeometrySink* pSink;
         m_pDFactory->CreatePathGeometry(pGeo);
@@ -880,18 +868,6 @@ namespace jela
     }
     void Engine::CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
     {
-        if (angle >= 360.f)
-        {
-            angle = 359.9f;
-            OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
-        }
-        if (angle <= -360.f)
-        {
-            angle = -359.9f;
-            OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
-        }
-        while (startAngle > 360.f) startAngle -= 360;
-        while (startAngle < -360.f) startAngle += 360;
     
         ID2D1GeometrySink* pSink;
         m_pDFactory->CreatePathGeometry(pGeo);
@@ -1133,6 +1109,19 @@ namespace jela
     
     void Engine::DrawArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, float lineThickness, bool closeSegment) const
     {
+        if (angle >= 360.f)
+        {
+            angle = 359.9f;
+            OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
+        }
+        if (angle <= -360.f)
+        {
+            angle = -359.9f;
+            OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
+        }
+        while (startAngle >= 360.f) startAngle -= 360;
+        while (startAngle <= -360.f) startAngle += 360;
+
         ID2D1PathGeometry* pGeo{};
         CreateArc(&pGeo, center, radiusX, radiusY, startAngle, angle, closeSegment);
     
