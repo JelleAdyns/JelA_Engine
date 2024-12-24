@@ -19,6 +19,7 @@ public:
     virtual void Draw() const override;
     virtual void Tick() override;
     virtual void KeyDown(int virtualKeycode) override;
+    virtual void KeyDownThisFrame(int virtualKeycode) override;
     virtual void KeyUp(int virtualKeycode) override;
     virtual void HandleControllerInput() override;
     virtual void MouseDown(bool isLeft, int x, int y) override;
@@ -26,7 +27,6 @@ public:
     virtual void MouseMove(int x, int y, int keyDown) override;
     virtual void MouseWheelTurn(int x, int y, int turnDistance, int keyDown) override;
 private:
-
 };
 
 #endif // !GAME_H

@@ -286,7 +286,7 @@ namespace jela
     
         return (int)msg.wParam;
     }
-    bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath)
+    bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, const COLORREF& bgColor, const tstring& wndwName)
     {
         // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
        // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
@@ -294,9 +294,16 @@ namespace jela
     
         if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
         {
+            
             ENGINE.SetInstance(hInstance);
             ResourceManager::GetInstance().Init(resourcePath);
     
+            m_Width = width;
+            m_Height = height;
+            SetBackGroundColor(bgColor);
+            m_Title = wndwName;
+            SetFrameRate(60);
+
             MakeWindow();
             CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
             // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
@@ -307,6 +314,7 @@ namespace jela
         }
         return false;
     }
+   
     void Engine::DrawBorders(int rtWidth, int rtHeight) const
     {
     
@@ -402,7 +410,7 @@ namespace jela
     
             if (!m_pDColorBrush)
             {
-                m_pDRenderTarget->CreateSolidColorBrush(D2D1::ColorF(255, 255, 255), &m_pDColorBrush);
+                m_pDRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.f, 1.f, 1.f), &m_pDColorBrush);
             }
         }
     

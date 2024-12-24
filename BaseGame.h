@@ -14,8 +14,8 @@ namespace jela
         BaseGame& operator=(const BaseGame& other) = delete;
         BaseGame& operator=(BaseGame&& other) noexcept = delete;
 
-        virtual void Initialize();
-        virtual void Cleanup();
+        virtual void Initialize() {};
+        virtual void Cleanup() {};
 
         virtual void Draw() const {}
         virtual void Tick() {}

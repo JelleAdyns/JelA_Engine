@@ -34,7 +34,8 @@ namespace jela
         ~Engine();
         static Engine& GetInstance();
         static void Shutdown();
-        bool Init(HINSTANCE hInstance, const tstring& resourcePath);
+        bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, const COLORREF& bgColor, const tstring& wndwName);
+
 
         int Run(std::unique_ptr<BaseGame>&& game);
         LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

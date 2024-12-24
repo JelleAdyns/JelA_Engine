@@ -68,9 +68,6 @@
     <ClCompile Include="Main.cpp">
       <Filter>Game Files</Filter>
     </ClCompile>
-    <ClCompile Include="BaseGame.cpp">
-      <Filter>Engine Files</Filter>
-    </ClCompile>
     <ClCompile Include="Controller.cpp">
       <Filter>Engine Files</Filter>
     </ClCompile>
