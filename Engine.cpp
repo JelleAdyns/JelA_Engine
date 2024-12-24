@@ -783,40 +783,43 @@ namespace jela
         SafeRelease(&pSink);
 
     }
-    void Engine::CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
+    void Engine::CreateArc(ID2D1PathGeometry* pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
     {
     
         ID2D1GeometrySink* pSink;
-        m_pDFactory->CreatePathGeometry(pGeo);
-        (*pGeo)->Open(&pSink);
+
+        HRESULT hr = (pGeo)->Open(&pSink);
     
-        auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
-        auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
-    
-        auto beginPoint = D2D1::Point2F(
-            static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
-            static_cast<FLOAT>(m_Height - (center.y + radiusY * std::sin(startRad)))
-        );
-        auto endPoint = D2D1::Point2F(
-            static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
-            static_cast<FLOAT>(m_Height - (center.y + radiusY * std::sin(endRad)))
-        );
-    
-        D2D1_ARC_SEGMENT arcSegment{
-            endPoint,
-            D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
-            0,
-            D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
-            std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
-        };
-    
-    
-    
-        pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
-        pSink->AddArc(arcSegment);
-        if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(m_Height - center.y)));
-        pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-        pSink->Close();
+        if(SUCCEEDED(hr))
+        {
+            auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
+            auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
+
+            auto beginPoint = D2D1::Point2F(
+                static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
+                static_cast<FLOAT>(m_Height - (center.y + radiusY * std::sin(startRad)))
+            );
+            auto endPoint = D2D1::Point2F(
+                static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
+                static_cast<FLOAT>(m_Height - (center.y + radiusY * std::sin(endRad)))
+            );
+
+            D2D1_ARC_SEGMENT arcSegment{
+                endPoint,
+                D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
+                0,
+                D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+                std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
+            };
+
+
+
+            pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
+            pSink->AddArc(arcSegment);
+            if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(m_Height - center.y)));
+            pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+            pSink->Close();
+        }
     
         SafeRelease(&pSink);
     }
@@ -1109,40 +1112,42 @@ namespace jela
         SafeRelease(&pSink);
 
     }
-    void Engine::CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
+    void Engine::CreateArc(ID2D1PathGeometry* pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
     {
 
         ID2D1GeometrySink* pSink;
-        m_pDFactory->CreatePathGeometry(pGeo);
-        (*pGeo)->Open(&pSink);
+        HRESULT hr = (pGeo)->Open(&pSink);
+        if(SUCCEEDED(hr))
+        {
 
-        auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
-        auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
+            auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
+            auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
 
-        auto beginPoint = D2D1::Point2F(
-            static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
-            static_cast<FLOAT>(center.y + radiusY * std::sin(startRad))
-        );
-        auto endPoint = D2D1::Point2F(
-            static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
-            static_cast<FLOAT>(center.y + radiusY * std::sin(endRad))
-        );
+            auto beginPoint = D2D1::Point2F(
+                static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
+                static_cast<FLOAT>(center.y + radiusY * std::sin(startRad))
+            );
+            auto endPoint = D2D1::Point2F(
+                static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
+                static_cast<FLOAT>(center.y + radiusY * std::sin(endRad))
+            );
 
-        D2D1_ARC_SEGMENT arcSegment{
-            endPoint,
-            D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
-            0,
-            D2D1_SWEEP_DIRECTION_CLOCKWISE,
-            angle < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
-        };
+            D2D1_ARC_SEGMENT arcSegment{
+                endPoint,
+                D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
+                0,
+                D2D1_SWEEP_DIRECTION_CLOCKWISE,
+                angle < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
+            };
 
 
 
-        pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
-        pSink->AddArc(arcSegment);
-        if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(center.y)));
-        pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-        pSink->Close();
+            pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
+            pSink->AddArc(arcSegment);
+            if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(center.y)));
+            pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+            pSink->Close();
+        }
 
         SafeRelease(&pSink);
     }
@@ -1223,16 +1228,15 @@ namespace jela
         while (startAngle <= -360.f) startAngle += 360;
 
         ID2D1PathGeometry* pGeo{};
-        CreateArc(&pGeo, center, radiusX, radiusY, startAngle, angle, closeSegment);
-    
-        SetTransform();
-    
-        m_pDRenderTarget->DrawGeometry(
-            pGeo,
-            m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness)
-        );
-    
+        HRESULT hr = m_pDFactory->CreatePathGeometry(&pGeo);
+        if (SUCCEEDED(hr))
+        {
+            CreateArc(pGeo, center, radiusX, radiusY, startAngle, angle, closeSegment);
+
+            SetTransform();
+
+            m_pDRenderTarget->DrawGeometry(pGeo, m_pDColorBrush, static_cast<FLOAT>(lineThickness));
+        }
         SafeRelease(&pGeo);
     }
     
@@ -1243,13 +1247,27 @@ namespace jela
     
     void Engine::FillArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle) const
     {
+        if (angle >= 360.f)
+        {
+            angle = 359.9f;
+            OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
+        }
+        if (angle <= -360.f)
+        {
+            angle = -359.9f;
+            OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
+        }
+        while (startAngle >= 360.f) startAngle -= 360;
+        while (startAngle <= -360.f) startAngle += 360;
+
         ID2D1PathGeometry* pGeo{};
-        CreateArc(&pGeo, center, radiusX, radiusY, startAngle, angle, true);
-    
-        SetTransform();
-    
-        m_pDRenderTarget->FillGeometry(pGeo, m_pDColorBrush);
-    
+        HRESULT hr = m_pDFactory->CreatePathGeometry(&pGeo);
+        if(SUCCEEDED(hr))
+        {
+            CreateArc(pGeo, center, radiusX, radiusY, startAngle, angle, true);
+            SetTransform();
+            m_pDRenderTarget->FillGeometry(pGeo, m_pDColorBrush);
+        }
         SafeRelease(&pGeo);
     }
     

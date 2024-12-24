@@ -197,7 +197,7 @@ namespace jela
 
 
         void CreatePolygon(ID2D1PathGeometry* pGeo, const std::vector<Point2Int>& points, bool closeSegment) const;
-        void CreateArc(ID2D1PathGeometry** pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const;
+        void CreateArc(ID2D1PathGeometry* pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const;
         void DrawBorders(int rtWidth, int rtHeight) const;
         void SetWindowPosition();
         void SetFullscreen();
