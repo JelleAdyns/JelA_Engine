@@ -13,7 +13,7 @@ void Game::Draw() const
 	jela::Point2Int{250,300},
 	jela::Point2Int{450,250},
 	jela::Point2Int{400,200},
-	jela::Point2Int{300,350},
+	jela::Point2Int{300,150},
 	};
 
 	ENGINE.FillPolygon(kaas);
