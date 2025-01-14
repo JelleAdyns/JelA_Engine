@@ -39,7 +39,7 @@ namespace jela
 
         int Run(std::unique_ptr<BaseGame>&& game);
         LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
+        void Quit();
 
         void DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness = 1.f) const;
         void DrawLine(int firstX, int firstY, const Point2Int& secondPoint, float lineThickness = 1.f) const;

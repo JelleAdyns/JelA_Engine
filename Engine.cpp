@@ -218,7 +218,7 @@ namespace jela
         }
         return result;
     }
-    
+
     int Engine::Run(std::unique_ptr<BaseGame>&& game)
     {
         int result = 0;
@@ -314,7 +314,12 @@ namespace jela
         }
         return false;
     }
-   
+
+    void Engine::Quit()
+    {
+        PostMessage(GetWindow(), WM_DESTROY, NULL, NULL);
+    }
+
     void Engine::DrawBorders(int rtWidth, int rtHeight) const
     {
     
