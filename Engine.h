@@ -52,63 +52,63 @@ namespace jela
         void DrawVector(int originX, int originY, float vectorX, float vectorY, int headLineLength = 30.f, float lineThickness = 1.f) const;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-        void DrawRectangle(int left, int bottom, int width, int height, float lineThickness = 1.f)const;
         void DrawRectangle(const Point2Int& leftBottom, int width, int height, float lineThickness = 1.f)const;
         void DrawRectangle(const RectInt& rect, float lineThickness = 1.f)const;
+        void DrawRectangle(int left, int bottom, int width, int height, float lineThickness = 1.f)const;
 
-        void DrawRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
+        void DrawRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
-        void DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, int height, bool showRect = false)const;
         void DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, int height, bool showRect = false)const;
         void DrawString(const tstring& textToDisplay, const Font& font, const RectInt& destRect, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, int height, bool showRect = false)const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, bool showRect = false)const;
-        //Takes the size of the font as Height of the destination rectangle in order to have a logical position
         void DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, bool showRect = false)const;
+        //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+        void DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, bool showRect = false)const;
 
         void DrawTexture(const Texture& texture, int destLeft, int destBottom, const RectInt& srcRect = {}, float opacity = 1.f)const;
         void DrawTexture(const Texture& texture, const Point2Int& destLeftBottom = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
         void DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
 
-        void FillRectangle(int left, int bottom, int width, int height)const;
         void FillRectangle(const Point2Int& leftBottom, int width, int height)const;
         void FillRectangle(const RectInt& rect)const;
+        void FillRectangle(int left, int bottom, int width, int height)const;
 
-        void FillRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY)const;
         void FillRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY)const;
         void FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const;
+        void FillRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY)const;
 #else
-        void DrawRectangle(int left, int top, int width, int height, float lineThickness = 1.f)const;
         void DrawRectangle(const Point2Int& leftTop, int width, int height, float lineThickness = 1.f)const;
         void DrawRectangle(const RectInt& rect, float lineThickness = 1.f)const;
+        void DrawRectangle(int left, int top, int width, int height, float lineThickness = 1.f)const;
 
-        void DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
+        void DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
-        void DrawString(const tstring& textToDisplay, const Font& font, int left, int top, int width, int height, bool showRect = false)const;
         void DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftTop, int width, int height, bool showRect = false)const;
         void DrawString(const tstring& textToDisplay, const Font& font, const RectInt& destRect, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Font& font, int left, int top, int width, int height, bool showRect = false)const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Font& font, int left, int top, int width, bool showRect = false)const;
-        //Takes the size of the font as Height of the destination rectangle in order to have a logical position
         void DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftTop, int width, bool showRect = false)const;
+        //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+        void DrawString(const tstring& textToDisplay, const Font& font, int left, int top, int width, bool showRect = false)const;
 
         void DrawTexture(const Texture& texture, int destLeft, int destTop, const RectInt& srcRect = {}, float opacity = 1.f)const;
         void DrawTexture(const Texture& texture, const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
         void DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
 
-        void FillRectangle(int left, int top, int width, int height)const;
         void FillRectangle(const Point2Int& leftTop, int width, int height)const;
         void FillRectangle(const RectInt& rect)const;
+        void FillRectangle(int left, int top, int width, int height)const;
 
-        void FillRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY)const;
         void FillRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY)const;
         void FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const;
+        void FillRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY)const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
         void DrawPolygon(const std::vector<Point2Int>& points, float lineThickness = 1.f, bool closeSegment = false)const;
@@ -120,14 +120,14 @@ namespace jela
         void FillArc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle)const;
         void FillArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle)const;
 
-        void DrawEllipse(int centerX, int centerY, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawEllipse(const Point2Int& center, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawEllipse(const EllipseInt& ellipse, float lineThickness = 1.f)const;
+        void DrawEllipse(int centerX, int centerY, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawCircle(const CircleInt& circle, float lineThickness = 1.f)const;
 
-        void FillEllipse(int centerX, int centerY, float radiusX, float radiusY)const;
         void FillEllipse(const Point2Int& center, float radiusX, float radiusY)const;
         void FillEllipse(const EllipseInt& ellipse)const;
+        void FillEllipse(int centerX, int centerY, float radiusX, float radiusY)const;
         void FillCircle(const CircleInt& circle)const;
 
         //Use CAPITAL letters or the virtual keycodes
