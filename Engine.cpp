@@ -1199,7 +1199,7 @@ namespace jela
     void Engine::DrawPolygon(const std::vector<Point2Int>& points, float lineThickness, bool closeSegment) const
     {
         ID2D1PathGeometry* pGeo{};
-
+        
         HRESULT hr = m_pDFactory->CreatePathGeometry(&pGeo);
 
         if (SUCCEEDED(hr))
@@ -1323,19 +1323,24 @@ namespace jela
         DWORD dwAdd = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
         ::SetWindowLong(m_hWindow, GWL_STYLE, dwAdd);
     
-        UINT dpi = GetDpiForWindow(m_hWindow);
-    
-        int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + static_cast<int>(m_Width * m_WindowScale) + 10) };
-        int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
-                            GetSystemMetrics(SM_CYCAPTION) + static_cast<int>(m_Height * m_WindowScale) + 10) };
-    
-        windowWidth = static_cast<int>(windowWidth * dpi / 96.f);
-        windowHeight = static_cast<int>(windowHeight * dpi / 96.f);
-    
-        int xPos{ GetSystemMetrics(SM_CXSCREEN) / 2 - windowWidth / 2 };
-        int yPos{ GetSystemMetrics(SM_CYSCREEN) / 2 - windowHeight / 2 };
-    
-        ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_FRAMECHANGED);
+        MONITORINFOEX mi{};
+        mi.cbSize = sizeof(MONITORINFOEX);
+
+        if (GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTONEAREST), &mi))
+        {
+            UINT dpi = GetDpiForWindow(m_hWindow);
+            int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + static_cast<int>(m_Width * m_WindowScale) + 10) };
+            int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
+                                GetSystemMetrics(SM_CYCAPTION) + static_cast<int>(m_Height * m_WindowScale) + 10) };
+            
+            windowWidth = static_cast<int>(windowWidth * dpi / 96.f);
+            windowHeight = static_cast<int>(windowHeight * dpi / 96.f);
+            
+            int xPos{ mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - windowWidth / 2 };
+            int yPos{ mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - windowHeight / 2 };
+
+            ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_FRAMECHANGED);
+        }
     
         if (m_pGame)
         {
@@ -1350,13 +1355,17 @@ namespace jela
         DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
         DWORD dwNewStyle = dwStyle & ~dwRemove;
         ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
-        ::SetWindowPos(m_hWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-        HDC hDC = ::GetWindowDC(m_hWindow);
-        ::SetWindowPos(m_hWindow, NULL, 0, 0,
-            ::GetDeviceCaps(hDC, HORZRES),
-            ::GetDeviceCaps(hDC, VERTRES),
-            SWP_FRAMECHANGED);
-    
+
+        MONITORINFOEX mi{};
+        mi.cbSize = sizeof(MONITORINFOEX);
+
+        if(GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTONEAREST), &mi))
+        {
+            ::SetWindowPos(m_hWindow, NULL, mi.rcMonitor.left, mi.rcMonitor.top,
+                mi.rcMonitor.right - mi.rcMonitor.left,
+                mi.rcMonitor.bottom - mi.rcMonitor.top,
+                SWP_FRAMECHANGED);
+        }
         if (m_pGame)
         {
             ShowWindow(m_hWindow, SW_DENORMAL);
