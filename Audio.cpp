@@ -20,15 +20,16 @@ namespace jela
 		AudioFile(const tstring& filename) :
 			m_pPlayer{ nullptr },
 			m_FilePath{ ResourceManager::GetInstance().GetDataPath() + filename },
-			m_hAudioWnd{}
+			m_hAudioWnd{},
+			m_Exists{}
 		{
 			HRESULT hr = CPlayer::CreateInstance(m_hAudioWnd, &m_pPlayer);
 
 			if (SUCCEEDED(hr)) OpenFile(m_FilePath);
 			else
 			{
-				Engine::NotifyError(m_hAudioWnd, L"Could not initialize the player object.", hr);
-				m_pPlayer->Release();
+				Engine::NotifyError(m_hAudioWnd, _T("Could not initialize the player object."), hr);
+				SafeRelease(&m_pPlayer);
 				return;
 			}
 		}
@@ -37,7 +38,7 @@ namespace jela
 		{
 			m_pPlayer->Stop();
 			m_pPlayer->Shutdown();
-			m_pPlayer->Release();
+			SafeRelease(&m_pPlayer);
 		}
 
 		AudioFile(const AudioFile& other) = delete;
@@ -80,19 +81,24 @@ namespace jela
 		{
 			return IsCreated() && (m_pPlayer->GetState() == CPlayer::PlayerState::ReadyToStart || IsPlaying() || IsStopped());
 		}
-
+		bool Exists() const
+		{
+			return m_Exists;
+		}
 	private:
 
-		void OpenFile(const tstring& fileName) const
+		void OpenFile(const tstring& fileName)
 		{
 			HRESULT hr = m_pPlayer->OpenURL(fileName);
-			if (FAILED(hr)) Engine::NotifyError(m_hAudioWnd, to_wstring(_T("Could not open the file.") + fileName).c_str(), hr);
+			if (SUCCEEDED(hr)) m_Exists = true;
+			else Engine::NotifyError(m_hAudioWnd, _T("Could not open the file." + fileName), hr);
 		}
 
 
 		CPlayer* m_pPlayer;
 		tstring m_FilePath;
 		HWND m_hAudioWnd;
+		bool m_Exists;
 	};
 
 
@@ -110,6 +116,7 @@ namespace jela
 
 		void AddSoundImpl(const tstring& filename, SoundID id)
 		{
+
 			std::lock_guard<std::mutex> lck{ m_EventsMutex };
 			m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{filename} });
 		}
@@ -130,19 +137,19 @@ namespace jela
 		void SetMasterVolumeImpl(uint8_t volumePercentage)
 		{
 			HRESULT hr = CPlayer::SetVolume(volumePercentage);
-			if (FAILED(hr)) Engine::NotifyError(NULL, to_wstring(_T("SetVolume reported on error.")).c_str(), hr);
+			if (FAILED(hr)) Engine::NotifyError(NULL, _T("SetVolume reported on error."), hr);
 		}
 		void IncrementMasterVolumeImpl()
 		{
 			int newVolume{ CPlayer::GetVolume() + 1 };
 			HRESULT hr = CPlayer::SetVolume(newVolume);
-			if (FAILED(hr)) Engine::NotifyError(NULL, to_wstring(_T("IncrementVolume reported on error.")).c_str(), hr);
+			if (FAILED(hr)) Engine::NotifyError(NULL, _T("IncrementVolume reported on error."), hr);
 		}
 		void DecrementMasterVolumeImpl()
 		{
 			int newVolume{ CPlayer::GetVolume() - 1 };
 			HRESULT hr = CPlayer::SetVolume(newVolume);
-			if (FAILED(hr)) Engine::NotifyError(NULL, to_wstring(_T("DecrementVolume reported on error.")).c_str(), hr);
+			if (FAILED(hr)) Engine::NotifyError(NULL, _T("DecrementVolume reported on error."), hr);
 		}
 		void ToggleMuteImpl()
 		{
@@ -223,7 +230,10 @@ namespace jela
 		void Add(const tstring& filename, SoundID id, std::map<SoundID, AudioInfo>& audioMap)
 		{
 			if (not audioMap.contains(id))
+			{
 				audioMap[id].pAudioFile = std::make_unique<Audio::AudioFile>(filename);
+				if (not audioMap[id].pAudioFile->Exists()) Remove(id, audioMap);
+			}
 			else OutputDebugString((_T("\nTrying to Add SoundID that is already present. Filename: ") + filename + _T("ID: ") + to_tstring(id) + _T('\n')).c_str());
 		}
 		void Remove(SoundID id, std::map<SoundID, AudioInfo>& audioMap)
