@@ -1736,7 +1736,15 @@ namespace jela
         Font{fontName, 20, false, false, fromFile}
     {}
     Font::Font(const tstring& fontName, int size ,bool bold, bool italic, bool fromFile)
-    {
+    { 
+        if (!m_pDWriteFactory)
+        {
+            DWriteCreateFactory(
+                DWRITE_FACTORY_TYPE_SHARED,
+                __uuidof(IDWriteFactory5),
+                reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
+        }
+    
         if (fromFile)
         {
             std::wstring filePath = to_wstring(ResourceManager::GetInstance().GetDataPath() + fontName);
@@ -1748,13 +1756,6 @@ namespace jela
         }
         else
         {
-            if (!m_pDWriteFactory)
-            {
-                DWriteCreateFactory(
-                    DWRITE_FACTORY_TYPE_SHARED,
-                    __uuidof(IDWriteFactory5),
-                    reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
-            }
             m_FontName = to_wstring(fontName);
             SetTextFormat(size, bold, italic);
         }
@@ -1773,14 +1774,7 @@ namespace jela
         IDWriteFontFile* pFontFile{ nullptr };
         m_pFontCollection = nullptr;
     
-        if (!m_pDWriteFactory)
-        {
-            DWriteCreateFactory(
-                DWRITE_FACTORY_TYPE_SHARED,
-                __uuidof(IDWriteFactory5),
-                reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
-        }
-    
+       
     
         hr = m_pDWriteFactory->CreateFontSetBuilder(&pFontSetBuilder);
         if (SUCCEEDED(hr))
