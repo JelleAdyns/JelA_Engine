@@ -180,15 +180,15 @@ namespace jela
         ID2D1HwndRenderTarget* getRenderTarget() const;
 
 
-        static void NotifyError(HWND hWnd, const WCHAR* pszErrorMessage, HRESULT hrErr)
+        static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
         {
             const size_t MESSAGE_LEN = 512;
-            WCHAR message[MESSAGE_LEN];
+            TCHAR message[MESSAGE_LEN];
 
-            if (SUCCEEDED(StringCchPrintfW(message, MESSAGE_LEN, L"%s (HRESULT = 0x%X)",
-                pszErrorMessage, hrErr)))
+            if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, _T("%s (HRESULT = 0x%X)"),
+                pszErrorMessage.c_str(), hrErr)))
             {
-                MessageBoxW(hWnd, message, NULL, MB_OK | MB_ICONERROR);
+                MessageBox(hWnd, message, _T("ERROR"), MB_OK | MB_ICONERROR);
             }
         }
 
