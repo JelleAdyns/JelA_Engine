@@ -46,24 +46,12 @@
 	#define tssub_match		std::ssub_match
 #endif
 
-#include <cstdlib>
-static std::wstring to_wstring(const tstring& str) {
-#ifdef _UNICODE
-	return str;
-#else
-	size_t requiredSize = 0;
-	mbstowcs_s(&requiredSize, nullptr, 0, str.c_str(), 0);  // Get required size
 
-	std::wstring wstr(requiredSize, L'\0');  // Allocate space
-	mbstowcs_s(&requiredSize, &wstr[0], requiredSize, str.c_str(), requiredSize - 1);
-
-	// Remove null terminator from std::wstring as it may be included
-	if (!wstr.empty() && wstr.back() == L'\0') {
-		wstr.pop_back();
-	}
-
-	return wstr;
-#endif // _UNICODE
+#include <filesystem>
+static std::wstring to_wstring(const tstring& str) 
+{
+	std::filesystem::path p{ str };
+	return p.wstring();
 }
 
 //next ifdef is code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
