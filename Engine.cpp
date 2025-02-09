@@ -29,7 +29,7 @@ namespace jela
         
     }
     
-    Engine::~Engine()
+    void Engine::Shutdown()
     {
         m_pGame->Cleanup();
 
@@ -257,11 +257,11 @@ namespace jela
     
                     float elapsedSec{ std::chrono::duration<float>(t2 - m_T1).count() };
     
-                    ENGINE.SetDeltaTime(elapsedSec);
+                    SetDeltaTime(elapsedSec);
     
                     m_T1 = t2;
     
-                    if (ENGINE.IsAnyButtonPressed()) m_IsKeyboardActive = false;
+                    if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
     
                     for (auto& controller : m_pVecControllers)
                     {
@@ -295,13 +295,13 @@ namespace jela
         if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
         {
             
-            ENGINE.SetInstance(hInstance);
+            SetInstance(hInstance);
             ResourceManager::GetInstance().Init(resourcePath);
 
             m_Width = width;
             m_Height = height;
-            SetBackGroundColor(bgColor);
             m_Title = wndwName;
+            SetBackGroundColor(bgColor);
             SetFrameRate(60);
 
             MakeWindow();
@@ -438,17 +438,17 @@ namespace jela
         SetTransform();
     
         // User Draw Calls
-        ENGINE.PushTransform();
+        PushTransform();
     #ifdef MATHEMATICAL_COORDINATESYSTEM
     
-        ENGINE.Scale(m_WindowScale, Point2Int{ 0,m_Height });
+        Scale(m_WindowScale, Point2Int{ 0,m_Height });
     #else
-        ENGINE.Scale(m_WindowScale, Point2Int{ 0,0 });
+        Scale(m_WindowScale, Point2Int{ 0,0 });
     
     #endif // MATHEMATICAL_COORDINATESYSTEM
     
         m_pGame->Draw();
-        ENGINE.PopTransform();
+        PopTransform();
     
         // Dont show more than the the scaled window size given by the user
         m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
@@ -617,6 +617,10 @@ namespace jela
         
     }
 
+    void Engine::DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, bool showRect)const
+    {
+       DrawString(textToDisplay, font, leftBottom.x, leftBottom.y, width, showRect);
+    }
     void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, bool showRect)const
     {
          SetTransform();
@@ -639,10 +643,6 @@ namespace jela
             D2D1_DRAW_TEXT_OPTIONS_NONE,
             DWRITE_MEASURING_MODE_NATURAL);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const Font& font, const Point2Int& leftBottom, int width, bool showRect)const
-    {
-       DrawString(textToDisplay, font, leftBottom.x, leftBottom.y, width, showRect);
-    }
     
     //Textures
     void Engine::DrawTexture(const Texture& texture, int destLeft, int destBottom, const RectInt& srcRect, float opacity)const
@@ -655,7 +655,7 @@ namespace jela
     }
     void Engine::DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
     {
-        RectInt wndwSize = ENGINE.GetWindowRect();
+        RectInt wndwSize = GetWindowRect();
     
         D2D1_RECT_F destination = D2D1::RectF(
             static_cast<FLOAT>(destRect.left),
@@ -684,7 +684,7 @@ namespace jela
         }
     
         SetTransform();
-        ENGINE.getRenderTarget()->DrawBitmap(
+        GetRenderTarget()->DrawBitmap(
             texture.GetBitmap(),
             destination,
             opacity,
@@ -1030,7 +1030,7 @@ namespace jela
         }
     
         SetTransform();
-        ENGINE.getRenderTarget()->DrawBitmap(
+        getRenderTarget()->DrawBitmap(
             texture.GetBitmap(),
             destination,
             opacity,
@@ -1617,7 +1617,7 @@ namespace jela
     {
         return m_IsKeyboardActive;
     }
-    ID2D1HwndRenderTarget* Engine::getRenderTarget() const
+    ID2D1HwndRenderTarget* Engine::GetRenderTarget() const
     {
         return m_pDRenderTarget;
     }
@@ -1689,7 +1689,7 @@ namespace jela
     
         if (SUCCEEDED(creationResult))
         {
-            creationResult = ENGINE.getRenderTarget()->CreateBitmapFromWicBitmap(
+            creationResult = ENGINE.GetRenderTarget()->CreateBitmapFromWicBitmap(
                 pConverter,
                 NULL,
                 &m_pDBitmap
@@ -1822,7 +1822,7 @@ namespace jela
     
         if (!SUCCEEDED(hr))
         {
-            OutputDebugStringW((L"Something went wrong in the Font constructor using file " + fontName).c_str());
+            OutputDebugStringW((L"Something went wrong in the Font constructor using " + fontName).c_str());
         }
         else
         {
@@ -1852,7 +1852,7 @@ namespace jela
                     L"en-us",
                     &m_pTextFormat);
     
-                assert((m_pTextFormat) && _T("TexFormat was not loaded correctly"));
+                assert((m_pTextFormat) && _T("TextFormat was not loaded correctly"));
                 m_FontSize = size;
             };
     

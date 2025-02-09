@@ -109,9 +109,4 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 #define MATHEMATICAL_COORDINATESYSTEM
 
-
-//#include "Engine.h"
-
-#define ENGINE (jela::Engine::GetInstance())
-
 #endif // !DEFINES_H

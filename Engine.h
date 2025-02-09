@@ -20,20 +20,16 @@ namespace jela
 
     class Engine final
     {
-    private:
-        Engine();
-
-        static inline Engine* m_pInstance = nullptr;
     public:
-
+        Engine();
         Engine(const Engine& other) = delete;
         Engine(Engine&& other) noexcept = delete;
         Engine& operator=(const Engine& other) = delete;
         Engine& operator=(Engine&& other) noexcept = delete;
 
-        ~Engine();
-        static Engine& GetInstance();
-        static void Shutdown();
+        ~Engine() = default;
+
+        void Shutdown();
         bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, const COLORREF& bgColor, const tstring& wndwName);
       
 
@@ -499,5 +495,9 @@ namespace jela
     }
     //---------------------------------------------------------------
 }
+
+
+// Extern declaration of the Engine global
+extern jela::Engine ENGINE;
 
 #endif // !ENGINE_H

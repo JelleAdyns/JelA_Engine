@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "Engine.h"
+#include "BaseGame.h"
 
 class Game final: public jela::BaseGame
 {
