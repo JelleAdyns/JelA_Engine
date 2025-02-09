@@ -173,7 +173,7 @@ namespace jela
         float GetTotalTime() const;
         bool IsKeyBoardActive() const;
 
-        ID2D1HwndRenderTarget* getRenderTarget() const;
+        ID2D1HwndRenderTarget* GetRenderTarget() const;
 
 
         static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)

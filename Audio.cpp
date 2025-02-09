@@ -19,7 +19,7 @@ namespace jela
 
 		AudioFile(const tstring& filename) :
 			m_pPlayer{ nullptr },
-			m_FilePath{ ResourceManager::GetInstance().GetDataPath() + filename },
+			m_FilePath{ filename },
 			m_hAudioWnd{},
 			m_Exists{}
 		{
@@ -118,7 +118,7 @@ namespace jela
 		{
 
 			std::lock_guard<std::mutex> lck{ m_EventsMutex };
-			m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{filename} });
+			m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{ResourceManager::GetInstance().GetDataPath() + filename} });
 		}
 		void RemoveSoundImpl(SoundID id)
 		{
@@ -365,6 +365,10 @@ namespace jela
 	Audio::Audio() :
 		m_pImpl{ new AudioImpl{} }
 	{
+		if (not SUCCEEDED(MFStartup(MF_VERSION)))
+		{
+			MessageBox(ENGINE.GetWindow(), _T("MFStartup failed. Check the passed version."), _T("MFStartup Error"), MB_ICONERROR);
+		}
 	}
 
 	Audio::~Audio()

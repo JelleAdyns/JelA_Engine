@@ -28,45 +28,33 @@ namespace jela
     {
         
     }
-    
+
     void Engine::Shutdown()
     {
         m_pGame->Cleanup();
 
+        AudioLocator::RegisterAudioService(nullptr);
         ResourceManager::ShutDown();
         SafeRelease(&m_pDColorBrush);
         SafeRelease(&m_pDRenderTarget);
         SafeRelease(&m_pDFactory);
-
         CoUninitialize();
-        MFShutdown();
     }
-    
-    Engine& Engine::GetInstance()
-    {
-        if (!m_pInstance)
-            m_pInstance = new Engine{};
-        return *m_pInstance;
-    }
-    void Engine::Shutdown()
-    {
-        delete m_pInstance;
-        m_pInstance = nullptr;
-    }
+
     LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         LRESULT result = 0;
     
-        if (message == WM_CREATE)
-        {
-            LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-            BaseGame* pBaseGame = (BaseGame*)pcs->lpCreateParams;
-    
-            ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pBaseGame));
-            // ENGINE.SetWindow(hWnd);
-            result = 1;
-        }
-        else
+        //if (message == WM_CREATE)
+        //{
+        //    LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
+        //    BaseGame* pBaseGame = (BaseGame*)pcs->lpCreateParams;
+        //
+        //    ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pBaseGame));
+        //    // SetWindow(hWnd);
+        //    result = 1;
+        //}
+        //else
         {
         
             bool wasHandled = false;
@@ -292,7 +280,7 @@ namespace jela
        // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
         HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
     
-        if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)) && SUCCEEDED(MFStartup(MF_VERSION)))
+        if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED))/* && SUCCEEDED(MFStartup(MF_VERSION))*/)
         {
             
             SetInstance(hInstance);
@@ -304,13 +292,15 @@ namespace jela
             SetBackGroundColor(bgColor);
             SetFrameRate(60);
 
-            MakeWindow();
-            CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
+            HRESULT hr{ S_OK };
+
+            hr = MakeWindow();
+            if(SUCCEEDED(hr)) CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
             // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
     
-            srand(static_cast<unsigned int>(time(nullptr)));
+            if(SUCCEEDED(hr)) srand(static_cast<unsigned int>(time(nullptr)));
     
-            return true;
+            if(SUCCEEDED(hr)) return true;
         }
         return false;
     }
@@ -623,7 +613,7 @@ namespace jela
     }
     void Engine::DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, bool showRect)const
     {
-         SetTransform();
+        SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(
             static_cast<FLOAT>(left),
             static_cast<FLOAT>(m_Height - (bottom + font.GetFontSize())),
@@ -1320,14 +1310,14 @@ namespace jela
     }
     void Engine::SetWindowPosition()
     {
-        DWORD dwAdd = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
-        ::SetWindowLong(m_hWindow, GWL_STYLE, dwAdd);
-    
         MONITORINFOEX mi{};
         mi.cbSize = sizeof(MONITORINFOEX);
 
         if (GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTONEAREST), &mi))
-        {
+        { 
+            DWORD dwAdd = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
+            ::SetWindowLong(m_hWindow, GWL_STYLE, dwAdd);
+
             UINT dpi = GetDpiForWindow(m_hWindow);
             int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + static_cast<int>(m_Width * m_WindowScale) + 10) };
             int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
@@ -1350,17 +1340,17 @@ namespace jela
     }
     void Engine::SetFullscreen()
     {
-        //https://www.codeproject.com/Questions/108400/How-to-Set-Win32-Application-to-Full-Screen-C
-        DWORD dwStyle = ::GetWindowLong(m_hWindow, GWL_STYLE);
-        DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
-        DWORD dwNewStyle = dwStyle & ~dwRemove;
-        ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
-
         MONITORINFOEX mi{};
         mi.cbSize = sizeof(MONITORINFOEX);
 
         if(GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTONEAREST), &mi))
         {
+            //https://www.codeproject.com/Questions/108400/How-to-Set-Win32-Application-to-Full-Screen-C
+            DWORD dwStyle = ::GetWindowLong(m_hWindow, GWL_STYLE);
+            DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
+            DWORD dwNewStyle = dwStyle & ~dwRemove;
+            ::SetWindowLong(m_hWindow, GWL_STYLE, dwNewStyle);
+
             ::SetWindowPos(m_hWindow, NULL, mi.rcMonitor.left, mi.rcMonitor.top,
                 mi.rcMonitor.right - mi.rcMonitor.left,
                 mi.rcMonitor.bottom - mi.rcMonitor.top,
@@ -1869,7 +1859,7 @@ namespace jela
             const auto vertAllign = m_pTextFormat->GetParagraphAlignment();
     
             SafeRelease(&m_pTextFormat);
-    
+
             createTextFormat();
     
             m_pTextFormat->SetTextAlignment(horAllign);
