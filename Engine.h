@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <map>
+#include <unordered_map>
 
 namespace jela
 {
@@ -364,11 +365,11 @@ namespace jela
 
         void Init(const tstring& dataPath);
 
-        Texture& GetTexture(const tstring& file);
+        void GetTexture(const tstring& file, Texture*& pointerToAssignTo);
         void RemoveTexture(const tstring& file);
         void RemoveAllTextures();
 
-        Font& GetFont(const tstring& fontName, bool fromFile = false);
+        void GetFont(const tstring& fontName, Font*& pointerToAssignTo, bool fromFile = false);
         void RemoveFont(const tstring& fontName);
         void RemoveAllFonts();
 
@@ -379,8 +380,55 @@ namespace jela
         ResourceManager() = default;
         tstring m_DataPath;
 
-        std::map<tstring, std::unique_ptr<Texture>> m_pMapTextures{};
-        std::map<tstring, std::unique_ptr<Font>> m_pMapFonts{};
+        template <typename ResourceType>
+        struct ManagedResource
+        {
+            std::unique_ptr<ResourceType> pResource = nullptr;
+            std::vector<ResourceType**> vecPointersToRefs = {};
+        };
+
+        template<typename ResourceType>
+        using ResourceMap = std::unordered_map<tstring, ManagedResource<ResourceType>>;
+
+        //------------------------------------------------------
+        // RESOURCES
+        ResourceMap<Texture> m_pMapTextures{};
+        ResourceMap<Font> m_pMapFonts{};
+        //------------------------------------------------------
+
+        template <typename ResourceType>
+        void SetReferencesToNull(ResourceMap<ResourceType>& resourceMap)
+        {
+            for (auto& [fileName, managedResource] : resourceMap)
+            {
+                SetReferencesToNull(managedResource.vecPointersToRefs);
+            }
+        }
+        template <typename ResourceType>
+        void SetReferencesToNull(std::vector<ResourceType**>& vectorToIterate)
+        {
+            for (ResourceType**  pRefPointer : vectorToIterate)
+            {
+                *pRefPointer = nullptr;
+            }
+        }
+        template <typename ResourceType>
+        void RemoveInvalidRefs(ResourceMap<ResourceType>& resourceMap)
+        {
+            for (auto& [fileName, managedResource] : resourceMap)
+            {
+                auto& vecRefs = managedResource.vecPointersToRefs;
+                const ResourceType* const pointerToCompare = managedResource.pResource.get();
+
+                vecRefs.erase(
+                    std::remove_if(vecRefs.begin(), vecRefs.end(), [&](const ResourceType* const* const refToPointer)
+                        {
+                            return (*refToPointer) != (pointerToCompare);
+                        }
+                    ),
+                    vecRefs.cend());
+            }
+        }
     };
     //---------------------------------------------------------------
 

@@ -1926,44 +1926,54 @@ namespace jela
         m_DataPath = dataPath;
     }
     
-    Texture& ResourceManager::GetTexture(const tstring& file)
+    void ResourceManager::GetTexture(const tstring& file, Texture*& pointerToAssignTo)
     {
         if (not m_pMapTextures.contains(file))
         {
-            m_pMapTextures[file] = std::make_unique<Texture>(file);
+            m_pMapTextures[file].pResource = std::make_unique<Texture>(file);
         }
-    
-        return *m_pMapTextures.at(file);
+        m_pMapTextures[file].vecPointersToRefs.push_back(&pointerToAssignTo);
+        pointerToAssignTo = m_pMapTextures.at(file).pResource.get();
     }
     
     void ResourceManager::RemoveTexture(const tstring& file)
     {
         if (m_pMapTextures.contains(file))
         {
+            RemoveInvalidRefs(m_pMapTextures);
+            SetReferencesToNull(m_pMapTextures.at(file).vecPointersToRefs);
+
             m_pMapTextures.erase(file);
         }
-        else OutputDebugString((_T("Texture to remove is not present. File: ") + file).c_str());
+        else OutputDebugString((_T("\nTexture to remove is not present. File: ") + file + _T("\n\n")).c_str());
     }
     
     void ResourceManager::RemoveAllTextures()
     {
+        RemoveInvalidRefs(m_pMapTextures);
+        SetReferencesToNull(m_pMapTextures);
+        
         m_pMapTextures.clear();
     }
     
-    Font& ResourceManager::GetFont(const tstring& fontName, bool fromFile)
+    void ResourceManager::GetFont(const tstring& fontName, Font*& pointerToAssignTo, bool fromFile)
     {
         if (not m_pMapFonts.contains(fontName))
         {
-            m_pMapFonts[fontName] = std::make_unique<Font>(fontName, fromFile);
+            m_pMapFonts[fontName].pResource = std::make_unique<Font>(fontName, fromFile);
         }
     
-        return *m_pMapFonts.at(fontName);
+        m_pMapFonts[fontName].vecPointersToRefs.push_back(&pointerToAssignTo);
+        pointerToAssignTo = m_pMapFonts.at(fontName).pResource.get();
     }
     
     void ResourceManager::RemoveFont(const tstring& fontName)
     {
         if (m_pMapFonts.contains(fontName))
         {
+            RemoveInvalidRefs(m_pMapFonts);
+            SetReferencesToNull(m_pMapFonts.at(fontName).vecPointersToRefs);
+
             m_pMapFonts.erase(fontName);
         }
         else OutputDebugString((_T("Font to remove is not present. File: ") + fontName).c_str());
@@ -1971,8 +1981,12 @@ namespace jela
     
     void ResourceManager::RemoveAllFonts()
     {
+        RemoveInvalidRefs(m_pMapFonts);
+        SetReferencesToNull(m_pMapFonts);
+
         m_pMapFonts.clear();
     }
+
     //---------------------------------------------------------------------------------------------------------------------------------
     
     
