@@ -160,7 +160,7 @@ namespace jela
         void SetBackGroundColor(COLORREF newColor);
         void SetInstance(HINSTANCE hInst);
         void SetTitle(const tstring& newTitle);
-        void SetWindowDimensions(int width, int height);
+        void SetWindowDimensions(int width, int height, bool refreshWindowPos = true);
         void SetWindowScale(float scale);
         void SetFrameRate(int FPS);
 

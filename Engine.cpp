@@ -1299,10 +1299,11 @@ namespace jela
         m_Title.assign(newTitle);
         SetWindowText(m_hWindow, newTitle.c_str());
     }
-    void Engine::SetWindowDimensions(int width, int height)
+    void Engine::SetWindowDimensions(int width, int height, bool refreshWindowPos)
     {
         m_Width = width;
         m_Height = height;
+        if(refreshWindowPos) SetWindowPosition();
     }
     void Engine::SetWindowScale(float scale)
     {
