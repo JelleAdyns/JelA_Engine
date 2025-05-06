@@ -66,9 +66,9 @@ namespace jela
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
         void DrawString(const tstring& textToDisplay, const Font& font, int left, int bottom, int width, bool showRect = false)const;
 
-        void DrawTexture(const Texture& texture, int destLeft, int destBottom, const RectInt& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture& texture, const Point2Int& destLeftBottom = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* const texture, int destLeft, int destBottom, const RectInt& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* const texture, const Point2Int& destLeftBottom = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* const texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
 
         void FillRectangle(const Point2Int& leftBottom, int width, int height)const;
         void FillRectangle(const RectInt& rect)const;
@@ -95,9 +95,9 @@ namespace jela
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
         void DrawString(const tstring& textToDisplay, const Font& font, int left, int top, int width, bool showRect = false)const;
 
-        void DrawTexture(const Texture& texture, int destLeft, int destTop, const RectInt& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture& texture, const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture& texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* const texture, int destLeft, int destTop, const RectInt& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* const texture, const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* const texture, const RectInt& destRect, const RectInt& srcRect = {}, float opacity = 1.f)const;
 
         void FillRectangle(const Point2Int& leftTop, int width, int height)const;
         void FillRectangle(const RectInt& rect)const;
