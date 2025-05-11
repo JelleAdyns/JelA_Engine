@@ -1944,14 +1944,12 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         m_DataPath = dataPath;
     }
     
-    void ResourceManager::GetTexture(const tstring& file, Texture*& pointerToAssignTo)
-    {
-        if (not m_pMapTextures.contains(file))
+    void ResourceManager::GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo)
         {
-            m_pMapTextures[file].pResource = std::make_unique<Texture>(file);
-        }
-        m_pMapTextures[file].vecPointersToRefs.push_back(&pointerToAssignTo);
-        pointerToAssignTo = m_pMapTextures.at(file).pResource.get();
+        m_pMapTextures.try_emplace(file, file);
+
+        m_pMapTextures.at(file).vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
+        pointerToAssignTo.pReference = &(m_pMapTextures.at(file).resource);
     }
     
     void ResourceManager::RemoveTexture(const tstring& file)
@@ -1959,7 +1957,7 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         if (m_pMapTextures.contains(file))
         {
             RemoveInvalidRefs(m_pMapTextures);
-            SetReferencesToNull(m_pMapTextures.at(file).vecPointersToRefs);
+            m_pMapTextures.at(file).SetReferencesToNull();
 
             m_pMapTextures.erase(file);
         }
@@ -1974,15 +1972,20 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         m_pMapTextures.clear();
     }
     
-    void ResourceManager::GetFont(const tstring& fontName, Font*& pointerToAssignTo, bool fromFile)
-    {
-        if (not m_pMapFonts.contains(fontName))
+    void ResourceManager::GetFont(const tstring& fontName, ReferencePtr<Font>& pointerToAssignTo, bool fromFile)
         {
-            m_pMapFonts[fontName].pResource = std::make_unique<Font>(fontName, fromFile);
-        }
+        m_pMapFonts.try_emplace(fontName, fontName, fromFile);
+
+        m_pMapFonts.at(fontName).vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
+        pointerToAssignTo.pReference = &(m_pMapFonts.at(fontName).resource);
     
-        m_pMapFonts[fontName].vecPointersToRefs.push_back(&pointerToAssignTo);
-        pointerToAssignTo = m_pMapFonts.at(fontName).pResource.get();
+        //if (not m_pMapFonts.contains(fontName))
+        //{
+        //    //m_pMapFonts[fontName].pResource = std::make_unique<Font>(fontName, fromFile);
+        //}
+        //
+        ////m_pMapFonts[fontName].vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
+        ////pointerToAssignTo.pReference = m_pMapFonts.at(fontName).pResource.get();
     }
     
     void ResourceManager::RemoveFont(const tstring& fontName)
@@ -1990,7 +1993,7 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         if (m_pMapFonts.contains(fontName))
         {
             RemoveInvalidRefs(m_pMapFonts);
-            SetReferencesToNull(m_pMapFonts.at(fontName).vecPointersToRefs);
+            m_pMapFonts.at(fontName).SetReferencesToNull();
 
             m_pMapFonts.erase(fontName);
         }
