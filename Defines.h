@@ -61,7 +61,7 @@ static std::wstring to_wstring(const tstring& str)
 #define GWLA_HINSTANCE	GWLP_HINSTANCE
 #define GWLA_HWNDPARENT GWLP_HWNDPARENT
 #define GWLA_USERDATA	GWLP_USERDATA
-#else if
+#else
 #define GWLA_WNDPROC	GWL_WNDPROC
 #define GWLA_HINSTANCE	GWL_HINSTANCE
 #define GWLA_HWNDPARENT GWL_HWNDPARENT
@@ -108,5 +108,9 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #endif
 
 #define MATHEMATICAL_COORDINATESYSTEM
+
+//Undefine min and max macro from minwindef.h
+#undef min
+#undef max
 
 #endif // !DEFINES_H

@@ -330,8 +330,7 @@ namespace jela
     HRESULT CPlayer::SetVolume(uint8_t volumePercentage)
     {
         int newVolume{ static_cast<int>(volumePercentage) };
-        if (volumePercentage > 100) newVolume = 100;
-        if (volumePercentage < 0) newVolume = 0;
+        newVolume = std::min(100, std::max(0, newVolume));
         return m_pMasterVolume->SetMasterVolume(newVolume / 100.f);
     }
 
