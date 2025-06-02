@@ -376,7 +376,7 @@ namespace jela
             {
                 ResourceManager::GetInstance().RemoveReferencePtr(&pReference);
             }
-
+            //Subject
         };
 
         void GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo);
@@ -401,9 +401,7 @@ namespace jela
             template <typename ...Args>
             ManagedResource(Args&&... args):
                 resource{ args...}
-            {
-
-            }
+            {}
 
             ManagedResource(const ManagedResource&) = delete;
             ManagedResource(ManagedResource&&) noexcept = delete;
@@ -423,7 +421,6 @@ namespace jela
                     ),
                     vecPointersToRefs.end());
             }
-
             void SetReferencesToNull()
             {
                 for (const ResourceType** const pRefPointer : vecPointersToRefs)
@@ -431,7 +428,6 @@ namespace jela
                     (*pRefPointer) = nullptr;
                 }
             }
-
             void EraseRefPointerReference(const ResourceType** const referencePointer)
             { 
                 vecPointersToRefs.erase(
@@ -445,17 +441,17 @@ namespace jela
 
         //------------------------------------------------------
         // RESOURCES
-        ResourceMap<Texture> m_pMapTextures{};
-        ResourceMap<Font> m_pMapFonts{};
+        ResourceMap<Texture> m_MapTextures{};
+        ResourceMap<Font> m_MapFonts{};
         //------------------------------------------------------
 
         template <typename ResourceType>
         void RemoveReferencePtr(const ResourceType** const referencePointer)
         {
             if constexpr (std::is_same_v<ResourceType, Texture>)
-                EraseRefPointerReference(m_pMapTextures, referencePointer);
+                EraseRefPointerReference(m_MapTextures, referencePointer);
             else if constexpr (std::is_same_v<ResourceType, Font>) 
-                EraseRefPointerReference(m_pMapFonts, referencePointer);
+                EraseRefPointerReference(m_MapFonts, referencePointer);
         }
 
         template <typename ResourceType>
