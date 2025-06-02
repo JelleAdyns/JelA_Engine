@@ -44,166 +44,140 @@ namespace jela
     LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         LRESULT result = 0;
-    
-        //if (message == WM_CREATE)
-        //{
-        //    LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-        //    BaseGame* pBaseGame = (BaseGame*)pcs->lpCreateParams;
-        //
-        //    ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pBaseGame));
-        //    // SetWindow(hWnd);
-        //    result = 1;
-        //}
-        //else
-        {
         
-            bool wasHandled = false;
-            if (m_pGame)
+        bool wasHandled = false;
+        if (m_pGame)
+        {
+            switch (message)
             {
-                switch (message)
+            case WM_ENTERSIZEMOVE:
+            case WM_KILLFOCUS:
+            case WM_EXITSIZEMOVE:
+            case WM_SETFOCUS:
+            {
+                m_T1 = std::chrono::high_resolution_clock::now();
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+            case WM_ACTIVATE:
+            {
+                if (LOWORD(wParam) == WA_INACTIVE) m_WindowIsActive = false;
+                else if (LOWORD(wParam) == WA_CLICKACTIVE || LOWORD(wParam) == WA_ACTIVE) m_WindowIsActive = true;
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+            case WM_SIZE:
+            {              
+                UINT width = LOWORD(lParam);
+                UINT height = HIWORD(lParam);
+                if (m_pDRenderTarget)
                 {
-                case WM_ENTERSIZEMOVE:
-                case WM_KILLFOCUS:
-                case WM_EXITSIZEMOVE:
-                case WM_SETFOCUS:
-                {
-                    m_T1 = std::chrono::high_resolution_clock::now();
-                }
-                result = 0;
-                wasHandled = true;
-                break;
-                case WM_ACTIVATE:
-                {
-                    if (LOWORD(wParam) == WA_INACTIVE) m_WindowIsActive = false;
-                    else if (LOWORD(wParam) == WA_CLICKACTIVE || LOWORD(wParam) == WA_ACTIVE) m_WindowIsActive = true;
-                }
-                result = 0;
-                wasHandled = true;
-                break;
-                case WM_SIZE:
-                {              
-                    UINT width = LOWORD(lParam);
-                    UINT height = HIWORD(lParam);
-                    if (m_pDRenderTarget)
-                    {
-                        //If error occurs, it will be returned by EndDraw()
-                        m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
+                    //If error occurs, it will be returned by EndDraw()
+                    m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
     
-                        int rendertargetWidth{ GetRenderTargetSize().width };
-                        int rendertargetHeight{ GetRenderTargetSize().height };
+                    int rendertargetWidth{ GetRenderTargetSize().width };
+                    int rendertargetHeight{ GetRenderTargetSize().height };
     
-                        float scaleX{ rendertargetWidth / (m_Width * m_WindowScale) };
-                        float scaleY{ rendertargetHeight / (m_Height * m_WindowScale) };
-                        float minScale{ std::min<float>(scaleX,scaleY) };
+                    float scaleX{ rendertargetWidth / (m_Width * m_WindowScale) };
+                    float scaleY{ rendertargetHeight / (m_Height * m_WindowScale) };
+                    float minScale{ std::min<float>(scaleX,scaleY) };
     
-                        float translationX{ (rendertargetWidth - (m_Width * m_WindowScale) * minScale) / 2.f };
-                        float translationY{ (rendertargetHeight - (m_Height * m_WindowScale) * minScale) / 2.f };
+                    float translationX{ (rendertargetWidth - (m_Width * m_WindowScale) * minScale) / 2.f };
+                    float translationY{ (rendertargetHeight - (m_Height * m_WindowScale) * minScale) / 2.f };
     
-                        m_ViewPortTranslationX = translationX;
-                        m_ViewPortTranslationY = translationY;
-                        m_ViewPortScaling = minScale;
-                        m_TransformChanged = true;
-                    }
-                }
-                result = 0;
-                wasHandled = true;
-                break;
-    
-                case WM_DISPLAYCHANGE:
-                {
-                    InvalidateRect(hWnd, NULL, FALSE);
-                }
-                result = 0;
-                wasHandled = true;
-                break;
-    
-                case WM_PAINT:
-                {
+                    m_ViewPortTranslationX = translationX;
+                    m_ViewPortTranslationY = translationY;
+                    m_ViewPortScaling = minScale;
+                    m_TransformChanged = true;
+                    
                     Paint();
                 }
-                result = 0;
-                wasHandled = true;
-                break;
-                case WM_KEYUP:
-                {
-                    if (static_cast<int>(wParam) == VK_F11)
-                    {
-                        if (m_IsFullscreen) SetWindowPosition();
-                        else SetFullscreen();
-    
-                        m_IsFullscreen = !m_IsFullscreen;
-                    }
-                    
-                    m_pGame->KeyUp(static_cast<int>(wParam));
-    
-                    m_IsKeyboardActive = true;
-                }
-                result = 0;
-                wasHandled = true;
-                break;
-                case WM_KEYDOWN:
-                {
-                    if ((lParam & (1 << 30)) == 0)
-                    {
-                        m_pGame->KeyDownThisFrame(static_cast<int>(wParam));
-                    }
-                    m_pGame->KeyDown(static_cast<int>(wParam));
-    
-                    m_IsKeyboardActive = true;
-                }
-                result = 0;
-                wasHandled = true;
-                break;
-    
-    
-                case WM_LBUTTONDOWN:
-                    m_pGame->MouseDown(true, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-                    result = 0;
-                    wasHandled = true;
-                    break;
-                case WM_LBUTTONUP:
-                    m_pGame->MouseUp(true, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-                    result = 0;
-                    wasHandled = true;
-                    break;
-                case WM_RBUTTONDOWN:
-                    m_pGame->MouseDown(false, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-                    result = 0;
-                    wasHandled = true;
-                    break;
-                case WM_RBUTTONUP:
-                    m_pGame->MouseUp(false, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-                    result = 0;
-                    wasHandled = true;
-                    break;
-                case WM_MOUSEMOVE:
-                    m_pGame->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), static_cast<int>(wParam));
-                    result = 0;
-                    wasHandled = true;
-                    break;
-                case WM_MOUSEWHEEL:
-                    m_pGame->MouseWheelTurn(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), GET_WHEEL_DELTA_WPARAM(wParam), LOWORD(wParam));
-                    result = 0;
-                    wasHandled = true;
-                    break;
-    
-    
-                case WM_DESTROY:
-                    PostQuitMessage(0);
-                    result = 1;
-                    wasHandled = true;
-                    break;
-                }     
                 
             }
+            result = 0;
+            wasHandled = true;
+            break;
     
-            
-            if (!wasHandled)
+            case WM_KEYUP:
             {
-                result = DefWindowProc(hWnd, message, wParam, lParam);
+                if (static_cast<int>(wParam) == VK_F11)
+                {
+                    if (m_IsFullscreen) SetWindowPosition();
+                    else SetFullscreen();
+    
+                    m_IsFullscreen = !m_IsFullscreen;
+                }
+                    
+                m_pGame->KeyUp(static_cast<int>(wParam));
+    
+                m_IsKeyboardActive = true;
             }
+            result = 0;
+            wasHandled = true;
+            break;
+            case WM_KEYDOWN:
+            {
+                if ((lParam & (1 << 30)) == 0)
+                {
+                    m_pGame->KeyDownThisFrame(static_cast<int>(wParam));
+                }
+                m_pGame->KeyDown(static_cast<int>(wParam));
+    
+                m_IsKeyboardActive = true;
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+    
+    
+            case WM_LBUTTONDOWN:
+                m_pGame->MouseDown(true, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_LBUTTONUP:
+                m_pGame->MouseUp(true, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_RBUTTONDOWN:
+                m_pGame->MouseDown(false, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_RBUTTONUP:
+                m_pGame->MouseUp(false, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_MOUSEMOVE:
+                m_pGame->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), static_cast<int>(wParam));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_MOUSEWHEEL:
+                m_pGame->MouseWheelTurn(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), GET_WHEEL_DELTA_WPARAM(wParam), LOWORD(wParam));
+                result = 0;
+                wasHandled = true;
+                break;
+    
+    
+            case WM_DESTROY:
+                PostQuitMessage(0);
+                result = 1;
+                wasHandled = true;
+                break;
+            }     
+                
+        }  
             
+        if (!wasHandled)
+        {
+            result = DefWindowProc(hWnd, message, wParam, lParam);
         }
+            
         return result;
     }
 
@@ -419,7 +393,6 @@ namespace jela
         m_pDRenderTarget->BeginDraw();
     
         // Clear background
-        //m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         m_pDRenderTarget->Clear(m_DColorBackGround);
     
         // Set tranformation for when the window changes in size
@@ -443,7 +416,6 @@ namespace jela
         // Dont show more than the the scaled window size given by the user
         m_pDRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         m_TransformChanged = true;
-    
     
         auto userColor = m_pDColorBrush->GetColor();
     
@@ -1585,7 +1557,6 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     }
     void Engine::Paint()
     {
-        InvalidateRect(m_hWindow, NULL, TRUE);
         HRESULT hr = OnRender();
     
         if (hr == D2DERR_RECREATE_TARGET)
@@ -1594,7 +1565,6 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
             SafeRelease(&m_pDRenderTarget);
             SafeRelease(&m_pDColorBrush);
         }
-        ValidateRect(m_hWindow, NULL);
     }
     
     RectInt Engine::GetWindowRect() const
@@ -1945,7 +1915,7 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     }
     
     void ResourceManager::GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo)
-        {
+    {
         m_MapTextures.try_emplace(file, file);
 
         m_MapTextures.at(file).vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
@@ -1973,12 +1943,12 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     }
     
     void ResourceManager::GetFont(const tstring& fontName, ReferencePtr<Font>& pointerToAssignTo, bool fromFile)
-        {
+    {
         m_MapFonts.try_emplace(fontName, fontName, fromFile);
 
         m_MapFonts.at(fontName).vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
         pointerToAssignTo.pReference = &(m_MapFonts.at(fontName).resource);
-    
+
         //if (not m_MapFonts.contains(fontName))
         //{
         //    //m_MapFonts[fontName].pResource = std::make_unique<Font>(fontName, fromFile);
