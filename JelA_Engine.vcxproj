@@ -149,6 +149,8 @@
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="CPlayer.h" />
+    <ClInclude Include="Observer.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Structs.h" />
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +161,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="CPlayer.cpp" />
     <ClCompile Include="Audio.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Structs.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

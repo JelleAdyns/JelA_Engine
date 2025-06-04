@@ -45,6 +45,12 @@
     <ClInclude Include="Controller.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
+    <ClInclude Include="Observer.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -69,6 +75,9 @@
       <Filter>Game Files</Filter>
     </ClCompile>
     <ClCompile Include="Controller.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
       <Filter>Engine Files</Filter>
     </ClCompile>
   </ItemGroup>

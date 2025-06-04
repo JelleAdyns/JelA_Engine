@@ -256,7 +256,7 @@ namespace jela
     
         if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED))/* && SUCCEEDED(MFStartup(MF_VERSION))*/)
         {
-            
+
             SetInstance(hInstance);
             ResourceManager::GetInstance().Init(resourcePath);
 
@@ -269,12 +269,20 @@ namespace jela
             HRESULT hr{ S_OK };
 
             hr = MakeWindow();
-            if(SUCCEEDED(hr)) CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
-            // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
-    
-            if(SUCCEEDED(hr)) srand(static_cast<unsigned int>(time(nullptr)));
-    
-            if(SUCCEEDED(hr)) return true;
+            if (SUCCEEDED(hr))
+            {
+                CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
+                // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
+
+                ResourceManager::GetInstance().GetFont(_T("Verdana"), m_pDefaultFont);
+                m_pCurrentFont = m_pDefaultFont.pObject;
+                m_pDefaultTextFormat = std::make_unique<TextFormat>(12, false, false, TextFormat::HorAllignment::Left, TextFormat::VertAllignment::Top);
+                SetTextFormat(m_pDefaultTextFormat.get());
+
+                srand(static_cast<unsigned int>(time(nullptr)));
+
+                return true;
+            }
         }
         return false;
     }
@@ -546,15 +554,15 @@ namespace jela
 
     
     // Strings
-    void Engine::DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftBottom, int width, int height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftBottom, int width, int height, bool showRect)const
     {
-        DrawString(textToDisplay, font, leftBottom.x, leftBottom.y, width, height, showRect);
+        DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const Font* const font, const RectInt& destRect, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect)const
     {
-        DrawString(textToDisplay, font, destRect.left, destRect.bottom, destRect.width, destRect.height, showRect);
+        DrawString(textToDisplay, destRect.left, destRect.bottom, destRect.width, destRect.height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const Font* const font, int left, int bottom, int width, int height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, int left, int bottom, int width, int height, bool showRect)const
     {
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(
@@ -568,27 +576,27 @@ namespace jela
             m_pDRenderTarget->DrawRectangle(rect, m_pDColorBrush);
         }
     
-        m_pDRenderTarget->DrawText(
-            to_wstring(textToDisplay).c_str(),
-            (UINT32) textToDisplay.length(),
-            font->GetFormat(),
-            rect,
-            m_pDColorBrush,
-            D2D1_DRAW_TEXT_OPTIONS_NONE,
-            DWRITE_MEASURING_MODE_NATURAL);
+       m_pDRenderTarget->DrawText(
+           to_wstring(textToDisplay).c_str(),
+           (UINT32) textToDisplay.length(),
+           m_pCurrentTextFormat->GetTextFormat(),
+           rect,
+           m_pDColorBrush,
+           D2D1_DRAW_TEXT_OPTIONS_NONE,
+           DWRITE_MEASURING_MODE_NATURAL);
         
     }
 
-    void Engine::DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftBottom, int width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftBottom, int width, bool showRect)const
     {
-       DrawString(textToDisplay, font, leftBottom.x, leftBottom.y, width, showRect);
+       DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const Font* const font, int left, int bottom, int width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, int left, int bottom, int width, bool showRect)const
     {
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(
             static_cast<FLOAT>(left),
-            static_cast<FLOAT>(m_Height - (bottom + font->GetFontSize())),
+            static_cast<FLOAT>(m_Height - (bottom + m_pCurrentTextFormat->GetFontSize())),
             static_cast<FLOAT>(left + width),
             static_cast<FLOAT>(m_Height - bottom));
         if (showRect)
@@ -599,7 +607,7 @@ namespace jela
         m_pDRenderTarget->DrawText(
             to_wstring(textToDisplay).c_str(),
             (UINT32) textToDisplay.length(),
-            font->GetFormat(),
+            m_pCurrentTextFormat->GetTextFormat(),
             rect,
             m_pDColorBrush,
             D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -896,15 +904,15 @@ void Engine::DrawRoundedRect(int left, int top, int width, int height, float rad
 }
 
 //String  
-void Engine::DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftTop, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, int height, bool showRect)const
 {
-    DrawString(textToDisplay, font, leftTop.x, leftTop.y, width, height, showRect);
+    DrawString(textToDisplay, leftTop.x, leftTop.y, width, height, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, const Font* const font, const RectInt& destRect, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect)const
 {
-    DrawString(textToDisplay, font, destRect.left, destRect.top, destRect.width, destRect.height, showRect);
+    DrawString(textToDisplay, destRect.left, destRect.top, destRect.width, destRect.height, showRect);
 }
-void Engine::DrawString(const tstring& textToDisplay, const Font* const font, int left, int top, int width, int height, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, int height, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
@@ -921,7 +929,7 @@ void Engine::DrawString(const tstring& textToDisplay, const Font* const font, in
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32)textToDisplay.length(),
-        font->GetFormat(),
+        m_pCurrentTextFormat->GetTextFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -930,19 +938,19 @@ void Engine::DrawString(const tstring& textToDisplay, const Font* const font, in
 }
 
 //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-void Engine::DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftTop, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, bool showRect)const
 {
-    DrawString(textToDisplay, font, leftTop.x, leftTop.y, width, showRect);
+    DrawString(textToDisplay, leftTop.x, leftTop.y, width, showRect);
 }
 //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-void Engine::DrawString(const tstring& textToDisplay, const Font* const font, int left, int top, int width, bool showRect)const
+void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, bool showRect)const
 {
     SetTransform();
     D2D1_RECT_F rect = D2D1::RectF(
         static_cast<FLOAT>(left),
         static_cast<FLOAT>(top),
         static_cast<FLOAT>(left + width),
-        static_cast<FLOAT>(top + font->GetFontSize()));
+        static_cast<FLOAT>(top + m_pCurrentTextFormat->GetFontSize()));
 
     if (showRect)
     {
@@ -952,7 +960,7 @@ void Engine::DrawString(const tstring& textToDisplay, const Font* const font, in
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32)textToDisplay.length(),
-        font->GetFormat(),
+        m_pCurrentTextFormat->GetTextFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -1531,6 +1539,41 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         return m_pVecControllers.at(controllerIndex)->IsPressed(button);
     }
     
+    void Engine::SetFont(const Font* const pFont)
+    {
+        if(pFont != m_pCurrentFont)
+        {
+            if (pFont == nullptr && pFont != m_pDefaultFont.pObject)
+            {
+                m_pCurrentFont = m_pDefaultFont.pObject;
+                OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
+            }
+            else m_pCurrentFont = pFont;
+            
+            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+        }
+    }
+
+    void Engine::SetTextFormat(TextFormat* const pTextFormat)
+    {
+        if (pTextFormat != m_pCurrentTextFormat)
+        {
+            m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
+
+            if (pTextFormat == nullptr && pTextFormat != m_pDefaultTextFormat.get())
+            {
+                m_pCurrentTextFormat = m_pDefaultTextFormat.get();
+                OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
+            }
+            else m_pCurrentTextFormat = pTextFormat;
+
+            m_OnFontChange.AddObserver(m_pCurrentTextFormat);
+
+
+            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+        }
+    }
+
     void Engine::SetColor(COLORREF newColor, float opacity)
     {
         //if (m_pDColorBrush) SafeRelease(&m_pDColorBrush);
@@ -1567,6 +1610,11 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         }
     }
     
+    const Font* const Engine::GetCurrentFont() const
+    {
+        return m_pCurrentFont;
+    }
+
     RectInt Engine::GetWindowRect() const
     {
         return RectInt{ 0, 0, m_Width, m_Height };
@@ -1599,389 +1647,7 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     {
         return m_pDRenderTarget;
     }
-    
-    //---------------------------------------------------------------------------------------------------------------------------------
-    //---------------------
-    //TEXTURE
-    //---------------------
-    
-    IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
-    
-    Texture::Texture(const tstring& filename) :
-        m_pDBitmap{NULL},
-        m_TextureWidth{0},
-        m_TextureHeight{0}
-    {
-    
-        HRESULT creationResult = S_OK;
-    
-        if (!m_pWICFactory)
-        {
-            creationResult = CoCreateInstance(
-                CLSID_WICImagingFactory,
-                NULL,
-                CLSCTX_ALL,
-                IID_PPV_ARGS(&m_pWICFactory)
-            );
-        }
-    
-        IWICBitmapDecoder* pDecoder = NULL;
-        IWICBitmapFrameDecode* pSource = NULL;
-        IWICFormatConverter* pConverter = NULL;
-    
-        std::wstring filePath = to_wstring(ResourceManager::GetInstance().GetDataPath() + filename);
-    
-        if (SUCCEEDED(creationResult))
-        {
-            creationResult = m_pWICFactory->CreateDecoderFromFilename(
-                filePath.c_str(),
-                NULL,
-                GENERIC_READ,
-                WICDecodeMetadataCacheOnLoad,
-                &pDecoder);
-        }
-    
-    
-        if (SUCCEEDED(creationResult))
-        {
-            // Create the initial frame.
-            creationResult = pDecoder->GetFrame(0, &pSource);
-        }
-    
-    
-        // Convert the image format to 32bppPBGRA
-        // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
-        if (SUCCEEDED(creationResult)) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
-        if (SUCCEEDED(creationResult))
-        {
-            creationResult = pConverter->Initialize(
-                pSource,
-                GUID_WICPixelFormat32bppPBGRA,
-                WICBitmapDitherTypeNone,
-                NULL,
-                0.f,
-                WICBitmapPaletteTypeMedianCut
-            );
-        }
-    
-    
-        if (SUCCEEDED(creationResult))
-        {
-            creationResult = ENGINE.GetRenderTarget()->CreateBitmapFromWicBitmap(
-                pConverter,
-                NULL,
-                &m_pDBitmap
-            );
-    
-    
-            if (SUCCEEDED(creationResult))
-            {
-                m_TextureWidth = m_pDBitmap->GetSize().width;
-                m_TextureHeight = m_pDBitmap->GetSize().height;
-            }
-        }
-     
-        if (!SUCCEEDED(creationResult))
-        {
-            OutputDebugStringW((L"ERROR! File \"" + filePath + L"\" couldn't load correctly").c_str());
-        }
-        SafeRelease(&pDecoder);
-        SafeRelease(&pSource);
-        SafeRelease(&pConverter);
-    
-    }
-    Texture::~Texture()
-    {
-        SafeRelease(&m_pDBitmap);
-    }
-    void Texture::DestroyFactory()
-    {
-        SafeRelease(&m_pWICFactory);
-    }
-    
-    //---------------------------------------------------------------------------------------------------------------------------------
-    
-    
-    
-    //---------------------------------------------------------------------------------------------------------------------------------
-    //---------------------
-    //Font
-    //---------------------
-    
-    IDWriteFactory5* Font::m_pDWriteFactory{ nullptr };
-    
-    Font::Font(const tstring& fontName, bool fromFile):
-        Font{fontName, 20, false, false, fromFile}
-    {}
-    Font::Font(const tstring& fontName, int size ,bool bold, bool italic, bool fromFile)
-    { 
-        if (!m_pDWriteFactory)
-        {
-            DWriteCreateFactory(
-                DWRITE_FACTORY_TYPE_SHARED,
-                __uuidof(IDWriteFactory5),
-                reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
-        }
-    
-        if (fromFile)
-        {
-            std::wstring filePath = to_wstring(ResourceManager::GetInstance().GetDataPath() + fontName);
-            HRESULT hr = Initialize(filePath);
-            if (SUCCEEDED(hr))
-            {
-                SetTextFormat(size, bold, italic);
-            }
-        }
-        else
-        {
-            m_FontName = to_wstring(fontName);
-            SetTextFormat(size, bold, italic);
-        }
-    }
-    Font::~Font()
-    {
-        SafeRelease(&m_pFontCollection);
-        SafeRelease(&m_pTextFormat);
-    }
-    HRESULT Font::Initialize(const std::wstring& fontName)
-    {
-        HRESULT hr = S_OK;
-    
-        IDWriteFontSetBuilder1* pFontSetBuilder{ nullptr };
-        IDWriteFontSet* pFontSet{ nullptr };
-        IDWriteFontFile* pFontFile{ nullptr };
-        m_pFontCollection = nullptr;
-    
-       
-    
-        hr = m_pDWriteFactory->CreateFontSetBuilder(&pFontSetBuilder);
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pDWriteFactory->CreateFontFileReference(fontName.c_str(), NULL, &pFontFile);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pFontSetBuilder->AddFontFile(pFontFile);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pFontSetBuilder->CreateFontSet(&pFontSet);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pDWriteFactory->CreateFontCollectionFromFontSet(pFontSet, &m_pFontCollection);
-        }
-    
-        IDWriteFontFamily* pFontFamily{ nullptr };
-        IDWriteLocalizedStrings* pStrings{ nullptr };
-    
-        UINT32 length;
-        std::wstring name{};
-    
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pFontFamily->GetFamilyNames(&pStrings);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pStrings->GetStringLength(0, &length);
-        }
-    
-        if (SUCCEEDED(hr))
-        {
-            name.resize(length);
-            hr = pStrings->GetString(0, &name[0], length + 1);
-        }
-    
-    
-        if (!SUCCEEDED(hr))
-        {
-            OutputDebugStringW((L"Something went wrong in the Font constructor using " + fontName).c_str());
-        }
-        else
-        {
-            m_FontName = name;
-        }
-    
-        SafeRelease(&pFontSetBuilder);
-        SafeRelease(&pFontSet);
-        SafeRelease(&pFontFile);
-        SafeRelease(&pFontFamily);
-        SafeRelease(&pStrings);
-    
-        return hr;
-    }
-    
-    void Font::SetTextFormat(int size, bool bold, bool italic)
-    {
-        const auto& createTextFormat = [&]()
-            {
-                m_pDWriteFactory->CreateTextFormat(
-                    m_FontName.c_str(),
-                    m_pFontCollection,
-                    bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
-                    italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
-                    DWRITE_FONT_STRETCH_NORMAL,
-                    static_cast<FLOAT>(size),
-                    L"en-us",
-                    &m_pTextFormat);
-    
-                assert((m_pTextFormat) && _T("TextFormat was not loaded correctly"));
-                m_FontSize = size;
-            };
-    
-        if (not m_pTextFormat)
-        {
-            createTextFormat();
-        }
-        else if(
-           m_pTextFormat->GetFontSize() != size or
-           m_pTextFormat->GetFontWeight() != (bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL) or
-           m_pTextFormat->GetFontStyle() != (italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL))
-        {
-            const auto horAllign = m_pTextFormat->GetTextAlignment();
-            const auto vertAllign = m_pTextFormat->GetParagraphAlignment();
-    
-            SafeRelease(&m_pTextFormat);
-
-            createTextFormat();
-    
-            m_pTextFormat->SetTextAlignment(horAllign);
-            m_pTextFormat->SetParagraphAlignment(vertAllign);
-        }
-    
-    }
-    void Font::SetHorizontalAllignment(HorAllignment allignment)
-    {
-        switch (allignment)
-        {
-        case HorAllignment::Left:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-            break;
-        case HorAllignment::Center:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-            break;
-        case HorAllignment::Right:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-            break;
-        case HorAllignment::Justified:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-            break;
-        }
-    }
-    void Font::SetVerticalAllignment(VertAllignment allignment)
-    {
-        switch (allignment)
-        {
-        case Font::VertAllignment::Top:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-            break;
-        case Font::VertAllignment::Center:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-            break;
-        case Font::VertAllignment::Bottom:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-            break;
-        }
-    }
-    IDWriteTextFormat* Font::GetFormat() const
-    {
-        return m_pTextFormat;
-    }
-    int Font::GetFontSize() const
-    {
-        return m_FontSize;
-    }
-    void Font::DestroyFactory()
-    {
-        SafeRelease(&m_pDWriteFactory);
-    }
-    //---------------------------------------------------------------------------------------------------------------------------------
-    
-    
-    
-    //---------------------------------------------------------------------------------------------------------------------------------
-    //---------------------
-    // ResourceManager
-    //---------------------
-
-    void ResourceManager::Init(const tstring& dataPath)
-    {
-        m_DataPath = dataPath;
-    }
-    
-    void ResourceManager::GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo)
-    {
-        m_MapTextures.try_emplace(file, file);
-
-        m_MapTextures.at(file).vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
-        pointerToAssignTo.pReference = &(m_MapTextures.at(file).resource);
-    }
-    
-    void ResourceManager::RemoveTexture(const tstring& file)
-    {
-        if (m_MapTextures.contains(file))
-        {
-            RemoveInvalidRefs(m_MapTextures);
-            m_MapTextures.at(file).SetReferencesToNull();
-
-            m_MapTextures.erase(file);
-        }
-        else OutputDebugString((_T("\nTexture to remove is not present. File: ") + file + _T("\n\n")).c_str());
-    }
-    
-    void ResourceManager::RemoveAllTextures()
-    {
-        RemoveInvalidRefs(m_MapTextures);
-        SetReferencesToNull(m_MapTextures);
-        
-        m_MapTextures.clear();
-    }
-    
-    void ResourceManager::GetFont(const tstring& fontName, ReferencePtr<Font>& pointerToAssignTo, bool fromFile)
-    {
-        m_MapFonts.try_emplace(fontName, fontName, fromFile);
-
-        m_MapFonts.at(fontName).vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
-        pointerToAssignTo.pReference = &(m_MapFonts.at(fontName).resource);
-
-        //if (not m_MapFonts.contains(fontName))
-        //{
-        //    //m_MapFonts[fontName].pResource = std::make_unique<Font>(fontName, fromFile);
-        //}
-        //
-        ////m_MapFonts[fontName].vecPointersToRefs.push_back(&(pointerToAssignTo.pReference));
-        ////pointerToAssignTo.pReference = m_MapFonts.at(fontName).pResource.get();
-    }
-    
-    void ResourceManager::RemoveFont(const tstring& fontName)
-    {
-        if (m_MapFonts.contains(fontName))
-        {
-            RemoveInvalidRefs(m_MapFonts);
-            m_MapFonts.at(fontName).SetReferencesToNull();
-
-            m_MapFonts.erase(fontName);
-        }
-        else OutputDebugString((_T("Font to remove is not present. File: ") + fontName).c_str());
-    }
-    
-    void ResourceManager::RemoveAllFonts()
-    {
-        RemoveInvalidRefs(m_MapFonts);
-        SetReferencesToNull(m_MapFonts);
-
-        m_MapFonts.clear();
-    }
-
-    //---------------------------------------------------------------------------------------------------------------------------------
-    
-    
-    
+ 
     
     //---------------------------------------------------------------------------------------------------------------------------------
     //---------------------
@@ -2205,7 +1871,6 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     
         return true;
     }
-    
     
     //---------------------------------------------------------------------------------------------------------------------------------
 }

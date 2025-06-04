@@ -7,17 +7,14 @@
 #include "Audio.h"
 #include "framework.h"
 #include "Controller.h"
+#include "Observer.h"
+#include "ResourceManager.h"
 #include <vector>
 #include <chrono>
-#include <map>
-#include <unordered_map>
+
 
 namespace jela
 {
-
-    class Texture;
-    class Font;
-    class ResourceManager;
 
     class Engine final
     {
@@ -57,14 +54,14 @@ namespace jela
         void DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
-        void DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftBottom, int width, int height, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Font* const font, const RectInt& destRect, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Font* const font, int left, int bottom, int width, int height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2Int& leftBottom, int width, int height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, int left, int bottom, int width, int height, bool showRect = false)const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftBottom, int width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2Int& leftBottom, int width, bool showRect = false)const;
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Font* const font, int left, int bottom, int width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, int left, int bottom, int width, bool showRect = false)const;
 
         void DrawTexture(const Texture* const texture, int destLeft, int destBottom, const RectInt& srcRect = {}, float opacity = 1.f)const;
         void DrawTexture(const Texture* const texture, const Point2Int& destLeftBottom = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
@@ -86,14 +83,14 @@ namespace jela
         void DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness = 1.f)const;
 
-        void DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftTop, int width, int height, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Font* const font, const RectInt& destRect, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Font* const font, int left, int top, int width, int height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, int height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, int left, int top, int width, int height, bool showRect = false)const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Font* const font, const Point2Int& leftTop, int width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, bool showRect = false)const;
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Font* const font, int left, int top, int width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, int left, int top, int width, bool showRect = false)const;
 
         void DrawTexture(const Texture* const texture, int destLeft, int destTop, const RectInt& srcRect = {}, float opacity = 1.f)const;
         void DrawTexture(const Texture* const texture, const Point2Int& destLeftTop = {}, const RectInt& srcRect = {}, float opacity = 1.f)const;
@@ -156,6 +153,8 @@ namespace jela
 
         // Setters
 
+        void SetFont(const Font* const pFont);
+        void SetTextFormat(TextFormat* const pTextFormat);
         void SetColor(COLORREF newColor, float opacity = 1.F);
         void SetBackGroundColor(COLORREF newColor);
         void SetInstance(HINSTANCE hInst);
@@ -166,6 +165,7 @@ namespace jela
 
         // Getters
 
+        const Font* const GetCurrentFont() const;
         RectInt GetWindowRect() const;
         float GetWindowScale() const;
         HWND GetWindow() const;
@@ -249,326 +249,15 @@ namespace jela
 
         std::chrono::high_resolution_clock::time_point m_T1;
 
-    };
-
-
-    //---------------------------------------------------------------
-    class Texture final
-    {
-    public:
-        explicit Texture(const tstring& filename);
-
-        Texture(const Texture& other) = delete;
-        Texture(Texture&& other) noexcept = delete;
-        Texture& operator=(const Texture& other) = delete;
-        Texture& operator=(Texture&& other) noexcept = delete;
-
-        ~Texture();
-
-        ID2D1Bitmap* const  GetBitmap() const { return m_pDBitmap; }
-        float GetWidth() const { return m_TextureWidth; }
-        float GetHeight() const { return m_TextureHeight; }
         
-        static void DestroyFactory();
+        Subject<const Font* const>      m_OnFontChange{};
 
-    private:
+        const Font*                     m_pCurrentFont{ nullptr };
+        TextFormat*                     m_pCurrentTextFormat{ nullptr };
 
-        static IWICImagingFactory* m_pWICFactory;
-        ID2D1Bitmap* m_pDBitmap{ nullptr };
-
-        float m_TextureWidth;
-        float m_TextureHeight;
+        ReferencePtr<Font>              m_pDefaultFont {};
+        std::unique_ptr<TextFormat>     m_pDefaultTextFormat{ nullptr };
     };
-    //---------------------------------------------------------------
-
-
-    //---------------------------------------------------------------
-    //https://stackoverflow.com/questions/37572961/c-directwrite-load-font-from-file-at-runtime
-
-    class Font final
-    {
-    public:
-        Font(const tstring& fontname, bool fromFile = false);
-        Font(const tstring& fontname, int size, bool bold, bool italic, bool fromFile = false);
-
-        Font(const Font& other) = delete;
-        Font(Font&& other) noexcept = delete;
-        Font& operator=(const Font& other) = delete;
-        Font& operator=(Font&& other) noexcept = delete;
-
-        ~Font();
-
-        enum class HorAllignment
-        {
-            Left,
-            Center,
-            Right,
-            Justified
-        };
-        enum class VertAllignment
-        {
-            Top,
-            Center,
-            Bottom,
-        };
-
-        void SetTextFormat(int size, bool bold, bool italic);
-        void SetHorizontalAllignment(HorAllignment allignment);
-        void SetVerticalAllignment(VertAllignment allignment);
-        IDWriteTextFormat* GetFormat() const;
-        int GetFontSize() const;
-
-        static void DestroyFactory();
-    private:
-        HRESULT Initialize(const std::wstring& filename);
-
-        static IDWriteFactory5* m_pDWriteFactory;
-
-        IDWriteFontCollection1* m_pFontCollection{nullptr};
-        IDWriteTextFormat* m_pTextFormat{nullptr};
-
-        std::wstring m_FontName;
-        int m_FontSize;
-    };
-    //---------------------------------------------------------------
-
-
-   
-    //---------------------------------------------------------------
-    class ResourceManager final
-    {
-
-    private:
-        static inline ResourceManager* m_pInstance = nullptr ;
-
-    public:
-        static ResourceManager& GetInstance()
-        {
-            if (!m_pInstance)
-                m_pInstance = new ResourceManager{};
-            
-            return *m_pInstance;
-        }
-        static void ShutDown()
-        {
-            delete m_pInstance;
-            m_pInstance = nullptr;
-
-            Texture::DestroyFactory();
-            Font::DestroyFactory();
-        }
-        ~ResourceManager() = default;
-
-        ResourceManager(const ResourceManager&) = delete;
-        ResourceManager(ResourceManager&&) noexcept = delete;
-        ResourceManager& operator= (const ResourceManager&) = delete;
-        ResourceManager& operator= (ResourceManager&&) noexcept = delete;
-        
-        void Init(const tstring& dataPath);
-        
-
-        template <typename ResourceType>
-        struct ReferencePtr
-        {
-            const ResourceType* pReference = nullptr;
-
-            ~ReferencePtr()
-            {
-                ResourceManager::GetInstance().RemoveReferencePtr(&pReference);
-            }
-            //Subject
-        };
-
-        void GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo);
-        void RemoveTexture(const tstring& file);
-        void RemoveAllTextures();
-
-        void GetFont(const tstring& fontName, ReferencePtr<Font>& pointerToAssignTo, bool fromFile = false);
-        void RemoveFont(const tstring& fontName);
-        void RemoveAllFonts();
-
-
-        const tstring& GetDataPath() const { return m_DataPath; }
-        void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
-
-    private:
-        ResourceManager() = default;
-        tstring m_DataPath;
-
-        template <typename ResourceType>
-        struct ManagedResource
-        {
-            template <typename ...Args>
-            ManagedResource(Args&&... args):
-                resource{ args...}
-            {}
-
-            ManagedResource(const ManagedResource&) = delete;
-            ManagedResource(ManagedResource&&) noexcept = delete;
-            ManagedResource& operator= (const ManagedResource&) = delete;
-            ManagedResource& operator= (ManagedResource&&) noexcept = delete;
-            
-            ResourceType resource;
-            std::vector<const ResourceType**> vecPointersToRefs = {};
-
-            void RemoveInvalidRefs()
-            {
-                vecPointersToRefs.erase(
-                    std::remove_if(vecPointersToRefs.begin(), vecPointersToRefs.end(), [&](const ResourceType* const*const refToPointer)
-                        {
-                            return (*refToPointer) != (&resource);
-                        }
-                    ),
-                    vecPointersToRefs.end());
-            }
-            void SetReferencesToNull()
-            {
-                for (const ResourceType** const pRefPointer : vecPointersToRefs)
-                {
-                    (*pRefPointer) = nullptr;
-                }
-            }
-            void EraseRefPointerReference(const ResourceType** const referencePointer)
-            { 
-                vecPointersToRefs.erase(
-                    std::remove(vecPointersToRefs.begin(), vecPointersToRefs.end(), referencePointer),
-                    vecPointersToRefs.end());
-            }
-        };
-
-        template<typename ResourceType>
-        using ResourceMap = std::unordered_map<tstring, ManagedResource<ResourceType>>;
-
-        //------------------------------------------------------
-        // RESOURCES
-        ResourceMap<Texture> m_MapTextures{};
-        ResourceMap<Font> m_MapFonts{};
-        //------------------------------------------------------
-
-        template <typename ResourceType>
-        void RemoveReferencePtr(const ResourceType** const referencePointer)
-        {
-            if constexpr (std::is_same_v<ResourceType, Texture>)
-                EraseRefPointerReference(m_MapTextures, referencePointer);
-            else if constexpr (std::is_same_v<ResourceType, Font>) 
-                EraseRefPointerReference(m_MapFonts, referencePointer);
-        }
-
-        template <typename ResourceType>
-        void EraseRefPointerReference(ResourceMap<ResourceType>& resourceMap, const ResourceType**const referencePointer)
-        {
-            for (auto& [filename, managedResource] : resourceMap)
-            {
-                managedResource.EraseRefPointerReference(referencePointer);
-            }
-        }
-        
-        template <typename ResourceType>
-        void SetReferencesToNull(ResourceMap<ResourceType>& resourceMap)
-        {
-            for (auto& [fileName, managedResource] : resourceMap)
-            {
-                managedResource.SetReferencesToNull();
-            }
-        }
-     
-        template <typename ResourceType>
-        void RemoveInvalidRefs(ResourceMap<ResourceType>& resourceMap)
-        {
-            for (auto& [fileName, managedResource] : resourceMap)
-            {
-                managedResource.RemoveInvalidRefs();
-            }
-        }
-    };
-
-    template <typename ResourceType>
-    using ReferencePtr = ResourceManager::ReferencePtr<ResourceType>;
-    //---------------------------------------------------------------
-
-
-
-    //---------------------------------------------------------------
-    template <typename... Args>
-    class Observer;
-    template <typename... Args>
-    class Subject final
-    {
-    public:
-        Subject() = default;
-        ~Subject()
-        {
-            for (auto& pObserver : m_pVecObservers)
-            {
-                pObserver->OnSubjectDestroy();
-            }
-        }
-
-        Subject(const Subject&) = delete;
-        Subject(Subject&&) noexcept = delete;
-        Subject& operator= (const Subject&) = delete;
-        Subject& operator= (Subject&&) noexcept = delete;
-
-        void AddObserver(Observer<Args...>* pObserver)
-        {
-            if (pObserver)
-            {
-                auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
-                if (pos == m_pVecObservers.cend())
-                {
-                    m_pVecObservers.push_back(pObserver);
-                }
-                else throw std::runtime_error("Observer already subscribed to Subject");
-            }
-        }
-        void RemoveObserver(Observer<Args...>* pObserver)
-        {
-            if (m_pVecObservers.size() > 0)
-            {
-                auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
-                if (pos != m_pVecObservers.cend()) m_pVecObservers.erase(pos);
-#ifndef NDEBUG
-                else OutputDebugString(_T("Couldn't find Observer to remove in the vector. Continuing.\n"));
-#endif // !NDEBUG
-            }
-        }
-
-        void NotifyObservers(Args... pSubjectOwner)
-        {
-            for (auto& pObserver : m_pVecObservers)
-            {
-                pObserver->Notify(pSubjectOwner...);
-            }
-        }
-    private:
-        std::vector<Observer<Args...>*> m_pVecObservers;
-
-    };
-
-
-
-    template <typename... Args>
-    class Observer
-    {
-    public:
-
-        virtual ~Observer() = default;
-
-        Observer(const Observer&) = delete;
-        Observer(Observer&&) noexcept = delete;
-        Observer& operator= (const Observer&) = delete;
-        Observer& operator= (Observer&&) noexcept = delete;
-
-        virtual void Notify(Args... args) = 0;
-        virtual void OnSubjectDestroy() = 0;
-
-    protected:
-        Observer() = default;
-    };
-    //---------------------------------------------------------------
-
-
-
 
     //---------------------------------------------------------------
     namespace utils
