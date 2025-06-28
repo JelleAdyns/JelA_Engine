@@ -118,7 +118,7 @@ namespace jela
 		{
 
 			std::lock_guard<std::mutex> lck{ m_EventsMutex };
-			m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{ResourceManager::GetInstance().GetDataPath() + filename} });
+			m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{ENGINE.ResourceMngr()->GetDataPath() + filename} });
 		}
 		void RemoveSoundImpl(SoundID id)
 		{

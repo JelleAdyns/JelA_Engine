@@ -118,44 +118,31 @@ namespace jela
         int m_Size;
     };
     //---------------------------------------------------------------
-
-
-
+    
+    
+    //---------------------------------------------------------------
     class ResourceManager final
     {
-
-    private:
-        static inline ResourceManager* m_pInstance = nullptr;
-
     public:
-        static ResourceManager& GetInstance()
-        {
-            if (!m_pInstance)
-                m_pInstance = new ResourceManager{};
-
-            return *m_pInstance;
+        ResourceManager(const tstring& dataPath)
+        {         
+            m_DataPath = dataPath;
+            Texture::InitFactory();
+            Font::InitFactory(); 
         }
-        static void ShutDown()
+        ~ResourceManager()
         {
-            delete m_pInstance;
-            m_pInstance = nullptr;
+            m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
+
+            m_pDefaultTextFormat = nullptr;
+            RemoveAllFonts();
+            RemoveAllTextures();
 
             Texture::DestroyFactory();
             Font::DestroyFactory();
         }
-        ~ResourceManager() = default;
 
-        ResourceManager(const ResourceManager&) = delete;
-        ResourceManager(ResourceManager&&) noexcept = delete;
-        ResourceManager& operator= (const ResourceManager&) = delete;
-        ResourceManager& operator= (ResourceManager&&) noexcept = delete;
-
-        void Init(const tstring& dataPath)
-        {
-            m_DataPath = dataPath;
-            Texture::InitFactory();
-            Font::InitFactory();
-        }
+        void Start();
 
         template <typename ResourceType>
         struct ReferencePtr
@@ -164,10 +151,16 @@ namespace jela
 
             ~ReferencePtr()
             {
-                ResourceManager::GetInstance().RemoveReferencePtr(&pObject);
+                auto resMan = GetResourceManager();
+                if (resMan)
+                    resMan->RemoveReferencePtr(&pObject);
             }
-            //Subject
         };
+
+        ResourceManager(const ResourceManager&) = delete;
+        ResourceManager(ResourceManager&&) noexcept = delete;
+        ResourceManager& operator= (const ResourceManager&) = delete;
+        ResourceManager& operator= (ResourceManager&&) noexcept = delete;
 
         void GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo);
         void RemoveTexture(const tstring& file);
@@ -179,10 +172,45 @@ namespace jela
 
 
         const tstring& GetDataPath() const { return m_DataPath; }
-        void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
+        const Font* const GetCurrentFont() const { return m_pCurrentFont; }
+        const TextFormat* const GetCurrentTextFormat() const { return m_pCurrentTextFormat; }
 
+        void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
+        void SetCurrentFont(const Font* const pFont)
+        {
+            if (pFont != m_pCurrentFont)
+            {
+                if (pFont == nullptr && pFont != m_pDefaultFont.pObject)
+                {
+                    m_pCurrentFont = m_pDefaultFont.pObject;
+                    OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
+                }
+                else m_pCurrentFont = pFont;
+
+                m_OnFontChange.NotifyObservers(m_pCurrentFont);
+            }
+        }
+        void SetCurrentTextFormat(TextFormat* const pTextFormat)
+        {
+            if (pTextFormat != m_pCurrentTextFormat)
+            {
+                m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
+
+                if (pTextFormat == nullptr && pTextFormat != m_pDefaultTextFormat.get())
+                {
+                    m_pCurrentTextFormat = m_pDefaultTextFormat.get();
+                    OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
+                }
+                else m_pCurrentTextFormat = pTextFormat;
+
+                m_OnFontChange.AddObserver(m_pCurrentTextFormat);
+
+
+                m_OnFontChange.NotifyObservers(m_pCurrentFont);
+            }
+        }
     private:
-        ResourceManager() = default;
+
         tstring m_DataPath;
 
         template <typename ResourceType>
@@ -232,8 +260,17 @@ namespace jela
 
         //------------------------------------------------------
         // RESOURCES
-        ResourceMap<Texture> m_MapTextures{};
-        ResourceMap<Font> m_MapFonts{};
+        ResourceMap<Texture>            m_MapTextures{};
+        ResourceMap<Font>               m_MapFonts{};
+
+        // CURRENTLY USED FONT
+        Subject<const Font* const>      m_OnFontChange{};
+
+        const Font*                     m_pCurrentFont{ nullptr };
+        TextFormat*                     m_pCurrentTextFormat{ nullptr };
+
+        ReferencePtr<Font>              m_pDefaultFont{};
+        std::unique_ptr<TextFormat>     m_pDefaultTextFormat{ nullptr };
         //------------------------------------------------------
 
         template <typename ResourceType>
@@ -271,6 +308,9 @@ namespace jela
                 managedResource.RemoveInvalidRefs();
             }
         }
+
+        static ResourceManager* const GetResourceManager();
+
     };
 
     template <typename ResourceType>

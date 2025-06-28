@@ -7,7 +7,7 @@
 #include "Engine.h"
 #include "Game.h"
 
-jela::Engine ENGINE;
+jela::Engine ENGINE{};
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,

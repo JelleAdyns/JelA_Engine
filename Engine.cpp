@@ -32,12 +32,16 @@ namespace jela
     void Engine::Shutdown()
     {
         m_pGame->Cleanup();
+        m_pGame = nullptr;
 
         AudioLocator::RegisterAudioService(nullptr);
-        ResourceManager::ShutDown();
+
+        m_pResourceManager = nullptr;
+
         SafeRelease(&m_pDColorBrush);
         SafeRelease(&m_pDRenderTarget);
         SafeRelease(&m_pDFactory);
+
         CoUninitialize();
     }
 
@@ -256,9 +260,7 @@ namespace jela
     
         if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED))/* && SUCCEEDED(MFStartup(MF_VERSION))*/)
         {
-
             SetInstance(hInstance);
-            ResourceManager::GetInstance().Init(resourcePath);
 
             m_Width = width;
             m_Height = height;
@@ -274,10 +276,8 @@ namespace jela
                 CreateRenderTarget(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
                 // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
 
-                ResourceManager::GetInstance().GetFont(_T("Verdana"), m_pDefaultFont);
-                m_pCurrentFont = m_pDefaultFont.pObject;
-                m_pDefaultTextFormat = std::make_unique<TextFormat>(12, false, false, TextFormat::HorAllignment::Left, TextFormat::VertAllignment::Top);
-                SetTextFormat(m_pDefaultTextFormat.get());
+                m_pResourceManager = std::make_unique<ResourceManager>(resourcePath);
+                m_pResourceManager->Start();
 
                 srand(static_cast<unsigned int>(time(nullptr)));
 
@@ -579,7 +579,7 @@ namespace jela
        m_pDRenderTarget->DrawText(
            to_wstring(textToDisplay).c_str(),
            (UINT32) textToDisplay.length(),
-           m_pCurrentTextFormat->GetTextFormat(),
+           m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
            rect,
            m_pDColorBrush,
            D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -596,7 +596,7 @@ namespace jela
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(
             static_cast<FLOAT>(left),
-            static_cast<FLOAT>(m_Height - (bottom + m_pCurrentTextFormat->GetFontSize())),
+            static_cast<FLOAT>(m_Height - (bottom + m_pResourceManager->GetCurrentTextFormat()->GetFontSize())),
             static_cast<FLOAT>(left + width),
             static_cast<FLOAT>(m_Height - bottom));
         if (showRect)
@@ -607,7 +607,7 @@ namespace jela
         m_pDRenderTarget->DrawText(
             to_wstring(textToDisplay).c_str(),
             (UINT32) textToDisplay.length(),
-            m_pCurrentTextFormat->GetTextFormat(),
+            m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
             rect,
             m_pDColorBrush,
             D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -929,7 +929,7 @@ void Engine::DrawString(const tstring& textToDisplay, int left, int top, int wid
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32)textToDisplay.length(),
-        m_pCurrentTextFormat->GetTextFormat(),
+        m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -950,7 +950,7 @@ void Engine::DrawString(const tstring& textToDisplay, int left, int top, int wid
         static_cast<FLOAT>(left),
         static_cast<FLOAT>(top),
         static_cast<FLOAT>(left + width),
-        static_cast<FLOAT>(top + m_pCurrentTextFormat->GetFontSize()));
+        static_cast<FLOAT>(top + m_pResourceManager->GetCurrentTextFormat()->GetFontSize()));
 
     if (showRect)
     {
@@ -960,7 +960,7 @@ void Engine::DrawString(const tstring& textToDisplay, int left, int top, int wid
     m_pDRenderTarget->DrawText(
         textToDisplay.c_str(),
         (UINT32)textToDisplay.length(),
-        m_pCurrentTextFormat->GetTextFormat(),
+        m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
         rect,
         m_pDColorBrush,
         D2D1_DRAW_TEXT_OPTIONS_NONE,
@@ -1541,37 +1541,12 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     
     void Engine::SetFont(const Font* const pFont)
     {
-        if(pFont != m_pCurrentFont)
-        {
-            if (pFont == nullptr && pFont != m_pDefaultFont.pObject)
-            {
-                m_pCurrentFont = m_pDefaultFont.pObject;
-                OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
-            }
-            else m_pCurrentFont = pFont;
-            
-            m_OnFontChange.NotifyObservers(m_pCurrentFont);
-        }
+        m_pResourceManager->SetCurrentFont(pFont);
     }
 
     void Engine::SetTextFormat(TextFormat* const pTextFormat)
     {
-        if (pTextFormat != m_pCurrentTextFormat)
-        {
-            m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
-
-            if (pTextFormat == nullptr && pTextFormat != m_pDefaultTextFormat.get())
-            {
-                m_pCurrentTextFormat = m_pDefaultTextFormat.get();
-                OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
-            }
-            else m_pCurrentTextFormat = pTextFormat;
-
-            m_OnFontChange.AddObserver(m_pCurrentTextFormat);
-
-
-            m_OnFontChange.NotifyObservers(m_pCurrentFont);
-        }
+        m_pResourceManager->SetCurrentTextFormat(pTextFormat);
     }
 
     void Engine::SetColor(COLORREF newColor, float opacity)
@@ -1610,9 +1585,14 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         }
     }
     
+    ResourceManager* const Engine::ResourceMngr() const
+    {
+        return m_pResourceManager.get();
+    }
+
     const Font* const Engine::GetCurrentFont() const
     {
-        return m_pCurrentFont;
+        return m_pResourceManager->GetCurrentFont();
     }
 
     RectInt Engine::GetWindowRect() const
@@ -1871,6 +1851,6 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     
         return true;
     }
-    
+
     //---------------------------------------------------------------------------------------------------------------------------------
 }

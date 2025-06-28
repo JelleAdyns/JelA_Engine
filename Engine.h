@@ -165,6 +165,7 @@ namespace jela
 
         // Getters
 
+        ResourceManager* const ResourceMngr() const;
         const Font* const GetCurrentFont() const;
         RectInt GetWindowRect() const;
         float GetWindowScale() const;
@@ -211,9 +212,9 @@ namespace jela
         HINSTANCE                       m_hInstance;
 
         //Direct2D
-        ID2D1Factory* m_pDFactory{};
-        ID2D1HwndRenderTarget* m_pDRenderTarget{};
-        ID2D1SolidColorBrush* m_pDColorBrush{};
+        ID2D1Factory*                   m_pDFactory{};
+        ID2D1HwndRenderTarget*          m_pDRenderTarget{};
+        ID2D1SolidColorBrush*           m_pDColorBrush{};
         D2D1_COLOR_F                    m_DColorBackGround{};
 
         //BaseGame
@@ -249,15 +250,11 @@ namespace jela
 
         std::chrono::high_resolution_clock::time_point m_T1;
 
-        
-        Subject<const Font* const>      m_OnFontChange{};
-
-        const Font*                     m_pCurrentFont{ nullptr };
-        TextFormat*                     m_pCurrentTextFormat{ nullptr };
-
-        ReferencePtr<Font>              m_pDefaultFont {};
-        std::unique_ptr<TextFormat>     m_pDefaultTextFormat{ nullptr };
+        std::unique_ptr<ResourceManager>m_pResourceManager{};
     };
+    //---------------------------------------------------------------
+
+
 
     //---------------------------------------------------------------
     namespace utils

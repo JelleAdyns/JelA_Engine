@@ -22,7 +22,7 @@ namespace jela
         IWICBitmapFrameDecode* pSource = NULL;
         IWICFormatConverter* pConverter = NULL;
 
-        std::wstring filePath = to_wstring(ResourceManager::GetInstance().GetDataPath() + filename);
+        std::wstring filePath = to_wstring(ENGINE.ResourceMngr()->GetDataPath() + filename);
 
         if (SUCCEEDED(creationResult))
         {
@@ -121,7 +121,7 @@ namespace jela
     {
         if (fromFile)
         {
-            std::wstring filePath = to_wstring(ResourceManager::GetInstance().GetDataPath() + fontName);
+            std::wstring filePath = to_wstring(ENGINE.ResourceMngr()->GetDataPath() + fontName);
             HRESULT hr = Initialize(filePath);
         }
         else
@@ -311,6 +311,15 @@ namespace jela
     //ResourceManager
     //---------------------
 
+    void ResourceManager::Start()
+    {
+        GetFont(_T("Verdana"), m_pDefaultFont);
+        SetCurrentFont(m_pDefaultFont.pObject);
+
+        m_pDefaultTextFormat = std::make_unique<TextFormat>(12, false, false, TextFormat::HorAllignment::Left, TextFormat::VertAllignment::Top);
+        SetCurrentTextFormat(m_pDefaultTextFormat.get());
+    }
+
     void ResourceManager::GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo)
     {
         m_MapTextures.try_emplace(file, file);
@@ -365,6 +374,11 @@ namespace jela
         SetReferencesToNull(m_MapFonts);
 
         m_MapFonts.clear();
+    }
+
+    ResourceManager* const ResourceManager::GetResourceManager()
+    {
+        return ENGINE.ResourceMngr();
     }
 
 }
