@@ -1317,9 +1317,8 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         MONITORINFOEX mi{};
         mi.cbSize = sizeof(MONITORINFOEX);
 
-        if (GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTONEAREST), &mi))
+        if (GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTOPRIMARY), &mi))
         { 
-            //DWORD dwAdd = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
             ::SetWindowLongPtr(m_hWindow, GWL_STYLE, m_OriginalStyle);
 
             UINT dpi = GetDpiForWindow(m_hWindow);
@@ -1354,7 +1353,7 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         if(GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTONEAREST), &mi))
         {
             //https://www.codeproject.com/Questions/108400/How-to-Set-Win32-Application-to-Full-Screen-C
-            m_OriginalStyle = ::GetWindowLongPtr(m_hWindow, GWL_STYLE);
+            m_OriginalStyle = static_cast<DWORD>(::GetWindowLongPtr(m_hWindow, GWL_STYLE));
             DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
             DWORD dwNewStyle = m_OriginalStyle & ~dwRemove;
             ::SetWindowLongPtr(m_hWindow, GWL_STYLE, dwNewStyle);
@@ -1595,8 +1594,9 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         if (hr == D2DERR_RECREATE_TARGET)
         {
             hr = S_OK;
-            SafeRelease(&m_pDRenderTarget);
+            SafeRelease(&m_pDBitmap);
             SafeRelease(&m_pDBitmapRenderTarget);
+            SafeRelease(&m_pDRenderTarget);
             SafeRelease(&m_pDColorBrush);
         }
         ValidateRect(m_hWindow, NULL);
