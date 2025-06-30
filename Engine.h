@@ -149,6 +149,8 @@ namespace jela
         void Scale(float scale, int xPointToScaleFrom, int yPointToScaleFrom);
         void Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom);
         void Scale(float scale, const Point2Int& PointToScaleFrom);
+        void Scale(float xScale, float yScale);
+        void Scale(float scale);
 
 
         // Setters
@@ -176,6 +178,7 @@ namespace jela
         bool IsKeyBoardActive() const;
 
         ID2D1HwndRenderTarget* GetRenderTarget() const;
+        ID2D1BitmapRenderTarget* GetBitmapRenderTarget() const;
 
 
         static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
@@ -193,10 +196,8 @@ namespace jela
       
     private:
 
-
         void CreatePolygon(ID2D1PathGeometry* pGeo, const std::vector<Point2Int>& points, bool closeSegment) const;
         void CreateArc(ID2D1PathGeometry* pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const;
-        void DrawBorders(int rtWidth, int rtHeight) const;
         void SetWindowPosition();
         void SetFullscreen();
         void SetTransform() const;
@@ -205,17 +206,20 @@ namespace jela
         void Paint();
         HRESULT OnRender();
         HRESULT MakeWindow();
-        HRESULT CreateRenderTarget();
+        HRESULT CreateRenderTargets();
 
         //Win32
         HWND                            m_hWindow;
         HINSTANCE                       m_hInstance;
+        DWORD                           m_OriginalStyle;
 
         //Direct2D
         ID2D1Factory*                   m_pDFactory{};
         ID2D1HwndRenderTarget*          m_pDRenderTarget{};
         ID2D1SolidColorBrush*           m_pDColorBrush{};
         D2D1_COLOR_F                    m_DColorBackGround{};
+        ID2D1BitmapRenderTarget*        m_pDBitmapRenderTarget{};
+        ID2D1Bitmap*                    m_pDBitmap{};
 
         //BaseGame
         std::unique_ptr<BaseGame>       m_pGame{};
@@ -223,7 +227,6 @@ namespace jela
         //Transform
         FLOAT                           m_ViewPortTranslationX{};
         FLOAT                           m_ViewPortTranslationY{};
-        FLOAT                           m_ViewPortScaling{};
 
         std::vector<D2D1::Matrix3x2F>   m_VecTransformMatrices{};
 
@@ -234,8 +237,10 @@ namespace jela
         tstring                         m_Title{};
 
         float                           m_WindowScale{ 1 };
-        int                             m_Width{};
-        int                             m_Height{};
+        int                             m_GameWidth{};
+        int                             m_GameHeight{};
+        int                             m_WindowWidth{};
+        int                             m_WindowHeight{};
 
         float                           m_MilliSecondsPerFrame{};
         float                           m_DeltaTime{};
