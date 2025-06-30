@@ -1554,6 +1554,13 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         return m_pVecControllers.at(controllerIndex)->IsPressed(button);
     }
     
+    void Engine::ShowMouse(bool show)
+    {
+        ShowCursor(show);
+
+        InvalidateRect(m_hWindow, NULL, true);
+    }
+
     void Engine::SetFont(const Font* const pFont)
     {
         m_pResourceManager->SetCurrentFont(pFont);
