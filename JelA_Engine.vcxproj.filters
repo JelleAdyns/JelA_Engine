@@ -51,6 +51,9 @@
     <ClInclude Include="ResourceManager.h">
       <Filter>Engine Files</Filter>
     </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp">
@@ -80,5 +83,10 @@
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Engine Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="JelA_Engine.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

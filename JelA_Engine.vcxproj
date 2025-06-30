@@ -150,6 +150,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="Observer.h" />
+    <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Structs.h" />
   </ItemGroup>
@@ -163,6 +164,9 @@
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Structs.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="JelA_Engine.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

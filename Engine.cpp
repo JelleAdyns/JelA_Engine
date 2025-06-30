@@ -1,5 +1,6 @@
 
 #include "Engine.h"
+#include "Resource.h"
 #include <chrono>
 #include <thread>
 #include <algorithm>
@@ -342,8 +343,8 @@ namespace jela
             wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
             wcex.lpszMenuName = NULL;
             wcex.lpszClassName = m_Title.c_str();
-            wcex.hIcon = 0;
-            wcex.hIconSm = 0;
+            wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_BIG));
+            wcex.hIconSm = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_SMALL));
     
             RegisterClassEx(&wcex);
     
