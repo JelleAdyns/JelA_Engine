@@ -1,8 +1,8 @@
 project(JelA_Engine)
 
 file(GLOB SRC
-     "*.h"
-     "*.cpp"
+     "include/*.h"
+     "src/*.cpp"
 )
 
 add_library(${PROJECT_NAME} STATIC ${SRC})
@@ -20,5 +20,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC "."
+    PUBLIC "./include"
+    PRIVATE "./src"
 )

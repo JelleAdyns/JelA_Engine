@@ -3,7 +3,7 @@ project(GameProjectTitle)
 set(GUI_TYPE WIN32)
 
 set(SOURCES 
-	"main.cpp"
+	"Main.cpp"
 	"Game.cpp"
 	"Game.h"	
 )
