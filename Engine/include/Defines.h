@@ -107,8 +107,6 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
 #endif
 
-#define MATHEMATICAL_COORDINATESYSTEM
-
 //Undefine min and max macro from minwindef.h
 #undef min
 #undef max
