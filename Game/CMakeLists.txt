@@ -8,7 +8,17 @@ set(SOURCES
 	"Game.h"	
 )
 
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES}  "${CMAKE_SOURCE_DIR}/Engine/Icons.rc")
+foreach(SOURCE_FILE IN LISTS SOURCES)
+        list(APPEND SOURCES "src/${SOURCE_FILE}")
+endforeach()
+
+list(FILTER SOURCES INCLUDE REGEX "src/")
+
+foreach(SOURCE_FILE IN LISTS SOURCES)
+        message(STATUS "Source File Path: ${SOURCE_FILE}")
+endforeach()
+
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/Icons.rc")
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE YES)
 
 add_dependencies(${PROJECT_NAME} JelA_Engine)
