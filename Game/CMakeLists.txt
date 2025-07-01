@@ -7,17 +7,7 @@ set(SOURCES
 	"Main.cpp"
 	"Game.cpp"
 	"Game.h"	
-)
-foreach(SOURCE_FILE IN LISTS SOURCES)
-        list(APPEND SOURCES "src/${SOURCE_FILE}")
-endforeach()
-
-list(FILTER SOURCES INCLUDE REGEX "src/")
-
-foreach(SOURCE_FILE IN LISTS SOURCES)
-        message(STATUS "Source File Path: ${SOURCE_FILE}")
-endforeach()
-
+ )
 
 #Create the Game Project
 #You need to remove ${CMAKE_CURRENT_SOURCE_DIR}/Icons.rc if you don't have an Icon for the application
@@ -33,7 +23,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE JelA_Engine)
 #Set the Game Project as startup project
 set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
-#Copy the 'Resources' folder to the 'out' folder upon build
+#Copy the 'Resources' folder to the Binary Directory upon build
 message(STATUS "BINARY DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 add_custom_target(copyResources ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -44,6 +34,8 @@ add_custom_target(copyResources ALL
 
 add_dependencies(${PROJECT_NAME} copyResources)
 
+#Filter the Source files
+source_group("src" REGULAR_EXPRESSION ".cpp|.h")
 
 #Define MATHEMATICAL_COORDINATESYSTEM to position the origion at the bottom-left corner of the screen
 #When not defined, the origin is positioned at the top-left corner of the screen
