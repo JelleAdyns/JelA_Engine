@@ -1,4 +1,4 @@
-project(EngineLibrary)
+project(JelA_Engine)
 
 file(GLOB SRC
      "*.h"

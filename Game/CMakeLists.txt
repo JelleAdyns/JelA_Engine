@@ -8,11 +8,11 @@ set(SOURCES
 	"Game.h"	
 )
 
-add_executable(${PROJECT_NAME} WIN32  ${SOURCES})
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES}  "${CMAKE_SOURCE_DIR}/Engine/Icons.rc")
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE YES)
 
-add_dependencies(${PROJECT_NAME} EngineLibrary)
-target_link_libraries(${PROJECT_NAME} PRIVATE EngineLibrary)
+add_dependencies(${PROJECT_NAME} JelA_Engine)
+target_link_libraries(${PROJECT_NAME} PRIVATE JelA_Engine)
 
 set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
