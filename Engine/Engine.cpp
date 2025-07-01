@@ -1,6 +1,5 @@
 
 #include "Engine.h"
-#include "Resource.h"
 #include <chrono>
 #include <thread>
 #include <algorithm>
@@ -299,20 +298,20 @@ namespace jela
             SetBackGroundColor(bgColor);
             SetFrameRate(60);
 
-            HRESULT hr{ S_OK };
+            m_pResourceManager = std::make_unique<ResourceManager>(resourcePath);
+            m_pResourceManager->Start();
 
+            HRESULT hr{ S_OK };
             hr = MakeWindow();
+
             if (SUCCEEDED(hr))
             {
-                CreateRenderTargets(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
+                hr = CreateRenderTargets(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
                 // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET. 
-
-                m_pResourceManager = std::make_unique<ResourceManager>(resourcePath);
-                m_pResourceManager->Start();
 
                 srand(static_cast<unsigned int>(time(nullptr)));
 
-                return true;
+                return SUCCEEDED(hr);
             }
         }
         return false;
@@ -343,9 +342,19 @@ namespace jela
             wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
             wcex.lpszMenuName = NULL;
             wcex.lpszClassName = m_Title.c_str();
-            wcex.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_BIG));
-            wcex.hIconSm = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_SMALL));
-    
+
+            //https://stackoverflow.com/questions/77638632/how-to-add-an-icon-to-a-win32api-window-in-a-cmake-project
+            HICON hIcon = static_cast<HICON>(LoadImage(
+                m_hInstance,
+                (m_pResourceManager->GetDataPath() + _T("WindowIcon.ico")).c_str(),
+                IMAGE_ICON, 
+                GetSystemMetrics(SM_CXICON),
+                GetSystemMetrics(SM_CYICON),
+                LR_LOADFROMFILE | LR_DEFAULTSIZE));
+
+            wcex.hIcon = hIcon;
+            wcex.hIconSm = hIcon;
+
             RegisterClassEx(&wcex);
     
             m_hWindow = CreateWindow(m_Title.c_str(), m_Title.c_str(), WS_OVERLAPPEDWINDOW,
