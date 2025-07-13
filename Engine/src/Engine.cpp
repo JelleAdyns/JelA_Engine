@@ -1,8 +1,7 @@
 
 #include "Engine.h"
-#include <chrono>
-#include <thread>
 #include <algorithm>
+#include <numbers>
 
 namespace jela
 {
@@ -23,7 +22,7 @@ namespace jela
         m_Title{ _T("Standard Game")},
         m_GameWidth{500},
         m_GameHeight{500},
-        m_MilliSecondsPerFrame{1.f/60.f},
+        m_SecondsPerFrame{1.f/60.f},
         m_IsFullscreen{false},
         m_KeyIsDown{false}
     {
@@ -79,7 +78,7 @@ namespace jela
             case WM_EXITSIZEMOVE:
             case WM_SETFOCUS:
             {
-                m_T1 = std::chrono::high_resolution_clock::now();
+                QueryPerformanceCounter(&m_TriggerCount);
             }
             result = 0;
             wasHandled = true;
@@ -214,45 +213,42 @@ namespace jela
 
     int Engine::Run(std::unique_ptr<BaseGame>&& game)
     {
-        int result = 0;
-        bool ableToRun = true;
-
         m_pGame = std::move(game);
         m_pGame->Initialize();
 
         SetWindowPosition();
 
-        MSG msg;
+        MSG msg{};
         
-        if(ableToRun)
-        {
-            m_T1 = std::chrono::high_resolution_clock::now();
     
+        LARGE_INTEGER countsPersSecond, currentCount, lastCount;
+        QueryPerformanceFrequency(&countsPersSecond);
+        QueryPerformanceCounter(&currentCount);
+        m_TriggerCount = currentCount;
+        lastCount= currentCount;
+
+        bool playing = true;
             // Main message loop:
-            while (true)
+        while (playing)
             {
     
-                if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
                 {
                     if (msg.message == WM_QUIT)
                     {
                         DestroyWindow(m_hWindow);
-                        break;
+                    playing = false;
                     }
     
                     TranslateMessage(&msg);
                     DispatchMessage(&msg);
-    
                 }
-                else
+          
+            QueryPerformanceCounter(&currentCount);
+            if (currentCount.QuadPart >= m_TriggerCount.QuadPart)
                 {
-                    const std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-    
-                    float elapsedSec{ std::chrono::duration<float>(t2 - m_T1).count() };
-    
-                    SetDeltaTime(elapsedSec);
-    
-                    m_T1 = t2;
+                SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
+                lastCount = currentCount;
     
                     if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
     
@@ -268,12 +264,9 @@ namespace jela
     
                     m_pGame->Tick();
                     Paint();
-    
-                    const auto sleepTime = t2 + std::chrono::milliseconds(static_cast<int>(m_MilliSecondsPerFrame)) - std::chrono::high_resolution_clock::now();
-                    std::this_thread::sleep_for(sleepTime);
-    
+
+                m_TriggerCount.QuadPart = currentCount.QuadPart + int(m_SecondsPerFrame*countsPersSecond.QuadPart);
                 }
-            }
     
         }
     
@@ -382,8 +375,8 @@ namespace jela
     
             // Create a Direct2D render target.
             hr = m_pDFactory->CreateHwndRenderTarget(
-                D2D1::RenderTargetProperties(),
-                D2D1::HwndRenderTargetProperties(m_hWindow, size),
+                D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE),
+                D2D1::HwndRenderTargetProperties(m_hWindow, size, D2D1_PRESENT_OPTIONS_IMMEDIATELY),
                 &m_pDRenderTarget
             );
     
@@ -489,8 +482,8 @@ namespace jela
         const int endX = originX + static_cast<int>(vectorX);
         const int endY = originY + static_cast<int>(vectorY);
     
-        const float desiredHeadAngle = float(M_PI / 12.f);
-        const float mirroredVectorAngle = atan2f(vectorY, vectorX) + float(M_PI) ;
+        const float desiredHeadAngle = std::numbers::pi_v<float> / 12.f;
+        const float mirroredVectorAngle = atan2f(vectorY, vectorX) + std::numbers::pi_v<float>;
     
         const Point2Int arrowP2{ static_cast<int>(endX + cosf(mirroredVectorAngle - desiredHeadAngle) * headLineLength),
                                 static_cast<int>(endY + sinf(mirroredVectorAngle - desiredHeadAngle) * headLineLength) };
@@ -1389,7 +1382,7 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     }
     void Engine::SetFrameRate(int FPS)
     {
-        m_MilliSecondsPerFrame = 1000.0f / FPS;
+        m_SecondsPerFrame = 1.f / FPS;
     }
 
     void Engine::SetTransform() const

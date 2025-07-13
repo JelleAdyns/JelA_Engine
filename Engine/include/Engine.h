@@ -243,7 +243,7 @@ namespace jela
         int                             m_WindowWidth{};
         int                             m_WindowHeight{};
 
-        float                           m_MilliSecondsPerFrame{};
+        float                           m_SecondsPerFrame{};
         float                           m_DeltaTime{};
         float                           m_TotalTime{};
 
@@ -254,7 +254,7 @@ namespace jela
 
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 
-        std::chrono::high_resolution_clock::time_point m_T1;
+        LARGE_INTEGER                   m_TriggerCount{};
 
         std::unique_ptr<ResourceManager>m_pResourceManager{};
     };
