@@ -218,15 +218,36 @@ namespace jela
 
         SetWindowPosition();
 
-        MSG msg{};
-        
-    
         LARGE_INTEGER countsPersSecond, currentCount, lastCount;
         QueryPerformanceFrequency(&countsPersSecond);
         QueryPerformanceCounter(&currentCount);
         m_TriggerCount = currentCount;
         lastCount= currentCount;
 
+        const auto updateGame = [&]()
+        {
+            SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
+            lastCount = currentCount;
+
+            if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
+
+            for (auto& controller : m_pVecControllers)
+            {
+                controller->ProcessControllerInput();
+            }
+
+            if (not m_IsKeyboardActive)
+            {
+                m_pGame->HandleControllerInput();
+            }
+
+            m_pGame->Tick();
+            Paint();
+
+            m_TriggerCount.QuadPart = currentCount.QuadPart + int(m_SecondsPerFrame * countsPersSecond.QuadPart);
+        };  
+        
+        MSG msg{};
         bool playing = true;
             // Main message loop:
         while (playing)
@@ -245,30 +266,17 @@ namespace jela
                 }
           
             QueryPerformanceCounter(&currentCount);
-            if (currentCount.QuadPart >= m_TriggerCount.QuadPart)
-                {
-                SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
-                lastCount = currentCount;
     
-                    if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
-    
-                    for (auto& controller : m_pVecControllers)
+            if (m_IsVSyncEnabled)
                     {
-                        controller->ProcessControllerInput();
+                updateGame();
+                    }
+            else if (currentCount.QuadPart >= m_TriggerCount.QuadPart)
+                    {
+                updateGame();
                     }
     
-                    if (not m_IsKeyboardActive)
-                    {
-                        m_pGame->HandleControllerInput();
-                    }
-    
-                    m_pGame->Tick();
-                    Paint();
-
-                m_TriggerCount.QuadPart = currentCount.QuadPart + int(m_SecondsPerFrame*countsPersSecond.QuadPart);
                 }
-    
-        }
     
         return (int)msg.wParam;
     }
@@ -376,7 +384,7 @@ namespace jela
             // Create a Direct2D render target.
             hr = m_pDFactory->CreateHwndRenderTarget(
                 D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE),
-                D2D1::HwndRenderTargetProperties(m_hWindow, size, D2D1_PRESENT_OPTIONS_IMMEDIATELY),
+                D2D1::HwndRenderTargetProperties(m_hWindow, size, m_IsVSyncEnabled ? D2D1_PRESENT_OPTIONS_NONE : D2D1_PRESENT_OPTIONS_IMMEDIATELY),
                 &m_pDRenderTarget
             );
     
@@ -392,6 +400,13 @@ namespace jela
         }
     
         return hr;
+    }
+    void Engine::ResetRenderTargets()
+    {
+        SafeRelease(&m_pDBitmap);
+        SafeRelease(&m_pDBitmapRenderTarget);
+        SafeRelease(&m_pDRenderTarget);
+        SafeRelease(&m_pDColorBrush);
     }
     HRESULT Engine::OnRender()
     {
@@ -1563,6 +1578,12 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
 
         InvalidateRect(m_hWindow, NULL, true);
     }
+    void Engine::SetVSync(bool enable)
+    {
+        m_IsVSyncEnabled = enable;
+        ResetRenderTargets();
+        CreateRenderTargets();
+    }
 
     void Engine::SetFont(const Font* const pFont)
     {
@@ -1604,10 +1625,7 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         if (hr == D2DERR_RECREATE_TARGET)
         {
             hr = S_OK;
-            SafeRelease(&m_pDBitmap);
-            SafeRelease(&m_pDBitmapRenderTarget);
-            SafeRelease(&m_pDRenderTarget);
-            SafeRelease(&m_pDColorBrush);
+            ResetRenderTargets();
         }
         ValidateRect(m_hWindow, NULL);
     }
@@ -1649,6 +1667,10 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     bool Engine::IsKeyBoardActive() const
     {
         return m_IsKeyboardActive;
+    }
+    ID2D1Factory* Engine::GetFactory() const
+    {
+        return m_pDFactory;
     }
     ID2D1HwndRenderTarget* Engine::GetRenderTarget() const
     {

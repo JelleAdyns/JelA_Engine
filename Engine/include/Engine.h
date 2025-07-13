@@ -156,6 +156,7 @@ namespace jela
         // Setters
 
         void ShowMouse(bool show);
+        void SetVSync(bool enable);
         void SetFont(const Font* const pFont);
         void SetTextFormat(TextFormat* const pTextFormat);
         void SetColor(COLORREF newColor, float opacity = 1.F);
@@ -208,6 +209,7 @@ namespace jela
         HRESULT OnRender();
         HRESULT MakeWindow();
         HRESULT CreateRenderTargets();
+        void ResetRenderTargets();
 
         //Win32
         HWND                            m_hWindow;
@@ -251,6 +253,7 @@ namespace jela
         bool                            m_KeyIsDown{};
         bool                            m_WindowIsActive{ true };
         bool                            m_IsKeyboardActive{true};
+        bool                            m_IsVSyncEnabled{true};
 
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 
