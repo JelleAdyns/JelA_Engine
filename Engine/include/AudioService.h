@@ -50,7 +50,7 @@ namespace jela
 		NullAudio& operator= (NullAudio&&) noexcept = delete;
 
 		virtual void AddSound(const tstring&, SoundID) override {}
-		virtual void RemoveSound(SoundID id) override {}
+		virtual void RemoveSound(SoundID) override {}
 		virtual void PlaySoundClip(SoundID, bool) const override {}
 		virtual uint8_t GetMasterVolume() const override { return 0; }
 		virtual void SetMasterVolume(uint8_t) override {}

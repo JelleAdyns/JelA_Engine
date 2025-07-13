@@ -123,6 +123,7 @@ namespace jela
         {
             std::wstring filePath = to_wstring(ENGINE.ResourceMngr()->GetDataPath() + fontName);
             HRESULT hr = Initialize(filePath);
+            if (hr != S_OK) Engine::NotifyError(NULL, _T("Font wasn't intialized properly"), hr);
         }
         else
         {
@@ -165,7 +166,7 @@ namespace jela
         IDWriteFontFamily* pFontFamily{ nullptr };
         IDWriteLocalizedStrings* pStrings{ nullptr };
 
-        UINT32 length;
+        UINT32 length{};
         std::wstring name{};
 
         if (SUCCEEDED(hr))

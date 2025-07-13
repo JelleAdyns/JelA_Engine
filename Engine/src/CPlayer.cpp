@@ -33,7 +33,7 @@ namespace jela
     HRESULT CreateMediaSource(IMFMediaSource** ppSource, const tstring& fileName);
 
     HRESULT CreatePlaybackTopology(IMFMediaSource* pSource,
-        IMFPresentationDescriptor* pPD, HWND hAudioWnd, IMFTopology** ppTopology);
+        IMFPresentationDescriptor* pPD, IMFTopology** ppTopology);
 
     //  Static class method to create the CPlayer object.
 
@@ -147,7 +147,7 @@ namespace jela
         if (SUCCEEDED(hr)) hr = m_pSource->CreatePresentationDescriptor(&pSourcePD);
 
         // Create a partial topology.
-        if (SUCCEEDED(hr)) hr = CreatePlaybackTopology(m_pSource, pSourcePD, m_hwndAudio, &pTopology);
+        if (SUCCEEDED(hr)) hr = CreatePlaybackTopology(m_pSource, pSourcePD, &pTopology);
 
         // Set the topology on the media session.
         if (SUCCEEDED(hr)) hr = m_pSession->SetTopology(0, pTopology);
@@ -324,14 +324,13 @@ namespace jela
     {
         float volume;
         m_pMasterVolume->GetMasterVolume(&volume);
-        return static_cast<uint8_t>(volume * 100);
+        return static_cast<uint8_t>(volume * m_MaxVolume);
     }
 
     HRESULT CPlayer::SetVolume(uint8_t volumePercentage)
     {
-        int newVolume{ static_cast<int>(volumePercentage) };
-        newVolume = std::min(100, std::max(0, newVolume));
-        return m_pMasterVolume->SetMasterVolume(newVolume / 100.f);
+        uint8_t newVolume = std::min(m_MaxVolume, std::max(m_MinVolume, volumePercentage));
+        return m_pMasterVolume->SetMasterVolume(newVolume / static_cast<float>(m_MaxVolume));
     }
 
     //  Release all resources held by this object.
@@ -366,7 +365,7 @@ namespace jela
     }
 
     //  Handler for MEEndOfPresentation event.
-    HRESULT CPlayer::OnPresentationEnded(IMFMediaEvent* pEvent)
+    HRESULT CPlayer::OnPresentationEnded(IMFMediaEvent*)
     {
         // The session puts itself into the stopped state automatically.
         m_state = PlayerState::Stopped;
@@ -385,7 +384,7 @@ namespace jela
         HRESULT hr = GetEventObject(pEvent, &pPD);
 
         // Create a partial topology.
-        if (SUCCEEDED(hr)) hr = CreatePlaybackTopology(m_pSource, pPD, m_hwndAudio, &pTopology);
+        if (SUCCEEDED(hr)) hr = CreatePlaybackTopology(m_pSource, pPD, &pTopology);
 
         // Set the topology on the media session.
         if (SUCCEEDED(hr)) hr = m_pSession->SetTopology(0, pTopology);
@@ -661,7 +660,7 @@ namespace jela
     }
 
     //  Create a playback topology from a media source.
-    HRESULT CreatePlaybackTopology(IMFMediaSource* pSource, IMFPresentationDescriptor* pPD, HWND hAudioWnd, IMFTopology** ppTopology)
+    HRESULT CreatePlaybackTopology(IMFMediaSource* pSource, IMFPresentationDescriptor* pPD, IMFTopology** ppTopology)
     {
         IMFTopology* pTopology = NULL;
         DWORD cSourceStreams = 0;

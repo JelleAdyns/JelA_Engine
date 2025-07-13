@@ -19,14 +19,14 @@ namespace jela
 
         virtual void Draw() const {}
         virtual void Tick() {}
-        virtual void KeyDown(int virtualKeycode) {}
-        virtual void KeyDownThisFrame(int virtualKeycode) {}
-        virtual void KeyUp(int virtualKeycode) {}
+        virtual void KeyDown(int) {}
+        virtual void KeyDownThisFrame(int) {}
+        virtual void KeyUp(int) {}
         virtual void HandleControllerInput() {}
-        virtual void MouseDown(bool isLeft, int x, int y) {}
-        virtual void MouseUp(bool isLeft, int x, int y) {}
-        virtual void MouseMove(int x, int y, int keyDown) {}
-        virtual void MouseWheelTurn(int x, int y, int turnDistance, int keyDown) {}
+        virtual void MouseDown(bool, int, int) {}
+        virtual void MouseUp(bool, int, int) {}
+        virtual void MouseMove(int, int, int) {}
+        virtual void MouseWheelTurn(int, int, int, int) {}
     };
 
 }

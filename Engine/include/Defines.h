@@ -48,7 +48,7 @@
 
 
 #include <filesystem>
-static std::wstring to_wstring(const tstring& str) 
+static inline std::wstring to_wstring(const tstring& str) 
 {
 	std::filesystem::path p{ str };
 	return p.wstring();

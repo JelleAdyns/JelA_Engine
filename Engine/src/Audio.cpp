@@ -141,15 +141,23 @@ namespace jela
 		}
 		void IncrementMasterVolumeImpl()
 		{
-			int newVolume{ CPlayer::GetVolume() + 1 };
-			HRESULT hr = CPlayer::SetVolume(newVolume);
-			if (FAILED(hr)) Engine::NotifyError(NULL, _T("IncrementVolume reported on error."), hr);
+			uint8_t newVolume{ CPlayer::GetVolume()  };
+			if (newVolume < CPlayer::GetMaxVolume())
+			{
+				newVolume += uint8_t{ 1 };
+				HRESULT hr = CPlayer::SetVolume(newVolume);
+				if (FAILED(hr)) Engine::NotifyError(NULL, _T("IncrementVolume reported on error."), hr);
+			}
 		}
 		void DecrementMasterVolumeImpl()
 		{
-			int newVolume{ CPlayer::GetVolume() - 1 };
-			HRESULT hr = CPlayer::SetVolume(newVolume);
-			if (FAILED(hr)) Engine::NotifyError(NULL, _T("DecrementVolume reported on error."), hr);
+			uint8_t newVolume{ CPlayer::GetVolume() };
+			if (newVolume > CPlayer::GetMinVolume())
+			{
+				newVolume -= uint8_t{ 1 };
+				HRESULT hr = CPlayer::SetVolume(newVolume);
+				if (FAILED(hr)) Engine::NotifyError(NULL, _T("DecrementVolume reported on error."), hr);
+			}
 		}
 		void ToggleMuteImpl()
 		{

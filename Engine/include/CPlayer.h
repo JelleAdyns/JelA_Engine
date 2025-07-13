@@ -49,15 +49,17 @@ namespace jela
         STDMETHODIMP  Invoke(IMFAsyncResult* pAsyncResult);
 
         // Playback
-        HRESULT       OpenURL(const tstring& fileName);
-        HRESULT       Play(bool repeat, bool resume = false);
-        HRESULT       Pause();
-        HRESULT       Stop();
-        HRESULT       Shutdown();
-        HRESULT       HandleEvent(UINT_PTR pEventPtr);
-        PlayerState   GetState() const { return m_state; }
-        static uint8_t       GetVolume();
-        static HRESULT       SetVolume(uint8_t volumePercentage);
+        HRESULT                         OpenURL(const tstring& fileName);
+        HRESULT                         Play(bool repeat, bool resume = false);
+        HRESULT                         Pause();
+        HRESULT                         Stop();
+        HRESULT                         Shutdown();
+        HRESULT                         HandleEvent(UINT_PTR pEventPtr);
+        PlayerState                     GetState() const { return m_state; }
+        static constexpr uint8_t        GetMaxVolume() { return m_MaxVolume; }
+        static constexpr uint8_t        GetMinVolume() { return m_MinVolume; }
+        static uint8_t                  GetVolume();
+        static HRESULT                  SetVolume(uint8_t volumePercentage);
 
         static const UINT WM_APP_PLAYER_EVENT = WM_APP + 1;
     protected:
@@ -94,6 +96,8 @@ namespace jela
         HANDLE                  m_hCloseEvent;      // Event to wait on while closing.
 
         static IMFSimpleAudioVolume* m_pMasterVolume;
+        static constexpr uint8_t m_MaxVolume{100};
+        static constexpr uint8_t m_MinVolume{0};
     };
 }
 
