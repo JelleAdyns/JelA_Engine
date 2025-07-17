@@ -237,12 +237,12 @@ namespace jela
 
 		const auto& swapCenterPoint = [&](bool xComparison)
 		{
-			if (xComparison)											// P1   _____CP2
+			if (xComparison)											// CP1  _____P2
 			{															//	   /   
 				m_StartAngle += 90;										//	  /	    
 				if (clockwise) SetPosition(point1.x, point2.y);			//   |
 			}															//	 |
-			else if (!clockwise) SetPosition(point1.x, point2.y);		// CP1		  P2	
+			else if (!clockwise) SetPosition(point1.x, point2.y);		// P1		  CP2	
 		};
 
 		SetPosition(point2.x, point1.y);
