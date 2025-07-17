@@ -3,6 +3,7 @@
 
 #include "BaseGame.h"
 #include "Structs.h"
+#include "Geometry.h"
 #include "CPlayer.h"
 #include "Audio.h"
 #include "framework.h"
@@ -105,14 +106,11 @@ namespace jela
         void FillRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY)const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-        void DrawPolygon(const std::vector<Point2Int>& points, float lineThickness = 1.f, bool closeSegment = false)const;
-        void FillPolygon(const std::vector<Point2Int>& points)const;
+        void DrawPolygon(const Polygon& polygon, float lineThickness = 1.f);
+        void FillPolygon(const Polygon& polygon);
 
-        void DrawArc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle, float lineThickness = 1.f, bool closeSegment = false)const;
-        void DrawArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, float lineThickness = 1.f, bool closeSegment = false)const;
-
-        void FillArc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle)const;
-        void FillArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle)const;
+        void DrawArc(const Arc& arc, float lineThickness = 1.f);
+        void FillArc(const Arc& arc);
 
         void DrawEllipse(const Point2Int& center, float radiusX, float radiusY, float lineThickness = 1.f)const;
         void DrawEllipse(const EllipseInt& ellipse, float lineThickness = 1.f)const;
@@ -179,6 +177,7 @@ namespace jela
         float GetTotalTime() const;
         bool IsKeyBoardActive() const;
 
+        ID2D1Factory* GetFactory() const;
         ID2D1HwndRenderTarget* GetRenderTarget() const;
         ID2D1BitmapRenderTarget* GetBitmapRenderTarget() const;
 
@@ -198,8 +197,8 @@ namespace jela
       
     private:
 
-        void CreatePolygon(ID2D1PathGeometry* pGeo, const std::vector<Point2Int>& points, bool closeSegment) const;
-        void CreateArc(ID2D1PathGeometry* pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const;
+        void DrawGeometry(const Geometry* const pGeometryObject, float lineThickness = 1.f);
+        void FillGeometry(const Geometry* const pGeometryObject);
         void SetWindowPosition();
         void SetFullscreen();
         void SetTransform() const;
@@ -215,6 +214,7 @@ namespace jela
         HWND                            m_hWindow;
         HINSTANCE                       m_hInstance;
         DWORD                           m_OriginalStyle;
+        LARGE_INTEGER                   m_TriggerCount{};
 
         //Direct2D
         ID2D1Factory*                   m_pDFactory{};
@@ -234,7 +234,6 @@ namespace jela
         std::vector<D2D1::Matrix3x2F>   m_VecTransformMatrices{};
 
         mutable bool                    m_TransformChanged{};
-
 
         //General datamembers
         tstring                         m_Title{};
@@ -256,8 +255,6 @@ namespace jela
         bool                            m_IsVSyncEnabled{true};
 
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
-
-        LARGE_INTEGER                   m_TriggerCount{};
 
         std::unique_ptr<ResourceManager>m_pResourceManager{};
     };
@@ -287,7 +284,9 @@ namespace jela
         Point2Int ClosestPointOnLine(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB);
         float DistPointLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB);
         bool IsPointOnLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB);
-        bool IntersectLineSegments(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2, float& outLambda1, float& outLambda2);
+        bool IntersectLines(const Vector2f& l1, const Vector2f& l2, const Point2Int& origin1 = {}, const Point2Int& origin2 = {});
+        bool IntersectLines(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2);
+        bool IntersectLineSegments(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2, float& line1Interpolation, float& line2Interpolation);
         bool IntersectRectLine(const RectInt& r, const Point2Int& p1, const Point2Int& p2, std::pair<Point2Int, Point2Int>& intersections);
     }
     //---------------------------------------------------------------

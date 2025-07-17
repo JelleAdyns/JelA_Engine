@@ -217,7 +217,7 @@ namespace jela
         m_pGame->Initialize();
 
         SetWindowPosition();
-
+     
         LARGE_INTEGER countsPersSecond, currentCount, lastCount;
         QueryPerformanceFrequency(&countsPersSecond);
         QueryPerformanceCounter(&currentCount);
@@ -249,34 +249,34 @@ namespace jela
         
         MSG msg{};
         bool playing = true;
-            // Main message loop:
+        // Main message loop:
         while (playing)
-            {
+        {
     
             while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+            {
+                if (msg.message == WM_QUIT)
                 {
-                    if (msg.message == WM_QUIT)
-                    {
-                        DestroyWindow(m_hWindow);
+                    DestroyWindow(m_hWindow);
                     playing = false;
-                    }
-    
-                    TranslateMessage(&msg);
-                    DispatchMessage(&msg);
                 }
+    
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
           
             QueryPerformanceCounter(&currentCount);
-    
+
             if (m_IsVSyncEnabled)
-                    {
+            {
                 updateGame();
-                    }
+            }
             else if (currentCount.QuadPart >= m_TriggerCount.QuadPart)
-                    {
+            {
                 updateGame();
-                    }
-    
-                }
+            }
+              
+        }
     
         return (int)msg.wParam;
     }
@@ -771,76 +771,6 @@ namespace jela
         FillRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY);
     }
 
-    //Polygon
-    void Engine::CreatePolygon(ID2D1PathGeometry* pGeo, const std::vector<Point2Int>& points, bool closeSegment) const
-    {
-
-        ID2D1GeometrySink* pSink;
-        HRESULT hr = (pGeo)->Open(&pSink);
-
-        if (SUCCEEDED(hr))
-        {
-            std::vector<D2D1_POINT_2F> D2points(points.size());
-
-            for (size_t i = 0; i < points.size(); i++)
-            {
-                D2points[i] = D2D1::Point2F(static_cast<FLOAT>(points[i].x), static_cast<FLOAT>(m_GameHeight - points[i].y));
-            }
-
-            pSink->BeginFigure(D2points[0], D2D1_FIGURE_BEGIN_FILLED);
-            for (size_t i = 1; i < points.size(); i++)
-            {
-                pSink->AddLine(D2points[i]);
-            }
-            pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-            pSink->Close();
-        }
-        SafeRelease(&pSink);
-
-    }
-
-    //Arc
-    void Engine::CreateArc(ID2D1PathGeometry* pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
-    {
-
-        ID2D1GeometrySink* pSink;
-
-        HRESULT hr = (pGeo)->Open(&pSink);
-
-        if (SUCCEEDED(hr))
-        {
-            auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
-            auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
-
-            auto beginPoint = D2D1::Point2F(
-                static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
-                static_cast<FLOAT>(m_GameHeight - (center.y + radiusY * std::sin(startRad)))
-            );
-            auto endPoint = D2D1::Point2F(
-                static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
-                static_cast<FLOAT>(m_GameHeight - (center.y + radiusY * std::sin(endRad)))
-            );
-
-            D2D1_ARC_SEGMENT arcSegment{
-                endPoint,
-                D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
-                0,
-                D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
-                std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
-            };
-
-
-
-            pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
-            pSink->AddArc(arcSegment);
-            if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(m_GameHeight - center.y)));
-            pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-            pSink->Close();
-        }
-
-        SafeRelease(&pSink);
-    }
-
     //Ellipses
     void Engine::FillEllipse(int centerX, int centerY, float radiusX, float radiusY)const
     {
@@ -866,143 +796,143 @@ namespace jela
     }
 #else
 
-//Lines
-void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
-{
-    SetTransform();
-    m_pDBitmapRenderTarget->DrawLine(
-        D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(firstY)),
-        D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(secondY)),
-        m_pDColorBrush,
-        static_cast<FLOAT>(lineThickness)
-    );
-}
-
-
-//Rectangles
-
-void Engine::DrawRectangle(const Point2Int& leftTop, int width, int height, float lineThickness)const
-{
-    DrawRectangle(leftTop.x, leftTop.y, width, height, lineThickness);
-}
-void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
-{
-    DrawRectangle(rect.left, rect.top, rect.width, rect.height, lineThickness);
-}
-void Engine::DrawRectangle(int left, int top, int width, int height, float lineThickness)const
-{
-    SetTransform();
-    m_pDBitmapRenderTarget->DrawRectangle(
-        D2D1::RectF(
-            static_cast<FLOAT>(left),
-            static_cast<FLOAT>(top),
-            static_cast<FLOAT>(left + width),
-            static_cast<FLOAT>(top + height)),
-        m_pDColorBrush,
-        static_cast<FLOAT>(lineThickness));
-}
-
-//RoundedRects
-void Engine::DrawRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY, float lineThickness)const
-{
-    DrawRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY, lineThickness);
-}
-void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
-{
-    DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, radiusX, radiusY, lineThickness);
-}
-void Engine::DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness)const
-{
-    SetTransform();
-    m_pDBitmapRenderTarget->DrawRoundedRectangle(
-        D2D1::RoundedRect(
+    //Lines
+    void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
+    {
+        SetTransform();
+        m_pDBitmapRenderTarget->DrawLine(
+            D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(firstY)),
+            D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(secondY)),
+            m_pDColorBrush,
+            static_cast<FLOAT>(lineThickness)
+        );
+    }
+    
+    
+    //Rectangles
+    
+    void Engine::DrawRectangle(const Point2Int& leftTop, int width, int height, float lineThickness)const
+    {
+        DrawRectangle(leftTop.x, leftTop.y, width, height, lineThickness);
+    }
+    void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
+    {
+        DrawRectangle(rect.left, rect.top, rect.width, rect.height, lineThickness);
+    }
+    void Engine::DrawRectangle(int left, int top, int width, int height, float lineThickness)const
+    {
+        SetTransform();
+        m_pDBitmapRenderTarget->DrawRectangle(
             D2D1::RectF(
                 static_cast<FLOAT>(left),
                 static_cast<FLOAT>(top),
                 static_cast<FLOAT>(left + width),
                 static_cast<FLOAT>(top + height)),
-            static_cast<FLOAT>(radiusX),
-            static_cast<FLOAT>(radiusY)),
-        m_pDColorBrush,
-        static_cast<FLOAT>(lineThickness));
-}
-
-//String  
-void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, int height, bool showRect)const
-{
-    DrawString(textToDisplay, leftTop.x, leftTop.y, width, height, showRect);
-}
-void Engine::DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect)const
-{
-    DrawString(textToDisplay, destRect.left, destRect.top, destRect.width, destRect.height, showRect);
-}
-void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, int height, bool showRect)const
-{
-    SetTransform();
-    D2D1_RECT_F rect = D2D1::RectF(
-        static_cast<FLOAT>(left),
-        static_cast<FLOAT>(top),
-        static_cast<FLOAT>(left + width),
-        static_cast<FLOAT>(top + height));
-
-    if (showRect)
-    {
-        m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+            m_pDColorBrush,
+            static_cast<FLOAT>(lineThickness));
     }
-
-    m_pDBitmapRenderTarget->DrawText(
-        textToDisplay.c_str(),
-        (UINT32)textToDisplay.length(),
-        m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
-        rect,
-        m_pDColorBrush,
-        D2D1_DRAW_TEXT_OPTIONS_NONE,
-        DWRITE_MEASURING_MODE_NATURAL);
-
-}
-
-//Takes the size of the font as Height of the destination rectangle in order to have a logical position
-void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, bool showRect)const
-{
-    DrawString(textToDisplay, leftTop.x, leftTop.y, width, showRect);
-}
-//Takes the size of the font as Height of the destination rectangle in order to have a logical position
-void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, bool showRect)const
-{
-    SetTransform();
-    D2D1_RECT_F rect = D2D1::RectF(
-        static_cast<FLOAT>(left),
-        static_cast<FLOAT>(top),
-        static_cast<FLOAT>(left + width),
-        static_cast<FLOAT>(top + m_pResourceManager->GetCurrentTextFormat()->GetFontSize()));
-
-    if (showRect)
+    
+    //RoundedRects
+    void Engine::DrawRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY, float lineThickness)const
     {
-        m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+        DrawRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY, lineThickness);
     }
-
-    m_pDBitmapRenderTarget->DrawText(
-        textToDisplay.c_str(),
-        (UINT32)textToDisplay.length(),
-        m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
-        rect,
-        m_pDColorBrush,
-        D2D1_DRAW_TEXT_OPTIONS_NONE,
-        DWRITE_MEASURING_MODE_NATURAL);
-}
-
-
-
-//Textures
-void Engine::DrawTexture(const Texture* const texture, int destLeft, int destTop, const RectInt& srcRect, float opacity)const
-{
-    DrawTexture(texture, RectInt{ destLeft, destTop, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
-}
-void Engine::DrawTexture(const Texture* const texture, const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
-{
-    DrawTexture(texture, RectInt{ destLeftTop.x, destLeftTop.y, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
-}
-void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+    void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
+    {
+        DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, radiusX, radiusY, lineThickness);
+    }
+    void Engine::DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness)const
+    {
+        SetTransform();
+        m_pDBitmapRenderTarget->DrawRoundedRectangle(
+            D2D1::RoundedRect(
+                D2D1::RectF(
+                    static_cast<FLOAT>(left),
+                    static_cast<FLOAT>(top),
+                    static_cast<FLOAT>(left + width),
+                    static_cast<FLOAT>(top + height)),
+                static_cast<FLOAT>(radiusX),
+                static_cast<FLOAT>(radiusY)),
+            m_pDColorBrush,
+            static_cast<FLOAT>(lineThickness));
+    }
+    
+    //String  
+    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, int height, bool showRect)const
+    {
+        DrawString(textToDisplay, leftTop.x, leftTop.y, width, height, showRect);
+    }
+    void Engine::DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect)const
+    {
+        DrawString(textToDisplay, destRect.left, destRect.top, destRect.width, destRect.height, showRect);
+    }
+    void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, int height, bool showRect)const
+    {
+        SetTransform();
+        D2D1_RECT_F rect = D2D1::RectF(
+            static_cast<FLOAT>(left),
+            static_cast<FLOAT>(top),
+            static_cast<FLOAT>(left + width),
+            static_cast<FLOAT>(top + height));
+    
+        if (showRect)
+        {
+            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+        }
+    
+        m_pDBitmapRenderTarget->DrawText(
+            textToDisplay.c_str(),
+            (UINT32)textToDisplay.length(),
+            m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
+            rect,
+            m_pDColorBrush,
+            D2D1_DRAW_TEXT_OPTIONS_NONE,
+            DWRITE_MEASURING_MODE_NATURAL);
+    
+    }
+    
+    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, bool showRect)const
+    {
+        DrawString(textToDisplay, leftTop.x, leftTop.y, width, showRect);
+    }
+    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
+    void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, bool showRect)const
+    {
+        SetTransform();
+        D2D1_RECT_F rect = D2D1::RectF(
+            static_cast<FLOAT>(left),
+            static_cast<FLOAT>(top),
+            static_cast<FLOAT>(left + width),
+            static_cast<FLOAT>(top + m_pResourceManager->GetCurrentTextFormat()->GetFontSize()));
+    
+        if (showRect)
+        {
+            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+        }
+    
+        m_pDBitmapRenderTarget->DrawText(
+            textToDisplay.c_str(),
+            (UINT32)textToDisplay.length(),
+            m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
+            rect,
+            m_pDColorBrush,
+            D2D1_DRAW_TEXT_OPTIONS_NONE,
+            DWRITE_MEASURING_MODE_NATURAL);
+    }
+    
+    
+    
+    //Textures
+    void Engine::DrawTexture(const Texture* const texture, int destLeft, int destTop, const RectInt& srcRect, float opacity)const
+    {
+        DrawTexture(texture, RectInt{ destLeft, destTop, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
+    }
+    void Engine::DrawTexture(const Texture* const texture, const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
+    {
+        DrawTexture(texture, RectInt{ destLeftTop.x, destLeftTop.y, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
+    }
+    void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
     {
         D2D1_RECT_F destination = D2D1::RectF(
             static_cast<FLOAT>(destRect.left),
@@ -1120,72 +1050,6 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         
     }
 
-    void Engine::CreatePolygon(ID2D1PathGeometry* pGeo, const std::vector<Point2Int>& points, bool closeSegment) const
-    {
-
-        ID2D1GeometrySink* pSink;
-        HRESULT hr = (pGeo)->Open(&pSink);
-
-        if (SUCCEEDED(hr))
-        {
-            std::vector<D2D1_POINT_2F> D2points(points.size());
-
-            for (size_t i = 0; i < points.size(); i++)
-            {
-                D2points[i] = D2D1::Point2F(static_cast<FLOAT>(points[i].x), static_cast<FLOAT>(points[i].y));
-            }
-
-            pSink->BeginFigure(D2points[0], D2D1_FIGURE_BEGIN_FILLED);
-            for (size_t i = 1; i < points.size(); i++)
-            {
-                pSink->AddLine(D2points[i]);
-            }
-            pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-            pSink->Close();
-        }
-        SafeRelease(&pSink);
-
-    }
-    void Engine::CreateArc(ID2D1PathGeometry* pGeo, const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) const
-    {
-
-        ID2D1GeometrySink* pSink;
-        HRESULT hr = (pGeo)->Open(&pSink);
-        if(SUCCEEDED(hr))
-        {
-
-            auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * M_PI / 180;
-            auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * M_PI / 180;
-
-            auto beginPoint = D2D1::Point2F(
-                static_cast<FLOAT>(center.x + radiusX * std::cos(startRad)),
-                static_cast<FLOAT>(center.y + radiusY * std::sin(startRad))
-            );
-            auto endPoint = D2D1::Point2F(
-                static_cast<FLOAT>(center.x + radiusX * std::cos(endRad)),
-                static_cast<FLOAT>(center.y + radiusY * std::sin(endRad))
-            );
-
-            D2D1_ARC_SEGMENT arcSegment{
-                endPoint,
-                D2D1::SizeF(static_cast<FLOAT>(radiusX), static_cast<FLOAT>(radiusY)),
-                0,
-                D2D1_SWEEP_DIRECTION_CLOCKWISE,
-                angle < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
-            };
-
-
-
-            pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
-            pSink->AddArc(arcSegment);
-            if (closeSegment) pSink->AddLine(D2D1::Point2F(static_cast<FLOAT>(center.x), static_cast<FLOAT>(center.y)));
-            pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-            pSink->Close();
-        }
-
-        SafeRelease(&pSink);
-    }
-
     //Ellipse
     void Engine::FillEllipse(const Point2Int& center, float radiusX, float radiusY)const
     {
@@ -1207,106 +1071,44 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
     }
     #endif // MATHEMATICAL_COORDINATSYSTEM
 
-    void Engine::DrawPolygon(const std::vector<Point2Int>& points, float lineThickness, bool closeSegment) const
+    void Engine::DrawPolygon(const Polygon& polygon, float lineThickness)
     {
-        ID2D1PathGeometry* pGeo{};
-        
-        HRESULT hr = m_pDFactory->CreatePathGeometry(&pGeo);
-
-        if (SUCCEEDED(hr))
-        {
-            CreatePolygon(pGeo, points, closeSegment);
-
-            SetTransform();
-
-            m_pDBitmapRenderTarget->DrawGeometry(pGeo, m_pDColorBrush, static_cast<FLOAT>(lineThickness));
-        }
-        SafeRelease(&pGeo);
+        DrawGeometry(&polygon, lineThickness);
+    }
+   
+    void Engine::FillPolygon(const Polygon& polygon)
+    {
+        FillGeometry(&polygon);
     }
 
-    void Engine::FillPolygon(const std::vector<Point2Int>& points) const
+    void Engine::DrawArc(const Arc& arc, float lineThickness)
     {
-        ID2D1PathGeometry* pGeo{};
-
-        HRESULT hr = m_pDFactory->CreatePathGeometry(&pGeo);
-
-
-        if (SUCCEEDED(hr))
-        {
-            CreatePolygon(pGeo, points, true);
-            SetTransform();
-            m_pDBitmapRenderTarget->FillGeometry(pGeo, m_pDColorBrush);
-        }
-
-       SafeRelease(&pGeo);
+        DrawGeometry(&arc, lineThickness);
     }
 
-
-    void Engine::DrawArc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle, float lineThickness, bool closeSegment) const
+    void Engine::FillArc(const Arc& arc)
     {
-        DrawArc(Point2Int{ centerX, centerY }, radiusX, radiusY, startAngle, angle, lineThickness, closeSegment);
+        FillGeometry(&arc);
     }
     
-    void Engine::DrawArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, float lineThickness, bool closeSegment) const
+    //Geometry
+    void Engine::DrawGeometry(const Geometry* const pGeometryObject, float lineThickness)
     {
-        if (angle >= 360.f)
-        {
-            angle = 359.9f;
-            OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
-        }
-        if (angle <= -360.f)
-        {
-            angle = -359.9f;
-            OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
-        }
-        while (startAngle >= 360.f) startAngle -= 360;
-        while (startAngle <= -360.f) startAngle += 360;
-
-        ID2D1PathGeometry* pGeo{};
-        HRESULT hr = m_pDFactory->CreatePathGeometry(&pGeo);
-        if (SUCCEEDED(hr))
-        {
-            CreateArc(pGeo, center, radiusX, radiusY, startAngle, angle, closeSegment);
-
-            SetTransform();
-
-            m_pDBitmapRenderTarget->DrawGeometry(pGeo, m_pDColorBrush, static_cast<FLOAT>(lineThickness));
-        }
-        SafeRelease(&pGeo);
+        PushTransform();
+        Translate(pGeometryObject->GetTranslation());
+        SetTransform();
+        m_pDBitmapRenderTarget->DrawGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush, static_cast<FLOAT>(lineThickness));
+        PopTransform();
     }
-    
-    void Engine::FillArc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle) const
+    void Engine::FillGeometry(const Geometry* const pGeometryObject)
     {
-        FillArc(Point2Int{ centerX, centerY }, radiusX, radiusY, startAngle, angle);
+        PushTransform();
+        Translate(pGeometryObject->GetTranslation());
+        SetTransform();
+        m_pDBitmapRenderTarget->FillGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush);
+        PopTransform();
     }
-    
-    void Engine::FillArc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle) const
-    {
-        if (angle >= 360.f)
-        {
-            angle = 359.9f;
-            OutputDebugString(_T("Angle is larger or equal to 360. Use Ellipse instead.\n"));
-        }
-        if (angle <= -360.f)
-        {
-            angle = -359.9f;
-            OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
-        }
-        while (startAngle >= 360.f) startAngle -= 360;
-        while (startAngle <= -360.f) startAngle += 360;
 
-        ID2D1PathGeometry* pGeo{};
-        HRESULT hr = m_pDFactory->CreatePathGeometry(&pGeo);
-        if(SUCCEEDED(hr))
-        {
-            CreateArc(pGeo, center, radiusX, radiusY, startAngle, angle, true);
-            SetTransform();
-            m_pDBitmapRenderTarget->FillGeometry(pGeo, m_pDColorBrush);
-        }
-        SafeRelease(&pGeo);
-    }
-    
-    
     bool Engine::IsKeyPressed(int virtualKeycode) const
     {
         return GetKeyState(virtualKeycode) < 0 and m_WindowIsActive;
@@ -1831,49 +1633,62 @@ void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, 
         Vector2f bToPoint{ linePointB, point };
     
         // If not on same line, return false
-        if (abs(Vector2f::Cross(aToPoint, bToPoint)) > 0.0001f) return false;
+        if (abs(Vector2f::Cross(aToPoint, bToPoint)) > FLT_EPSILON) return false;
     
         // Both vectors must point in opposite directions if p is between a and b
         if (Vector2f::Dot(aToPoint, bToPoint) > 0) return false;
     
         return true;
     }
-    
-    bool utils::IntersectLineSegments(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2, float& outLambda1, float& outLambda2)
+    bool utils::IntersectLines(const Vector2f& l1, const Vector2f& l2, const Point2Int& origin1, const Point2Int& origin2)
     {
+        float crossArea = Vector2f::Cross(l1, l2);
+        if (std::abs(crossArea) <= FLT_EPSILON) // if parallel
+        {
+            Vector2f OriginToOrigin{ origin1, origin2 };
+            // if there's an offset, return false
+            if (std::abs(Vector2f::Cross(OriginToOrigin, l2)) > FLT_EPSILON) return false;
+        }
+        return true;
+    }
+    bool utils::IntersectLines(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2)
+    {
+        return IntersectLines({ p1,p2 }, { q1,q2 }, p1, q1);
+    }
+    bool utils::IntersectLineSegments(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2, float& line1Interpolation, float& line2Interpolation)
+    {
+        if (!IntersectLines(p1, p2, q1, q2)) return false;
+        
         bool intersecting{ false };
-    
         Vector2f firstLine{ p1, p2 };
         Vector2f secondLine{ q1, q2 };
-    
-        float denom = Vector2f::Cross(firstLine,secondLine);
-    
-        if (std::abs(denom) > 0.0001f)
-        {
-            intersecting = true;
-    
-            Vector2f p1q1{ p1, q1 };
-    
-            float num1 = Vector2f::Cross( p1q1, secondLine);
-            float num2 = Vector2f::Cross( p1q1, firstLine);
             
-            outLambda1 = num1 / denom;
-            outLambda2 = num2 / denom;
-        }
-        else // are parallel
+        float crossArea = Vector2f::Cross(firstLine, secondLine);
+
+        if (std::abs(crossArea) <= FLT_EPSILON) // if parallel
         {
-            Vector2f p1q1{ p1, q1 };
-    
-            if (std::abs(Vector2f::Cross(p1q1,secondLine)) > 0.0001f) return false;
-    
-            outLambda1 = 0;
-            outLambda2 = 0;
+            line1Interpolation = 0;
+            line2Interpolation = 0;
             if (utils::IsPointOnLineSegment(p1, q1, q2) ||
                 utils::IsPointOnLineSegment(p2, q1, q2))
             {
                 intersecting = true;
             }
         }
+        else
+        {
+            Vector2f p1q1{ p1, q1 };
+            float num1 = Vector2f::Cross(p1q1, secondLine);
+            float num2 = Vector2f::Cross(p1q1, firstLine);
+
+            line1Interpolation = num1 / crossArea;
+            line2Interpolation = num2 / crossArea;
+            
+            if (line1Interpolation > 0 && line1Interpolation <= 1 && line2Interpolation > 0 && line2Interpolation <= 1)
+                intersecting = true;
+            
+        }
+        
         return intersecting;
     }
     
