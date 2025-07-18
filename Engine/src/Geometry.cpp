@@ -235,16 +235,12 @@ namespace jela
 
 		m_Angle = clockwise ? -90.f : 90.f;
 
-		const auto& swapCenterPoint = [&](bool xComparison)
-		{
-			if (xComparison)											// CP1  _____P2
-			{															//	   /   
-				m_StartAngle += 90;										//	  /	    
-				if (clockwise) SetPosition(point1.x, point2.y);			//   |
-			}															//	 |
-			else if (!clockwise) SetPosition(point1.x, point2.y);		// P1		  CP2	
-		};
-
+		const auto& swapCenterPoint = [&](bool xComparison)							// CP1  _____P2
+		{																			//	   /   
+			if (xComparison) m_StartAngle += 90;									//	  /	    
+			if (xComparison == clockwise) SetPosition(point1.x, point2.y);			//   |
+		};																			//	 |
+																					// P1		 CP2
 		SetPosition(point2.x, point1.y);
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
