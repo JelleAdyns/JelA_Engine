@@ -3,41 +3,41 @@
 namespace jela
 {
 
-	Point2Int::Point2Int(int x, int y) :
+	Point2f::Point2f(float x, float y) :
 		x{ x },
 		y{ y }
 	{}
-	bool Point2Int::operator==(const Point2Int& rhs)
+	bool Point2f::operator==(const Point2f& rhs)
 	{
 		return x == rhs.x and y == rhs.y;
 	}
-	bool Point2Int::operator!=(const Point2Int& rhs)
+	bool Point2f::operator!=(const Point2f& rhs)
 	{
 		return x != rhs.x or y != rhs.y;
 	}
 
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-	RectInt::RectInt(int left, int bottom, int width, int height) :
+	Rectf::Rectf(float left, float bottom, float width, float height) :
 		left{ left },
 		bottom{ bottom },
 		width{ width },
 		height{ height }
 	{}
-	RectInt::RectInt(const Point2Int& leftBottom, int width, int height) :
+	Rectf::Rectf(const Point2f& leftBottom, float width, float height) :
 		left{ leftBottom.x },
 		bottom{ leftBottom.y },
 		width{ width },
 		height{ height }
 	{}
 #else
-	RectInt::RectInt(int left, int top, int width, int height) :
+	Rectf::Rectf(float left, float top, float width, float height) :
 		left{ left },
 		top{ top },
 		width{ width },
 		height{ height }
 	{}
-	RectInt::RectInt(const Point2Int& leftTop, int width, int height) :
+	Rectf::Rectf(const Point2f& leftTop, float width, float height) :
 		left{ leftTop.x },
 		top{ leftTop.y },
 		width{ width },
@@ -46,26 +46,26 @@ namespace jela
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
 
-	EllipseInt::EllipseInt(int xCenter, int yCenter, float xRadius, float yRadius) :
+	Ellipsef::Ellipsef(float xCenter, float yCenter, float xRadius, float yRadius) :
 		center{ xCenter,yCenter },
 		radiusX{ xRadius },
 		radiusY{ yRadius }
 	{}
 
-	EllipseInt::EllipseInt(const Point2Int& center, float xRadius, float yRadius) :
+	Ellipsef::Ellipsef(const Point2f& center, float xRadius, float yRadius) :
 		center{ center },
 		radiusX{ xRadius },
 		radiusY{ yRadius }
 	{}
 
 
-	CircleInt::CircleInt(int xCenter, int yCenter, float radius) :
+	Circlef::Circlef(float xCenter, float yCenter, float radius) :
 		center{ xCenter, yCenter },
 		rad{ radius }
 	{
 	}
 
-	CircleInt::CircleInt(const Point2Int& center, float radius) :
+	Circlef::Circlef(const Point2f& center, float radius) :
 		center{ center },
 		rad{ radius }
 	{
@@ -75,13 +75,13 @@ namespace jela
 		x{ x },
 		y{ y }
 	{}
-	Vector2f::Vector2f(const Point2Int& endPoint) :
-		x{ static_cast<float>(endPoint.x) },
-		y{ static_cast<float>(endPoint.y) }
+	Vector2f::Vector2f(const Point2f& endPoint) :
+		x{ endPoint.x },
+		y{ endPoint.y }
 	{}
-	Vector2f::Vector2f(const Point2Int& startPoint, const Point2Int& endPoint) :
-		x{ static_cast<float>(endPoint.x - startPoint.x) },
-		y{ static_cast<float>(endPoint.y - startPoint.y) }
+	Vector2f::Vector2f(const Point2f& startPoint, const Point2f& endPoint) :
+		x{ endPoint.x - startPoint.x },
+		y{ endPoint.y - startPoint.y }
 	{}
 
 
@@ -108,22 +108,22 @@ namespace jela
 	}
 	float Vector2f::Length() const
 	{
-		return sqrtf(static_cast<float>(x * x + y * y));
+		return sqrtf(x * x + y * y);
 	}
 	float Vector2f::SquaredLength() const
 	{
-		return static_cast<float>(x * x + y * y);
+		return x * x + y * y;
 	}
 	Vector2f Vector2f::Normalized() const
 	{
 		auto l = Length();
-		if (l < 0.0001f) return {};
+		if (l < FLT_EPSILON) return {};
 		return { x / l, y / l };
 	}
 	Vector2f& Vector2f::Normalize()
 	{
 		auto l = Length();
-		if (l < 0.0001f) return *this;
+		if (l < FLT_EPSILON) return *this;
 		*this /= l;
 		return *this;
 	}
@@ -212,29 +212,29 @@ namespace jela
 		lhs << rhs.ToString();
 		return lhs;
 	}
-	Point2Int& operator+=(Point2Int& lhs, const Vector2f& rhs)
+	Point2f& operator+=(Point2f& lhs, const Vector2f& rhs)
 	{
-		lhs.x += static_cast<int>(rhs.x);
-		lhs.y += static_cast<int>(rhs.y);
+		lhs.x += rhs.x;
+		lhs.y += rhs.y;
 		return lhs;
 	}
-	Point2Int operator+(const Point2Int& lhs, const Vector2f& rhs)
+	Point2f operator+(const Point2f& lhs, const Vector2f& rhs)
 	{
-		return Point2Int{ static_cast<int>(lhs.x + rhs.x), static_cast<int>(lhs.y + rhs.y) };
+		return Point2f{ lhs.x + rhs.x, lhs.y + rhs.y };
 	}
-	Point2Int& operator-=(Point2Int& lhs, const Vector2f& rhs)
+	Point2f& operator-=(Point2f& lhs, const Vector2f& rhs)
 	{
-		lhs.x -= static_cast<int>(rhs.x);
-		lhs.y -= static_cast<int>(rhs.y);
+		lhs.x -= rhs.x;
+		lhs.y -= rhs.y;
 		return lhs;
 	}
-	Point2Int operator-(const Point2Int& lhs, const Vector2f& rhs)
+	Point2f operator-(const Point2f& lhs, const Vector2f& rhs)
 	{
-		return Point2Int{ static_cast<int>(lhs.x - rhs.x), static_cast<int>(lhs.y - rhs.y) };
+		return Point2f{ lhs.x - rhs.x, lhs.y - rhs.y };
 	}
-	Vector2f operator-(const Point2Int& lhs, const Point2Int& rhs)
+	Vector2f operator-(const Point2f& lhs, const Point2f& rhs)
 	{
-		return { static_cast<float>(lhs.x - rhs.x),static_cast<float>(lhs.y - rhs.y) };
+		return { lhs.x - rhs.x, lhs.y - rhs.y };
 	}
 
 }

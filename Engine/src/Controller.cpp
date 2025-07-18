@@ -366,9 +366,9 @@ namespace jela
 	//	m_pImpl->ActivateAllCommandsImpl();
 	//}
 
-	void Controller::Vibrate(int strengthPrecantage)
+	void Controller::Vibrate(int strengthPercantage)
 	{
-		m_pImpl->VibrateImpl(strengthPrecantage);
+		m_pImpl->VibrateImpl(strengthPercantage);
 	}
 
 	Vector2f Controller::GetJoystickValue(bool leftJoystick)

@@ -55,18 +55,14 @@ namespace jela
         if (m_pGame)
         {
 
-            int xCoordinate = static_cast<int>(
-                std::round(
-                    (GET_X_LPARAM(lParam) - m_ViewPortTranslationX) / 
-                    (m_WindowWidth - m_ViewPortTranslationX * 2) * 
-                    m_GameWidth
-                ));
-            int yCoordinate = static_cast<int>(
-                std::round(
-                    (GET_Y_LPARAM(lParam) - m_ViewPortTranslationY) /
-                    (m_WindowHeight - m_ViewPortTranslationY * 2) *
-                    m_GameHeight
-                ));
+            float xCoordinate = std::round(
+                (GET_X_LPARAM(lParam) - m_ViewPortTranslationX) / 
+                (m_WindowWidth - m_ViewPortTranslationX * 2) * m_GameWidth);
+
+            float yCoordinate = std::round(
+                (GET_Y_LPARAM(lParam) - m_ViewPortTranslationY) /
+                (m_WindowHeight - m_ViewPortTranslationY * 2) *m_GameHeight);
+
 #ifdef MATHEMATICAL_COORDINATESYSTEM
             yCoordinate = m_GameHeight - yCoordinate;
 #endif // MATHEMATICAL_COORDINATESYSTEM
@@ -100,8 +96,8 @@ namespace jela
                     //If error occurs, it will be returned by EndDraw()
                     m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
     
-                    m_WindowWidth = GetRenderTargetSize().width;
-                    m_WindowHeight = GetRenderTargetSize().height;
+                    m_WindowWidth = static_cast<int>(std::round(GetRenderTargetSize().width));
+                    m_WindowHeight = static_cast<int>(std::round(GetRenderTargetSize().height));
     
                     float scaleX{ m_WindowWidth / (m_GameWidth * m_WindowScale) };
                     float scaleY{ m_WindowHeight / (m_GameHeight * m_WindowScale) };
@@ -223,29 +219,6 @@ namespace jela
         QueryPerformanceCounter(&currentCount);
         m_TriggerCount = currentCount;
         lastCount= currentCount;
-
-        const auto updateGame = [&]()
-        {
-            SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
-            lastCount = currentCount;
-
-            if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
-
-            for (auto& controller : m_pVecControllers)
-            {
-                controller->ProcessControllerInput();
-            }
-
-            if (not m_IsKeyboardActive)
-            {
-                m_pGame->HandleControllerInput();
-            }
-
-            m_pGame->Tick();
-            Paint();
-
-            m_TriggerCount.QuadPart = currentCount.QuadPart + int(m_SecondsPerFrame * countsPersSecond.QuadPart);
-        };  
         
         MSG msg{};
         bool playing = true;
@@ -267,15 +240,28 @@ namespace jela
           
             QueryPerformanceCounter(&currentCount);
 
-            if (m_IsVSyncEnabled)
+            if (m_IsVSyncEnabled || currentCount.QuadPart >= m_TriggerCount.QuadPart)
             {
-                updateGame();
+               SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
+                lastCount = currentCount;
+
+                if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
+
+                for (auto& controller : m_pVecControllers)
+                {
+                    controller->ProcessControllerInput();
+                }
+
+                if (not m_IsKeyboardActive)
+                {
+                    m_pGame->HandleControllerInput();
+                }
+
+                m_pGame->Tick();
+                Paint();
+
+                m_TriggerCount.QuadPart = currentCount.QuadPart + int(m_SecondsPerFrame * countsPersSecond.QuadPart); 
             }
-            else if (currentCount.QuadPart >= m_TriggerCount.QuadPart)
-            {
-                updateGame();
-            }
-              
         }
     
         return (int)msg.wParam;
@@ -444,13 +430,14 @@ namespace jela
         {
             m_pDRenderTarget->DrawBitmap(
                 m_pDBitmap,
-                D2D1::RectF(
-                    static_cast<FLOAT>(m_ViewPortTranslationX),
-                    static_cast<FLOAT>(m_ViewPortTranslationY),
-                    static_cast<FLOAT>(m_WindowWidth - m_ViewPortTranslationX),
-                    static_cast<FLOAT>(m_WindowHeight - m_ViewPortTranslationY)
+                D2D1::RectF
+                (
+                    m_ViewPortTranslationX,
+                    m_ViewPortTranslationY,
+                    m_WindowWidth - m_ViewPortTranslationX,
+                    m_WindowHeight - m_ViewPortTranslationY
                 ),
-                static_cast<FLOAT>(1.f),
+                1.f,
                 D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
             );
         }
@@ -463,49 +450,49 @@ namespace jela
     
     //lines
     
-    void Engine::DrawLine(const Point2Int& firstPoint, const Point2Int& secondPoint, float lineThickness) const
+    void Engine::DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness) const
     {
         DrawLine(firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y, lineThickness);
        
     }
-    void Engine::DrawLine(int firstX, int firstY, const Point2Int& secondPoint, float lineThickness) const
+    void Engine::DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness) const
     {
         DrawLine(firstX, firstY, secondPoint.x, secondPoint.y, lineThickness);
     }
     
-    void Engine::DrawLine(const Point2Int& firstPoint, int secondX, int secondY, float lineThickness) const
+    void Engine::DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness) const
     {
         DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness);
     }
     
-    void Engine::DrawVector(const Point2Int& origin, const Vector2f& vector, int headLineLength, float lineThickness) const
+    void Engine::DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength, float lineThickness) const
     {
         DrawVector(origin.x, origin.y, vector.x, vector.y, headLineLength, lineThickness);
     }
-    void Engine::DrawVector(const Point2Int& origin, float vectorX, float vectorY, int headLineLength, float lineThickness) const
+    void Engine::DrawVector(const Point2f& origin, float vectorX, float vectorY, float headLineLength, float lineThickness) const
     {
         DrawVector(origin.x, origin.y, vectorX, vectorY, headLineLength, lineThickness);
     }
-    void Engine::DrawVector(int originX, int originY, const Vector2f& vector, int headLineLength, float lineThickness) const
+    void Engine::DrawVector(float originX, float originY, const Vector2f& vector, float headLineLength, float lineThickness) const
     {
         DrawVector(originX, originY, vector.x, vector.y, headLineLength, lineThickness);
     }
-    void Engine::DrawVector(int originX, int originY, float vectorX, float vectorY, int headLineLength, float lineThickness) const
+    void Engine::DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness) const
     {
         SetTransform();
     
-        const int endX = originX + static_cast<int>(vectorX);
-        const int endY = originY + static_cast<int>(vectorY);
+        const float endX = originX + vectorX;
+        const float endY = originY + vectorY;
     
         const float desiredHeadAngle = std::numbers::pi_v<float> / 12.f;
         const float mirroredVectorAngle = atan2f(vectorY, vectorX) + std::numbers::pi_v<float>;
     
-        const Point2Int arrowP2{ static_cast<int>(endX + cosf(mirroredVectorAngle - desiredHeadAngle) * headLineLength),
-                                static_cast<int>(endY + sinf(mirroredVectorAngle - desiredHeadAngle) * headLineLength) };
+        const Point2f arrowP2{ endX + cosf(mirroredVectorAngle - desiredHeadAngle) * headLineLength,
+                                endY + sinf(mirroredVectorAngle - desiredHeadAngle) * headLineLength };
     
         
-        const Point2Int arrowP3{ static_cast<int>(endX + cosf(mirroredVectorAngle + desiredHeadAngle) * headLineLength),
-                                static_cast<int>(endY + sinf(mirroredVectorAngle + desiredHeadAngle) * headLineLength) };
+        const Point2f arrowP3{ endX + cosf(mirroredVectorAngle + desiredHeadAngle) * headLineLength,
+                                endY + sinf(mirroredVectorAngle + desiredHeadAngle) * headLineLength };
     
         DrawLine(originX, originY, endX, endY, lineThickness);
         DrawLine(endX, endY, arrowP2.x, arrowP2.y, lineThickness);
@@ -513,87 +500,94 @@ namespace jela
     }
 
     #ifdef MATHEMATICAL_COORDINATESYSTEM
-    void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
+    void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness)const
     {
-         SetTransform();
+        SetTransform();
         m_pDBitmapRenderTarget->DrawLine(
-            D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(m_GameHeight - firstY)),
-            D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(m_GameHeight - secondY)),
+            D2D1::Point2F(firstX, m_GameHeight - firstY),
+            D2D1::Point2F(secondX, m_GameHeight - secondY),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness)
+            lineThickness
         );
     }
     
     
     //Rectangles
 
-    void Engine::DrawRectangle(const Point2Int& leftBottom, int width, int height, float lineThickness)const
+    void Engine::DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness)const
     {
         DrawRectangle( leftBottom.x, leftBottom.y, width, height, lineThickness);
     }
-    void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
+    void Engine::DrawRectangle(const Rectf& rect, float lineThickness)const
     {
         DrawRectangle( rect.left, rect.bottom ,rect.width, rect.height, lineThickness);
     } 
-    void Engine::DrawRectangle(int left, int bottom, int width, int height, float lineThickness)const
+    void Engine::DrawRectangle(float left, float bottom, float width, float height, float lineThickness)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawRectangle(
-            D2D1::RectF(
-                static_cast<FLOAT>(left),
-                static_cast<FLOAT>(m_GameHeight - (bottom + height)),
-                static_cast<FLOAT>(left + width),
-                static_cast<FLOAT>(m_GameHeight - bottom)),
+            D2D1::RectF
+            (
+                left,
+                m_GameHeight - (bottom + height),
+                left + width,
+                m_GameHeight - bottom
+            ),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness));
+            lineThickness
+        );
        
     }
     
     //RoundedRects
-    void Engine::DrawRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         DrawRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness)const
     {
         DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY, lineThickness);
     }   
-    void Engine::DrawRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawRoundedRectangle(
-            D2D1::RoundedRect(
-                D2D1::RectF(
-                    static_cast<FLOAT>(left),
-                    static_cast<FLOAT>(m_GameHeight - (bottom + height)),
-                    static_cast<FLOAT>(left + width),
-                    static_cast<FLOAT>(m_GameHeight - bottom)),
-                static_cast<FLOAT>(radiusX),
-                static_cast<FLOAT>(radiusY)),
+            D2D1::RoundedRect
+            (
+                D2D1::RectF
+                (
+                    left,
+                    m_GameHeight - (bottom + height),
+                    left + width,
+                    m_GameHeight - bottom
+                ),
+                radiusX,
+                radiusY
+            ),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness));
-        
+            lineThickness
+        );
     }
 
 
     
     // Strings
-    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftBottom, int width, int height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect)const
     {
         DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect)const
     {
         DrawString(textToDisplay, destRect.left, destRect.bottom, destRect.width, destRect.height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, int left, int bottom, int width, int height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect)const
     {
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(
-            static_cast<FLOAT>(left),
-            static_cast<FLOAT>(m_GameHeight - (bottom + height)),
-            static_cast<FLOAT>(left + width),
-            static_cast<FLOAT>(m_GameHeight - bottom));
+            left,
+            m_GameHeight - (bottom + height),
+            left + width,
+            m_GameHeight - bottom);
     
         if (showRect)
         {
@@ -611,18 +605,19 @@ namespace jela
         
     }
 
-    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftBottom, int width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect)const
     {
        DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, int left, int bottom, int width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect)const
     {
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(
-            static_cast<FLOAT>(left),
-            static_cast<FLOAT>(m_GameHeight - (bottom + m_pResourceManager->GetCurrentTextFormat()->GetFontSize())),
-            static_cast<FLOAT>(left + width),
-            static_cast<FLOAT>(m_GameHeight - bottom));
+            left,
+            m_GameHeight - (bottom + m_pResourceManager->GetCurrentTextFormat()->GetFontSize()),
+            left + width,
+            m_GameHeight - bottom);
+
         if (showRect)
         {
             m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
@@ -639,42 +634,37 @@ namespace jela
     }
     
     //Textures
-    void Engine::DrawTexture(const Texture* const texture, int destLeft, int destBottom, const RectInt& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* const texture, float destLeft, float destBottom, const Rectf& srcRect, float opacity)const
     {
-        DrawTexture(texture, RectInt{ destLeft, destBottom, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
+        DrawTexture(texture, Rectf{ destLeft, destBottom, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const Point2Int& destLeftBottom, const RectInt& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* const texture, const Point2f& destLeftBottom, const Rectf& srcRect, float opacity)const
     {
-        DrawTexture(texture, RectInt{ destLeftBottom.x, destLeftBottom.y, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
+        DrawTexture(texture, Rectf{ destLeftBottom.x, destLeftBottom.y, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect, float opacity)const
     {
-        RectInt wndwSize = GetWindowRect();
+        Rectf wndwSize = GetWindowRect();
 
         D2D1_RECT_F destination = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(wndwSize.height - (destRect.bottom + destRect.height)),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(wndwSize.height - destRect.bottom)
+            destRect.left,
+            wndwSize.height - (destRect.bottom + destRect.height),
+            destRect.left + destRect.width,
+            wndwSize.height - destRect.bottom
         );
         D2D1_RECT_F source{};
         if ((srcRect.width <= 0 || srcRect.height <= 0) && texture)
         {
-            source = D2D1::RectF(
-                0.F,
-                0.F,
-                static_cast<FLOAT>(texture->GetWidth()),
-                static_cast<FLOAT>(texture->GetHeight())
-            );
+            source = D2D1::RectF(0.F,0.F,texture->GetWidth(),texture->GetHeight());
         }
         else
         {
             float sliceMargin{ 0.07f };
             source = D2D1::RectF(
-                static_cast<FLOAT>(srcRect.left + sliceMargin),
-                static_cast<FLOAT>(srcRect.bottom + sliceMargin),
-                static_cast<FLOAT>(srcRect.left + srcRect.width - sliceMargin),
-                static_cast<FLOAT>(srcRect.bottom + srcRect.height - sliceMargin));
+                srcRect.left + sliceMargin,
+                srcRect.bottom + sliceMargin,
+                srcRect.left + srcRect.width - sliceMargin,
+                srcRect.bottom + srcRect.height - sliceMargin);
         }
 
         SetTransform();
@@ -696,27 +686,28 @@ namespace jela
     }
 
     //Ellipses  
-    void Engine::DrawEllipse(const Point2Int& center, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness)const
     {
         DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
+    void Engine::DrawEllipse(const Ellipsef& ellipse, float lineThickness)const
     {
         DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness);
     }
-    void Engine::DrawEllipse(int centerX, int centerY, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawEllipse(
             D2D1::Ellipse(
-                D2D1::Point2F(static_cast<FLOAT>(centerX), static_cast<FLOAT>(m_GameHeight - centerY)),
-                static_cast<FLOAT>(radiusX),
-                static_cast<FLOAT>(radiusY)),
+                D2D1::Point2F(centerX, m_GameHeight - centerY),
+                radiusX, radiusY
+            ),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness));
+            lineThickness
+        );
 
     }
-    void Engine::DrawCircle(const CircleInt& circle, float lineThickness) const
+    void Engine::DrawCircle(const Circlef& circle, float lineThickness) const
     {
         DrawEllipse(circle.center, circle.rad, circle.rad, lineThickness);
     }
@@ -726,154 +717,146 @@ namespace jela
     //----------------
 
     //Rectangles
-    void Engine::FillRectangle(const Point2Int& leftBottom, int width, int height)const
+    void Engine::FillRectangle(const Point2f& leftBottom, float width, float height)const
     {
         FillRectangle(leftBottom.x, leftBottom.y, width, height);
     }
-    void Engine::FillRectangle(const RectInt& rect)const
+    void Engine::FillRectangle(const Rectf& rect)const
     {
         FillRectangle(rect.left, rect.bottom, rect.width, rect.height);
     }
-    void Engine::FillRectangle(int left, int bottom, int width, int height)const
+    void Engine::FillRectangle(float left, float bottom, float width, float height)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRectangle(
             D2D1::RectF(
-                static_cast<FLOAT>(left),
-                static_cast<FLOAT>(m_GameHeight - (bottom + height)),
-                static_cast<FLOAT>(left + width),
-                static_cast<FLOAT>(m_GameHeight - bottom)),
+                left,
+                m_GameHeight - (bottom + height),
+                left + width,
+                m_GameHeight - bottom
+            ),
             m_pDColorBrush);
 
     }
 
     //RoundedRects
-    void Engine::FillRoundedRect(int left, int bottom, int width, int height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(
-                    static_cast<FLOAT>(left),
-                    static_cast<FLOAT>(m_GameHeight - (bottom + height)),
-                    static_cast<FLOAT>(left + width),
-                    static_cast<FLOAT>(m_GameHeight - bottom)),
-                static_cast<FLOAT>(radiusX),
-                static_cast<FLOAT>(radiusY)),
+                    left,
+                    m_GameHeight - (bottom + height),
+                    left + width,
+                    m_GameHeight - bottom
+                ),
+                radiusX,
+                radiusY
+            ),
             m_pDColorBrush);
     }
-    void Engine::FillRoundedRect(const Point2Int& leftBottom, int width, int height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY)const
     {
         FillRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY);
     }
-    void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const
     {
         FillRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY);
     }
 
     //Ellipses
-    void Engine::FillEllipse(int centerX, int centerY, float radiusX, float radiusY)const
+    void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const
     {
-        FillEllipse(EllipseInt{ centerX, centerY, radiusX, radiusY });
+        FillEllipse(Ellipsef{ centerX, centerY, radiusX, radiusY });
     }
-    void Engine::FillEllipse(const Point2Int& center, float radiusX, float radiusY)const
+    void Engine::FillEllipse(const Point2f& center, float radiusX, float radiusY)const
     {
-        FillEllipse(EllipseInt{ center, radiusX, radiusY });
+        FillEllipse(Ellipsef{ center, radiusX, radiusY });
     }
-    void Engine::FillEllipse(const EllipseInt& ellipse)const
+    void Engine::FillEllipse(const Ellipsef& ellipse)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillEllipse(
             D2D1::Ellipse(
-                D2D1::Point2F(static_cast<FLOAT>(ellipse.center.x), static_cast<FLOAT>(m_GameHeight - ellipse.center.y)),
-                static_cast<FLOAT>(ellipse.radiusX),
-                static_cast<FLOAT>(ellipse.radiusY)),
+                D2D1::Point2F(ellipse.center.x, m_GameHeight - ellipse.center.y),
+                ellipse.radiusX, ellipse.radiusY
+            ),
             m_pDColorBrush);
     }
-    void Engine::FillCircle(const CircleInt& circle) const
+    void Engine::FillCircle(const Circlef& circle) const
     {
         FillEllipse(circle.center, circle.rad, circle.rad);
     }
 #else
 
     //Lines
-    void Engine::DrawLine(int firstX, int firstY, int secondX, int secondY, float lineThickness)const
+    void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawLine(
-            D2D1::Point2F(static_cast<FLOAT>(firstX), static_cast<FLOAT>(firstY)),
-            D2D1::Point2F(static_cast<FLOAT>(secondX), static_cast<FLOAT>(secondY)),
+            D2D1::Point2F(firstX, firstY), D2D1::Point2F(secondX, secondY),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness)
+            lineThickness
         );
     }
     
     
     //Rectangles
     
-    void Engine::DrawRectangle(const Point2Int& leftTop, int width, int height, float lineThickness)const
+    void Engine::DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness)const
     {
         DrawRectangle(leftTop.x, leftTop.y, width, height, lineThickness);
     }
-    void Engine::DrawRectangle(const RectInt& rect, float lineThickness)const
+    void Engine::DrawRectangle(const Rectf& rect, float lineThickness)const
     {
         DrawRectangle(rect.left, rect.top, rect.width, rect.height, lineThickness);
     }
-    void Engine::DrawRectangle(int left, int top, int width, int height, float lineThickness)const
+    void Engine::DrawRectangle(float left, float top, float width, float height, float lineThickness)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawRectangle(
-            D2D1::RectF(
-                static_cast<FLOAT>(left),
-                static_cast<FLOAT>(top),
-                static_cast<FLOAT>(left + width),
-                static_cast<FLOAT>(top + height)),
+            D2D1::RectF(left, top, left + width, top + height),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness));
+            lineThickness
+        );
     }
     
     //RoundedRects
-    void Engine::DrawRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         DrawRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawRoundedRect(const RectInt& rect, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness)const
     {
         DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawRoundedRectangle(
             D2D1::RoundedRect(
-                D2D1::RectF(
-                    static_cast<FLOAT>(left),
-                    static_cast<FLOAT>(top),
-                    static_cast<FLOAT>(left + width),
-                    static_cast<FLOAT>(top + height)),
-                static_cast<FLOAT>(radiusX),
-                static_cast<FLOAT>(radiusY)),
+                D2D1::RectF(left, top, left + width, top + height),
+                radiusX,radiusY
+            ),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness));
+            lineThickness
+        );
     }
     
     //String  
-    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, int height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect)const
     {
         DrawString(textToDisplay, leftTop.x, leftTop.y, width, height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const RectInt& destRect, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect)const
     {
         DrawString(textToDisplay, destRect.left, destRect.top, destRect.width, destRect.height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, int height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect)const
     {
         SetTransform();
-        D2D1_RECT_F rect = D2D1::RectF(
-            static_cast<FLOAT>(left),
-            static_cast<FLOAT>(top),
-            static_cast<FLOAT>(left + width),
-            static_cast<FLOAT>(top + height));
+        D2D1_RECT_F rect = D2D1::RectF(left, top, left + width, top + height);
     
         if (showRect)
         {
@@ -892,19 +875,15 @@ namespace jela
     }
     
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-    void Engine::DrawString(const tstring& textToDisplay, const Point2Int& leftTop, int width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect)const
     {
         DrawString(textToDisplay, leftTop.x, leftTop.y, width, showRect);
     }
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-    void Engine::DrawString(const tstring& textToDisplay, int left, int top, int width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect)const
     {
         SetTransform();
-        D2D1_RECT_F rect = D2D1::RectF(
-            static_cast<FLOAT>(left),
-            static_cast<FLOAT>(top),
-            static_cast<FLOAT>(left + width),
-            static_cast<FLOAT>(top + m_pResourceManager->GetCurrentTextFormat()->GetFontSize()));
+        D2D1_RECT_F rect = D2D1::RectF(left, top, left + width, top + m_pResourceManager->GetCurrentTextFormat()->GetFontSize());
     
         if (showRect)
         {
@@ -924,47 +903,37 @@ namespace jela
     
     
     //Textures
-    void Engine::DrawTexture(const Texture* const texture, int destLeft, int destTop, const RectInt& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* const texture, float destLeft, float destTop, const Rectf& srcRect, float opacity)const
     {
-        DrawTexture(texture, RectInt{ destLeft, destTop, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
+        DrawTexture(texture, Rectf{ destLeft, destTop, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const Point2Int& destLeftTop, const RectInt& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* const texture, const Point2f& destLeftTop, const Rectf& srcRect, float opacity)const
     {
-        DrawTexture(texture, RectInt{ destLeftTop.x, destLeftTop.y, texture ? int(texture->GetWidth()) : 50, texture ? int(texture->GetHeight()) : 50 }, srcRect, opacity);
+        DrawTexture(texture, Rectf{ destLeftTop.x, destLeftTop.y, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const RectInt& destRect, const RectInt& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect, float opacity)const
     {
-        D2D1_RECT_F destination = D2D1::RectF(
-            static_cast<FLOAT>(destRect.left),
-            static_cast<FLOAT>(destRect.top),
-            static_cast<FLOAT>(destRect.left + destRect.width),
-            static_cast<FLOAT>(destRect.top + destRect.height)
-        );
+        D2D1_RECT_F destination = D2D1::RectF(destRect.left, destRect.top, destRect.left + destRect.width, destRect.top + destRect.height);
     
         D2D1_RECT_F source{};
         if ((srcRect.width <= 0 || srcRect.height <= 0) && texture)
         {
-            source = D2D1::RectF(
-                0.F,
-                0.F,
-                static_cast<FLOAT>(texture->GetWidth()),
-                static_cast<FLOAT>(texture->GetHeight())
-            );
+            source = D2D1::RectF(0.F, 0.F, texture->GetWidth(), texture->GetHeight());
         }
         else
         {
             float sliceMargin{ 0.07f };
             source = D2D1::RectF(
-                static_cast<FLOAT>(srcRect.left + sliceMargin),
-                static_cast<FLOAT>(srcRect.top + sliceMargin),
-                static_cast<FLOAT>(srcRect.left + srcRect.width - sliceMargin),
-                static_cast<FLOAT>(srcRect.top + srcRect.height - sliceMargin));
+                srcRect.left + sliceMargin,
+                srcRect.top + sliceMargin, 
+                srcRect.left + srcRect.width - sliceMargin,
+                srcRect.top + srcRect.height - sliceMargin
+            );
         }
     
         SetTransform();
         if (texture)
         {
-
             m_pDBitmapRenderTarget->DrawBitmap(
                 texture->GetBitmap(),
                 destination,
@@ -980,24 +949,25 @@ namespace jela
         }
     }
     //Ellipse
-    void Engine::DrawEllipse(const Point2Int& center, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness)const
     {
         DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawEllipse(const EllipseInt& ellipse, float lineThickness)const
+    void Engine::DrawEllipse(const Ellipsef& ellipse, float lineThickness)const
     {
        DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness);
     }
-    void Engine::DrawEllipse(int centerX, int centerY, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawEllipse(
             D2D1::Ellipse(
-                D2D1::Point2F(static_cast<FLOAT>(centerX), static_cast<FLOAT>(centerY)),
-                static_cast<FLOAT>(radiusX),
-                static_cast<FLOAT>(radiusY)),
+                D2D1::Point2F(centerX, centerY),
+                radiusX, radiusY
+            ),
             m_pDColorBrush,
-            static_cast<FLOAT>(lineThickness));
+            lineThickness
+        );
     }
 
     //-----------------
@@ -1005,68 +975,57 @@ namespace jela
     //-----------------
     
     //Rectangles
-    void Engine::FillRectangle(const Point2Int& leftTop, int width, int height)const
+    void Engine::FillRectangle(const Point2f& leftTop, float width, float height)const
     {
         FillRectangle(leftTop.x, leftTop.y, width, height);
     }
-    void Engine::FillRectangle(const RectInt& rect)const
+    void Engine::FillRectangle(const Rectf& rect)const
     {
         FillRectangle( rect.left,rect.top,rect.width,rect.height);
     }
-    void Engine::FillRectangle(int left, int top, int width, int height)const
+    void Engine::FillRectangle(float left, float top, float width, float height)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRectangle(
-            D2D1::RectF(
-                static_cast<FLOAT>(left),
-                static_cast<FLOAT>(top),
-                static_cast<FLOAT>(left + width),
-                static_cast<FLOAT>(top + height)),
+            D2D1::RectF(left, top, left + width, top + height),
             m_pDColorBrush);
     }
 
     //RoundedRects
-    void Engine::FillRoundedRect(const Point2Int& leftTop, int width, int height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY)const
     {
         FillRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY);
     }
-    void Engine::FillRoundedRect(const RectInt& rect, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const
     {
         FillRoundedRect( rect.left, rect.top, rect.width, rect.height, radiusX, radiusY);
     }
-    void Engine::FillRoundedRect(int left, int top, int width, int height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRoundedRectangle(
             D2D1::RoundedRect(
-                D2D1::RectF(
-                    static_cast<FLOAT>(left),
-                    static_cast<FLOAT>(top),
-                    static_cast<FLOAT>(left + width),
-                    static_cast<FLOAT>(top + height)),
-                static_cast<FLOAT>(radiusX),
-                static_cast<FLOAT>(radiusY)),
-            m_pDColorBrush);
-        
+                D2D1::RectF(left, top, left + width, top + height),
+                radiusX, radiusY
+            ),
+            m_pDColorBrush
+        );
     }
 
     //Ellipse
-    void Engine::FillEllipse(const Point2Int& center, float radiusX, float radiusY)const
+    void Engine::FillEllipse(const Point2f& center, float radiusX, float radiusY)const
     {
         FillEllipse(center.x, center.y, radiusX, radiusY);
     }
-    void Engine::FillEllipse(const EllipseInt& ellipse)const
+    void Engine::FillEllipse(const Ellipsef& ellipse)const
     {
         FillEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY);
     }
-    void Engine::FillEllipse(int centerX, int centerY, float radiusX, float radiusY)const
+    void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillEllipse(
-            D2D1::Ellipse(
-                D2D1::Point2F(static_cast<FLOAT>(centerX), static_cast<FLOAT>(centerY)),
-                static_cast<FLOAT>(radiusX),
-                static_cast<FLOAT>(radiusY)),
+            D2D1::Ellipse(D2D1::Point2F(centerX, centerY), radiusX, radiusY),
             m_pDColorBrush);
     }
     #endif // MATHEMATICAL_COORDINATSYSTEM
@@ -1097,7 +1056,7 @@ namespace jela
         PushTransform();
         Translate(pGeometryObject->GetTranslation());
         SetTransform();
-        m_pDBitmapRenderTarget->DrawGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush, static_cast<FLOAT>(lineThickness));
+        m_pDBitmapRenderTarget->DrawGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush, lineThickness);
         PopTransform();
     }
     void Engine::FillGeometry(const Geometry* const pGeometryObject)
@@ -1219,36 +1178,36 @@ namespace jela
     }
 
     #ifdef MATHEMATICAL_COORDINATESYSTEM
-    void Engine::Translate(int xTranslation, int yTranslation)
+    void Engine::Translate(float xTranslation, float yTranslation)
     {
         if (!m_VecTransformMatrices.empty())
         {
-            auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
-            lastMatrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(-yTranslation)) * lastMatrix;
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = D2D1::Matrix3x2F::Translation(xTranslation, -yTranslation) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Translation matrix."));
     
         m_TransformChanged = true;
     }
     
-    void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint)
+    void Engine::Rotate(float angle, float xPivotPoint, float yPivotPoint)
     {
         if (!m_VecTransformMatrices.empty())
         {
-            auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
-            lastMatrix = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(-angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(m_GameHeight - yPivotPoint))) * lastMatrix;
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = D2D1::Matrix3x2F::Rotation(-angle, D2D1::Point2F(xPivotPoint, m_GameHeight - yPivotPoint)) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
     
         m_TransformChanged = true;
     }
-    void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
+    void Engine::Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom)
     {
         if (!m_VecTransformMatrices.empty())
         {
-            auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
-            lastMatrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale),
-                D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(m_GameHeight - yPointToScaleFrom)))
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = D2D1::Matrix3x2F::Scale(xScale, yScale,
+                D2D1::Point2F(xPointToScaleFrom, m_GameHeight - yPointToScaleFrom))
                 * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Scaling matrix."));
@@ -1256,32 +1215,32 @@ namespace jela
         m_TransformChanged = true;
     }
     #else
-    void Engine::Translate(int xTranslation, int yTranslation)
+    void Engine::Translate(float xTranslation, float yTranslation)
     {
         if (!m_VecTransformMatrices.empty())
         {
-            auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
-            lastMatrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(xTranslation), static_cast<FLOAT>(yTranslation)) * lastMatrix;
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = D2D1::Matrix3x2F::Translation(xTranslation, yTranslation) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Translation matrix."));
     
         m_TransformChanged = true;
     }
-    void Engine::Rotate(float angle, int xPivotPoint, int yPivotPoint)
+    void Engine::Rotate(float angle, float xPivotPoint, float yPivotPoint)
     {
         if (!m_VecTransformMatrices.empty())
         {
-            auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
-            lastMatrix = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(angle), D2D1::Point2F(static_cast<FLOAT>(xPivotPoint), static_cast<FLOAT>(yPivotPoint))) * lastMatrix;
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(xPivotPoint, yPivotPoint)) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
     }
-    void Engine::Scale(float xScale, float yScale, int xPointToScaleFrom, int yPointToScaleFrom)
+    void Engine::Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom)
     {
         if (!m_VecTransformMatrices.empty())
         {
-            auto& lastMatrix = m_VecTransformMatrices.at(m_VecTransformMatrices.size() - 1);
-            lastMatrix = D2D1::Matrix3x2F::Scale(static_cast<FLOAT>(xScale), static_cast<FLOAT>(yScale), D2D1::Point2F(static_cast<FLOAT>(xPointToScaleFrom), static_cast<FLOAT>(yPointToScaleFrom))) * lastMatrix;
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = D2D1::Matrix3x2F::Scale(xScale, yScale, D2D1::Point2F(xPointToScaleFrom, yPointToScaleFrom)) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Scaling matrix."));
     
@@ -1302,21 +1261,21 @@ namespace jela
     }
     void Engine::Translate(const Vector2f& translation)
     {
-        Translate(static_cast<int>(round(translation.x)), static_cast<int>(round(translation.y)));
+        Translate(translation.x, translation.y);
     }
-    void Engine::Rotate(float angle, const Point2Int& pivotPoint)
+    void Engine::Rotate(float angle, const Point2f& pivotPoint)
     {
         Rotate(angle, pivotPoint.x, pivotPoint.y);
     }
-    void Engine::Scale(float scale, int xPointToScaleFrom, int yPointToScaleFrom)
+    void Engine::Scale(float scale, float xPointToScaleFrom, float yPointToScaleFrom)
     {
         Scale(scale, scale, xPointToScaleFrom, yPointToScaleFrom);
     }
-    void Engine::Scale(float xScale, float yScale, const Point2Int& PointToScaleFrom)
+    void Engine::Scale(float xScale, float yScale, const Point2f& PointToScaleFrom)
     {
         Scale(xScale, yScale, PointToScaleFrom.x, PointToScaleFrom.y);
     }
-    void Engine::Scale(float scale, const Point2Int& PointToScaleFrom)
+    void Engine::Scale(float scale, const Point2f& PointToScaleFrom)
     {
         Scale(scale, scale, PointToScaleFrom.x, PointToScaleFrom.y);
     }
@@ -1404,7 +1363,7 @@ namespace jela
             GetGValue(newColor) / 255.f,
             GetBValue(newColor) / 255.f));
     
-        m_pDColorBrush->SetOpacity(static_cast<FLOAT>(opacity));
+        m_pDColorBrush->SetOpacity(opacity);
     }
     void Engine::SetBackGroundColor(COLORREF newColor)
     {
@@ -1415,10 +1374,10 @@ namespace jela
             1.f);
     }
     
-    RectInt Engine::GetRenderTargetSize() const
+    Rectf Engine::GetRenderTargetSize() const
     {
         D2D1_SIZE_F size = m_pDRenderTarget->GetSize();
-        return RectInt{ 0,0,static_cast<int>(size.width),static_cast<int>(size.height)};
+        return Rectf{ 0,0,size.width, size.height};
     }
     void Engine::Paint()
     {
@@ -1442,9 +1401,9 @@ namespace jela
         return m_pResourceManager->GetCurrentFont();
     }
 
-    RectInt Engine::GetWindowRect() const
+    Rectf Engine::GetWindowRect() const
     {
-        return RectInt{ 0, 0, m_GameWidth, m_GameHeight };
+        return Rectf{ 0, 0, static_cast<float>(m_GameWidth), static_cast<float>(m_GameHeight) };
     }
     float Engine::GetWindowScale() const
     {
@@ -1491,19 +1450,19 @@ namespace jela
     
     // Following functions originate from Koen Samyn, professor Game Development at Howest
     
-    float utils::Distance(int x1, int y1, int x2, int y2)
+    float utils::Distance(float x1, float y1, float x2, float y2)
     {
-        int b = x2 - x1;
-        int c = y2 - y1;
-        return sqrt(static_cast<float>(b * b + c * c));
+        const float b = x2 - x1;
+        const float c = y2 - y1;
+        return sqrt(b * b + c * c);
     }
     
-    float utils::Distance(const Point2Int& p1, const Point2Int& p2)
+    float utils::Distance(const Point2f& p1, const Point2f& p2)
     {
         return Distance(p1.x, p1.y, p2.x, p2.y);
     }
     
-    bool utils::IsPointInRect(const Point2Int& p, const RectInt& r)
+    bool utils::IsPointInRect(const Point2f& p, const Rectf& r)
     {
         return p.x >= r.left and
             p.x <= (r.left + r.width) and
@@ -1517,37 +1476,43 @@ namespace jela
     
     }
     
-    bool utils::IsPointInCircle(const Point2Int& p, const CircleInt& c)
+    bool utils::IsPointInCircle(const Point2f& p, const Circlef& c)
     {
-        int x = c.center.x - p.x;
-        int y = c.center.y - p.y;
+        const float x = c.center.x - p.x;
+        const float y = c.center.y - p.y;
         return x * x + y * y < c.rad * c.rad;
     }
     
-    bool utils::IsPointInEllipse(const Point2Int& p, const EllipseInt& e)
+    bool utils::IsPointInEllipse(const Point2f& p, const Ellipsef& e)
     {
-        float lhs = (p.x * p.x) * (e.radiusY * e.radiusY) + (p.y * p.y) * (e.radiusX * e.radiusX);
-        float rhs = (e.radiusX * e.radiusX) * (e.radiusY * e.radiusY);
+        const float xDist = p.x - e.center.x;
+        const float yDist = p.y - e.center.y;
+        const float xRadSqrd = e.radiusX * e.radiusX;
+        const float yRadSqrd = e.radiusY * e.radiusY;
+
+        const float lhs = xDist * xDist * yRadSqrd  +  yDist * yDist * xRadSqrd;
+        const float rhs = xRadSqrd * yRadSqrd;
+
         return lhs <= rhs;
     }
     
-    bool utils::IsOverlapping(const Point2Int& a, const Point2Int& b, const CircleInt& c)
+    bool utils::IsOverlapping(const Point2f& a, const Point2f& b, const Circlef& c)
     {
         return DistPointLineSegment(c.center, a, b) <= c.rad;
     }
     
-    bool utils::IsOverlapping(const Point2Int& a, const Point2Int& b, const EllipseInt& e)
+    bool utils::IsOverlapping(const Point2f& a, const Point2f& b, const Ellipsef& e)
     {
         return IsPointInEllipse(ClosestPointOnLine(e.center, a, b), e);
     }
     
-    bool utils::IsOverlapping(const Point2Int& a, const Point2Int& b, const RectInt& r)
+    bool utils::IsOverlapping(const Point2f& a, const Point2f& b, const Rectf& r)
     {
-        std::pair<Point2Int, Point2Int> p{};
+        std::pair<Point2f, Point2f> p{};
         return utils::IntersectRectLine(r, a, b, p);
     }
     
-    bool utils::IsOverlapping(const RectInt& r1, const RectInt& r2)
+    bool utils::IsOverlapping(const Rectf& r1, const Rectf& r2)
     {
     
     #ifdef MATHEMATICAL_COORDINATESYSTEM
@@ -1567,43 +1532,43 @@ namespace jela
         return true;
     }
     
-    bool utils::IsOverlapping(const RectInt& r, const CircleInt& c)
+    bool utils::IsOverlapping(const Rectf& r, const Circlef& c)
     {
         if (IsPointInRect(c.center, r)) return true;
     
-        int right = r.left + r.width;
+        float right = r.left + r.width;
     
     #ifdef MATHEMATICAL_COORDINATESYSTEM
-        int top = r.bottom + r.height;
-        if (DistPointLineSegment(c.center, Point2Int{ r.left, r.bottom }, Point2Int{ r.left, top }) <= c.rad) return true;
+        float top = r.bottom + r.height;
+        if (DistPointLineSegment(c.center, Point2f{ r.left, r.bottom }, Point2f{ r.left, top }) <= c.rad) return true;
         
-        if (DistPointLineSegment(c.center, Point2Int{ r.left, r.bottom }, Point2Int{ right, r.bottom }) <= c.rad) return true;
+        if (DistPointLineSegment(c.center, Point2f{ r.left, r.bottom }, Point2f{ right, r.bottom }) <= c.rad) return true;
         
-        if (DistPointLineSegment(c.center, Point2Int{ r.left, top }, Point2Int{ right, top }) <= c.rad) return true;
+        if (DistPointLineSegment(c.center, Point2f{ r.left, top }, Point2f{ right, top }) <= c.rad) return true;
         
-        if (DistPointLineSegment(c.center, Point2Int{ right, top }, Point2Int{ right, r.bottom }) <= c.rad) return true;
+        if (DistPointLineSegment(c.center, Point2f{ right, top }, Point2f{ right, r.bottom }) <= c.rad) return true;
     #else
-        int bottom = r.top + r.height;
-        if (DistPointLineSegment(c.center, Point2Int{ r.left, r.top }, Point2Int{ r.left, bottom }) <= c.rad) return true;
+        float bottom = r.top + r.height;
+        if (DistPointLineSegment(c.center, Point2f{ r.left, r.top }, Point2f{ r.left, bottom }) <= c.rad) return true;
         
-        if (DistPointLineSegment(c.center, Point2Int{ r.left, r.top }, Point2Int{ right, r.top }) <= c.rad) return true;
+        if (DistPointLineSegment(c.center, Point2f{ r.left, r.top }, Point2f{ right, r.top }) <= c.rad) return true;
         
-        if (DistPointLineSegment(c.center, Point2Int{ r.left, bottom }, Point2Int{ right, bottom }) <= c.rad) return true;
+        if (DistPointLineSegment(c.center, Point2f{ r.left, bottom }, Point2f{ right, bottom }) <= c.rad) return true;
         
-        if (DistPointLineSegment(c.center, Point2Int{ right, bottom }, Point2Int{ right, r.top }) <= c.rad) return true;
+        if (DistPointLineSegment(c.center, Point2f{ right, bottom }, Point2f{ right, r.top }) <= c.rad) return true;
         
     #endif // MATHEMATICAL_COORDINATESYSTEM
     
         return false;
     }
     
-    bool utils::IsOverlapping(const CircleInt& c1, const CircleInt& c2)
+    bool utils::IsOverlapping(const Circlef& c1, const Circlef& c2)
     {
         return (c2.center - c1.center).SquaredLength() < (c1.rad + c2.rad) * (c1.rad + c2.rad);
     }
     
     
-    Point2Int utils::ClosestPointOnLine(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB)
+    Point2f utils::ClosestPointOnLine(const Point2f& point, const Point2f& linePointA, const Point2f& linePointB)
     {
         Vector2f aToB{ linePointA, linePointB };
         Vector2f aToPoint{ linePointA, point };
@@ -1618,16 +1583,16 @@ namespace jela
         if (pointProjectionOnLine > distAB) return linePointB;
     
         // Closest point is between A and B, calc intersection point
-        Point2Int intersection{ linePointA + pointProjectionOnLine * abNorm };
+        Point2f intersection{ linePointA + pointProjectionOnLine * abNorm };
         return intersection;
     }
     
-    float utils::DistPointLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB)
+    float utils::DistPointLineSegment(const Point2f& point, const Point2f& linePointA, const Point2f& linePointB)
     {
         return (point - ClosestPointOnLine(point, linePointA, linePointB)).Length();
     }
     
-    bool utils::IsPointOnLineSegment(const Point2Int& point, const Point2Int& linePointA, const Point2Int& linePointB)
+    bool utils::IsPointOnLineSegment(const Point2f& point, const Point2f& linePointA, const Point2f& linePointB)
     {
         Vector2f aToPoint{ linePointA, point };
         Vector2f bToPoint{ linePointB, point };
@@ -1640,7 +1605,7 @@ namespace jela
     
         return true;
     }
-    bool utils::IntersectLines(const Vector2f& l1, const Vector2f& l2, const Point2Int& origin1, const Point2Int& origin2)
+    bool utils::IntersectLines(const Vector2f& l1, const Vector2f& l2, const Point2f& origin1, const Point2f& origin2)
     {
         float crossArea = Vector2f::Cross(l1, l2);
         if (std::abs(crossArea) <= FLT_EPSILON) // if parallel
@@ -1651,11 +1616,11 @@ namespace jela
         }
         return true;
     }
-    bool utils::IntersectLines(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2)
+    bool utils::IntersectLines(const Point2f& p1, const Point2f& p2, const Point2f& q1, const Point2f& q2)
     {
         return IntersectLines({ p1,p2 }, { q1,q2 }, p1, q1);
     }
-    bool utils::IntersectLineSegments(const Point2Int& p1, const Point2Int& p2, const Point2Int& q1, const Point2Int& q2, float& line1Interpolation, float& line2Interpolation)
+    bool utils::IntersectLineSegments(const Point2f& p1, const Point2f& p2, const Point2f& q1, const Point2f& q2, float& line1Interpolation, float& line2Interpolation)
     {
         if (!IntersectLines(p1, p2, q1, q2)) return false;
         
@@ -1692,13 +1657,13 @@ namespace jela
         return intersecting;
     }
     
-    bool utils::IntersectRectLine(const RectInt& r, const Point2Int& p1, const Point2Int& p2, std::pair<Point2Int, Point2Int>& intersections)
+    bool utils::IntersectRectLine(const Rectf& r, const Point2f& p1, const Point2f& p2, std::pair<Point2f, Point2f>& intersections)
     {
-        float xDenom{ static_cast<float>(p2.x - p1.x) };
+        float xDenom{ p2.x - p1.x };
         float x1{ (r.left - p1.x) / xDenom};
         float x2{ (r.left + r.width - p1.x) / xDenom };
     
-        float yDenom{ static_cast<float>(p2.y - p1.y) };
+        float yDenom{ p2.y - p1.y };
     #ifdef MATHEMATICAL_COORDINATESYSTEM
         float y1{ (r.bottom - p1.y  ) / yDenom };
         float y2{ (r.bottom + r.height - p1.y ) / yDenom };
@@ -1708,8 +1673,8 @@ namespace jela
     #endif // !MATHEMATICAL_COORDINATESYSTEM
         
     
-        float tMin{ std::max<float>(std::min<float>(x1,x2), std::min<float>(y1,y2)) };
-        float tMax{ std::min<float>(std::max<float>(x1,x2), std::max<float>(y1,y2)) };
+        float tMin{ std::max(std::min(x1,x2), std::min(y1,y2)) };
+        float tMax{ std::min(std::max(x1,x2), std::max(y1,y2)) };
     
         if (tMin > tMax) return false;
     

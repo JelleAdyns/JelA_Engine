@@ -89,7 +89,7 @@ namespace jela
             Bottom,
         };
 
-        TextFormat(int fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign);
+        TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign);
 
         TextFormat(const TextFormat& other) = delete;
         TextFormat(TextFormat&& other) noexcept = delete;
@@ -98,7 +98,7 @@ namespace jela
 
         ~TextFormat();
 
-        int GetFontSize() const { return m_Size; };
+        float GetFontSize() const { return m_Size; };
         IDWriteTextFormat* const GetTextFormat() const { return m_pTextFormat; };
     private:
 
@@ -115,7 +115,7 @@ namespace jela
         void SetFont(const Font* const pFont);
 
         IDWriteTextFormat* m_pTextFormat{ nullptr };
-        int m_Size;
+        float m_Size;
     };
     //---------------------------------------------------------------
     

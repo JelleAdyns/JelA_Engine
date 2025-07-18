@@ -19,14 +19,14 @@ namespace jela
 
 	//--------------------------------------------------------------------------------------------------------------------
 	// Polygon
-	Polygon::Polygon(const std::vector<Point2Int>& points, bool closeSegment) :
+	Polygon::Polygon(const std::vector<Point2f>& points, bool closeSegment) :
 		Geometry{},
 		m_Points{points}
 	{
-		AdjustPoints([&](Point2Int& point) { point += GetTranslation(); });
+		AdjustPoints([&](Point2f& point) { point += GetTranslation(); });
 		Recreate(points, closeSegment);
 	}
-	bool Polygon::Recreate(const std::vector<Point2Int>& points, bool closeSegment)
+	bool Polygon::Recreate(const std::vector<Point2f>& points, bool closeSegment)
 	{
 		HRESULT hr = Geometry::Recreate();
 
@@ -47,9 +47,9 @@ namespace jela
 				{
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 
-					D2points[i] = D2D1::Point2F(static_cast<FLOAT>(points[i].x), static_cast<FLOAT>(ENGINE.GetWindowRect().height - points[i].y));
+					D2points[i] = D2D1::Point2F(points[i].x, ENGINE.GetWindowRect().height - points[i].y);
 #else
-					D2points[i] = D2D1::Point2F(static_cast<FLOAT>(points[i].x), static_cast<FLOAT>(points[i].y));
+					D2points[i] = D2D1::Point2F(points[i].x, points[i].y);
 
 #endif // MATHEMATICAL_COORDINATESYSTEM
 				}
@@ -69,32 +69,32 @@ namespace jela
 
 	void Polygon::ResetPosition()
 	{
-		AdjustPoints([&](Point2Int& point) { point -= GetTranslation(); });
+		AdjustPoints([&](Point2f& point) { point -= GetTranslation(); });
 		Geometry::ResetPosition();
 	}
 	void Polygon::Move(const Vector2f& translation)
 	{
 		Geometry::Move(translation);
-		AdjustPoints([&](Point2Int& point) { point += translation; });
+		AdjustPoints([&](Point2f& point) { point += translation; });
 	}
 
-	std::vector<Point2Int> Polygon::GetOriginalPoints() const
+	std::vector<Point2f> Polygon::GetOriginalPoints() const
 	{
-		std::vector<Point2Int>transformedPoints = m_Points;
+		std::vector<Point2f>transformedPoints = m_Points;
 		std::for_each(std::execution::par, transformedPoints.begin(), transformedPoints.end(),
-			[&](Point2Int& point) { point -= GetTranslation(); });
+			[&](Point2f& point) { point -= GetTranslation(); });
 		return transformedPoints;
 	}
 
-	bool Polygon::IsPointInside(const Point2Int& point) const
+	bool Polygon::IsPointInside(const Point2f& point) const
 	{
 		if (m_Points.size() < 2) return false;
 
 		// 1. First do a simple test with axis aligned bounding box around the polygon
-		int xMin{ m_Points[0].x };
-		int xMax{ m_Points[0].x };
-		int yMin{ m_Points[0].y };
-		int yMax{ m_Points[0].y };
+		float xMin{ m_Points[0].x };
+		float xMax{ m_Points[0].x };
+		float yMin{ m_Points[0].y };
+		float yMax{ m_Points[0].y };
 		for (size_t idx{ 1 }; idx < m_Points.size(); ++idx)
 		{
 			if (xMin > m_Points[idx].x) xMin = m_Points[idx].x;
@@ -112,7 +112,7 @@ namespace jela
 		//    and count how often it hits any side of the polygon. 
 		//    If the number of hits is even, it's outside of the polygon, if it's odd, it's inside.
 		int numberOfIntersectionPoints{ 0 };
-		Point2Int p2{ xMax + 10, yMax + 20 }; // random point outside the box
+		Point2f p2{ xMax + 10, yMax + 20 }; // random point outside the box
 
 		// Count the number of intersection points
 		float lambda1{}, lambda2{};
@@ -127,7 +127,7 @@ namespace jela
 
 	}
 
-	void Polygon::AdjustPoints(const std::function<void(Point2Int&)>& func)
+	void Polygon::AdjustPoints(const std::function<void(Point2f&)>& func)
 	{
 		std::for_each(std::execution::par, m_Points.begin(), m_Points.end(), func);
 	}
@@ -136,7 +136,7 @@ namespace jela
 
 	//--------------------------------------------------------------------------------------------------------------------
 	// Arc
-	Arc::Arc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
+	Arc::Arc(float centerX, float centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
 		Geometry{},
 		m_Radius{radiusX,radiusY},
 		m_StartAngle{startAngle},
@@ -145,10 +145,10 @@ namespace jela
 		SetPosition(centerX,centerY);
 		Recreate(radiusX, radiusY, startAngle, angle, closeSegment);
 	}
-	Arc::Arc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
+	Arc::Arc(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
 		Arc{ center.x, center.y, radiusX, radiusY, startAngle, angle, closeSegment }
 	{}
-	Arc::Arc(const Point2Int& point1, const Point2Int& point2, bool clockwise, bool closeSegment) :
+	Arc::Arc(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment) :
 		Geometry{}
 	{
 		Recreate(point1, point2, clockwise, closeSegment);
@@ -205,7 +205,7 @@ namespace jela
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 
-			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, static_cast<FLOAT>(ENGINE.GetWindowRect().height)));
+			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, ENGINE.GetWindowRect().height));
 #else
 			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, 0));
 
@@ -227,7 +227,7 @@ namespace jela
 	{
 		return Recreate(m_Radius.x, m_Radius.y, startAngle, angle, closeSegment);
 	}
-	bool Arc::Recreate(const Point2Int& point1, const Point2Int& point2, bool clockwise, bool closeSegment)
+	bool Arc::Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment)
 	{
 		m_Radius = point1 - point2;
 		m_Radius.x = std::abs(m_Radius.x);
@@ -264,10 +264,10 @@ namespace jela
 
 	}
 
-	void Arc::SetPosition(int centerX, int centerY)
+	void Arc::SetPosition(float centerX, float centerY)
 	{
 		ResetPosition();
-		Move(static_cast<float>(centerX), static_cast<float>(centerY));
+		Move(centerX, centerY);
 	}
 
 	//--------------------------------------------------------------------------------------------------------------------

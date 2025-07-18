@@ -50,7 +50,7 @@ namespace jela
 		void DeactivateAllCommands();
 		void ActivateAllCommands();*/
 
-		void Vibrate(int strengthPrecantage);
+		void Vibrate(int strengthPercantage);
 		Vector2f GetJoystickValue(bool leftJoystick);
 		float GetTriggerValue(bool leftTrigger);
 		static int AmountOfConnectedControllers();

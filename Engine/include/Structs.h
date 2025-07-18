@@ -6,63 +6,63 @@
 
 namespace jela
 {
-	struct Point2Int
+	struct Point2f
 	{
-		Point2Int() = default;
-		explicit Point2Int(int x, int y);
-		int x;
-		int y;
+		Point2f() = default;
+		explicit Point2f(float x, float y);
+		float x;
+		float y;
 
-		bool operator==(const Point2Int& rhs);
-		bool operator!=(const Point2Int& rhs);
+		bool operator==(const Point2f& rhs);
+		bool operator!=(const Point2f& rhs);
 	};
 
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-	struct RectInt
+	struct Rectf
 	{
-		RectInt() = default;
-		explicit RectInt(int left, int bottom, int width, int height);
-		explicit RectInt(const Point2Int& leftBottom, int width, int height);
+		Rectf() = default;
+		explicit Rectf(float left, float bottom, float width, float height);
+		explicit Rectf(const Point2f& leftBottom, float width, float height);
 
-		int left;
-		int bottom;
-		int width;
-		int height;
+		float left;
+		float bottom;
+		float width;
+		float height;
 	};
 #else
-	struct RectInt
+	struct Rectf
 	{
 	public:
-		RectInt() = default;
-		explicit RectInt(int left, int top, int width, int height);
-		explicit RectInt(const Point2Int& leftTop, int width, int height);
+		Rectf() = default;
+		explicit Rectf(float left, float top, float width, float height);
+		explicit Rectf(const Point2f& leftTop, float width, float height);
 
-		int left;
-		int top;
-		int width;
-		int height;
+		float left;
+		float top;
+		float width;
+		float height;
 	};
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-	struct EllipseInt
+	struct Ellipsef
 	{
-		EllipseInt() = default;
-		explicit EllipseInt(int xCenter, int yCenter, float xRadius, float yRadius);
-		explicit EllipseInt(const Point2Int& center, float xRadius, float yRadius);
+		Ellipsef() = default;
+		explicit Ellipsef(float xCenter, float yCenter, float xRadius, float yRadius);
+		explicit Ellipsef(const Point2f& center, float xRadius, float yRadius);
 
-		Point2Int center;
+		Point2f center;
 		float radiusX;
 		float radiusY;
 	};
 
-	struct CircleInt
+	struct Circlef
 	{
-		CircleInt() = default;
-		explicit CircleInt(int xCenter, int yCenter, float radius);
-		explicit CircleInt(const Point2Int& center, float radius);
+		Circlef() = default;
+		explicit Circlef(float xCenter, float yCenter, float radius);
+		explicit Circlef(const Point2f& center, float radius);
 
-		Point2Int center;
+		Point2f center;
 		float rad;
 	};
 
@@ -71,8 +71,8 @@ namespace jela
 	{
 		Vector2f() = default;
 		Vector2f(float x, float y);
-		Vector2f(const Point2Int& endPoint);
-		Vector2f(const Point2Int& startPoint, const Point2Int& endPoint);
+		Vector2f(const Point2f& endPoint);
+		Vector2f(const Point2f& startPoint, const Point2f& endPoint);
 
 		Vector2f operator-() const;
 		Vector2f operator+() const;
@@ -110,12 +110,12 @@ namespace jela
 	Vector2f operator*(float lhs, Vector2f rhs);
 	tostream& operator<< (tostream& lhs, const Vector2f& rhs);
 
-	Point2Int& operator+=(Point2Int& lhs, const Vector2f& rhs);
-	Point2Int operator+(const Point2Int& lhs, const Vector2f& rhs);
-	Point2Int& operator-=(Point2Int& lhs, const Vector2f& rhs);
-	Point2Int operator-(const Point2Int& lhs, const Vector2f& rhs);
+	Point2f& operator+=(Point2f& lhs, const Vector2f& rhs);
+	Point2f operator+(const Point2f& lhs, const Vector2f& rhs);
+	Point2f& operator-=(Point2f& lhs, const Vector2f& rhs);
+	Point2f operator-(const Point2f& lhs, const Vector2f& rhs);
 
-	Vector2f operator-(const Point2Int& lhs, const Point2Int& rhs);
+	Vector2f operator-(const Point2f& lhs, const Point2f& rhs);
 }
 
 #endif // !STRUCTS_H

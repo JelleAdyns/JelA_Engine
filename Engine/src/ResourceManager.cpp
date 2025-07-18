@@ -224,7 +224,7 @@ namespace jela
     }
 
 
-    TextFormat::TextFormat(int fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign)
+    TextFormat::TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign)
     {
 
         Font::m_pDWriteFactory->CreateTextFormat(
@@ -233,7 +233,7 @@ namespace jela
             bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
             italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL,
-            static_cast<FLOAT>(fontSize),
+            fontSize,
             L"en-us",
             &m_pTextFormat);
 
@@ -296,7 +296,7 @@ namespace jela
             weight,
             style,
             DWRITE_FONT_STRETCH_NORMAL,
-            static_cast<FLOAT>(size),
+            size,
             L"en-us",
             &m_pTextFormat);
 
@@ -317,7 +317,7 @@ namespace jela
         GetFont(_T("Verdana"), m_pDefaultFont);
         SetCurrentFont(m_pDefaultFont.pObject);
 
-        m_pDefaultTextFormat = std::make_unique<TextFormat>(12, false, false, TextFormat::HorAllignment::Left, TextFormat::VertAllignment::Top);
+        m_pDefaultTextFormat = std::make_unique<TextFormat>(12.f, false, false, TextFormat::HorAllignment::Left, TextFormat::VertAllignment::Top);
         SetCurrentTextFormat(m_pDefaultTextFormat.get());
     }
 

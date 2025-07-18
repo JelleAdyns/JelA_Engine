@@ -23,10 +23,10 @@ namespace jela
         virtual void KeyDownThisFrame(int) {}
         virtual void KeyUp(int) {}
         virtual void HandleControllerInput() {}
-        virtual void MouseDown(bool, int, int) {}
-        virtual void MouseUp(bool, int, int) {}
-        virtual void MouseMove(int, int, int) {}
-        virtual void MouseWheelTurn(int, int, int, int) {}
+        virtual void MouseDown(bool, float, float) {}
+        virtual void MouseUp(bool, float, float) {}
+        virtual void MouseMove(float, float, int) {}
+        virtual void MouseWheelTurn(float, float, int, int) {}
     };
 
 }

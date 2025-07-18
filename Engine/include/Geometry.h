@@ -31,43 +31,43 @@ namespace jela
 	class Polygon final : public Geometry
 	{
 	public:
-		Polygon(const std::vector<Point2Int>& points, bool closeSegment = true);
+		Polygon(const std::vector<Point2f>& points, bool closeSegment = true);
 		virtual ~Polygon() = default;
 
-		bool Recreate(const std::vector<Point2Int>& points, bool closeSegment = true);
+		bool Recreate(const std::vector<Point2f>& points, bool closeSegment = true);
 
 		virtual void ResetPosition() override;
 		virtual void Move(float x, float y) override { Move({ x,y }); }
 		virtual void Move(const Vector2f& translation) override;
 
-		std::vector<Point2Int> GetOriginalPoints() const;
-		const std::vector<Point2Int>& GetPoints() const{ return m_Points; };
-		bool IsPointInside(const Point2Int& point) const;
+		std::vector<Point2f> GetOriginalPoints() const;
+		const std::vector<Point2f>& GetPoints() const{ return m_Points; };
+		bool IsPointInside(const Point2f& point) const;
 	private:
-		void AdjustPoints(const std::function<void(Point2Int&)>& func);
+		void AdjustPoints(const std::function<void(Point2f&)>& func);
 
-		std::vector<Point2Int> m_Points{};
+		std::vector<Point2f> m_Points{};
 	};
 
 	class Arc final : public Geometry
 	{
 	public:
-		Arc(int centerX, int centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
-		Arc(const Point2Int& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
-		Arc(const Point2Int& point1, const Point2Int& point2, bool clockwise, bool closeSegment);
+		Arc(float centerX, float centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
+		Arc(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
+		Arc(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
 
 		virtual ~Arc() = default;
 
 		bool Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
 		bool RecreateByRadius(float radiusX, float radiusY, bool closeSegment);
 		bool RecreateByAngle(float startAngle, float angle, bool closeSegment);
-		bool Recreate(const Point2Int& point1, const Point2Int& point2, bool clockwise, bool closeSegment);
+		bool Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
 		
-		void SetPosition(const Point2Int& center) { SetPosition(center.x, center.y); }
-		void SetPosition(int centerX, int centerY);
+		void SetPosition(const Point2f& center) { SetPosition(center.x, center.y); }
+		void SetPosition(float centerX, float centerY);
 		
 		// The center (position) of an Arc object is equal to the translation.
-		Point2Int GetPosition() const { return Point2Int{ static_cast<int>(GetTranslation().x),static_cast<int>(GetTranslation().y) }; }
+		Point2f GetPosition() const { return Point2f{ GetTranslation().x, GetTranslation().y }; }
 		const Vector2f& GetRadius() const { return m_Radius; }
 		float GetStartAngle() const { return m_StartAngle; }
 		float GetAngle() const { return m_Angle; }
