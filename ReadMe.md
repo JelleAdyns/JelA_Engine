@@ -1,5 +1,5 @@
 # JelA Engine
-'place picture here'
+<img width="1920" height="1080" alt="JelA_Engine_Logo" src="https://github.com/user-attachments/assets/8e2bc0e8-e213-4594-b436-f017da230cdc" />
 
 Hi and welcome!
 
@@ -17,7 +17,7 @@ The JelA Engine is a personal project that serves the purpose of gaining a deepe
 If you want to check out some of my work, be sure to check out my [portfolio](https://www.jelleadyns.com/).
 
 ## Remarks
-The JelA Engine is **free to use** for all types of users. In case of experiencing **issues** or wanting to provide genuine **feedback**, you can always send me an e-mail via [jelle.adyns@gmail.com](mailto:jelle.adyns@gmail.com). I'd greatly appreciate the gesture : ).
+The JelA Engine is **free to use** for all types of users. In case of experiencing **issues** or wanting to provide genuine **feedback**, you can always send me an e-mail via [jelle.adyns@gmail.com](mailto:jelle.adyns@gmail.com) or use the Github 'Issues' tab. I'd greatly appreciate the gesture : ).
 ## Projects
 Here you can find personal projects that were made with the JelA Engine:
 - [The Clashing Elements: The Game](https://github.com/JelleAdyns/TheClashingElements-SaviorsOfTheMultiverse-Game) (Unofficial Engine version)
