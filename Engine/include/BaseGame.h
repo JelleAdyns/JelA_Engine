@@ -17,8 +17,8 @@ namespace jela
         virtual void Initialize() {};
         virtual void Cleanup() {};
 
-        virtual void Draw() const {}
         virtual void Tick() {}
+        virtual void Draw() const {}
         virtual void KeyDown(int) {}
         virtual void KeyDownThisFrame(int) {}
         virtual void KeyUp(int) {}

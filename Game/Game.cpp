@@ -9,11 +9,11 @@ void Game::Cleanup()
 {
 	
 }
-void Game::Draw() const
+void Game::Tick()
 {
 	
 }
-void Game::Tick()
+void Game::Draw() const
 {
 	
 }

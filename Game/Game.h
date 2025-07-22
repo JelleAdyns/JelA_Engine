@@ -17,8 +17,8 @@ public:
 
     virtual void Initialize() override;
     virtual void Cleanup() override;
-    virtual void Draw() const override;
     virtual void Tick() override;
+    virtual void Draw() const override;
     virtual void KeyDown(int virtualKeycode) override;
     virtual void KeyDownThisFrame(int virtualKeycode) override;
     virtual void KeyUp(int virtualKeycode) override;
