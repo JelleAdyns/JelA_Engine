@@ -9,6 +9,10 @@ namespace jela
 	class Geometry
 	{
 	public:
+		Geometry(const Geometry& other) = delete;
+		Geometry(Geometry&& other) noexcept = delete;
+		Geometry& operator=(const Geometry& other) = delete;
+		Geometry& operator=(Geometry&& other) noexcept = delete;
 
 		virtual void Move(float x, float y) { Move({ x,y }); }
 		virtual void Move(const Vector2f& translation) { m_Translation += translation; }
@@ -32,6 +36,11 @@ namespace jela
 	{
 	public:
 		Polygon(const std::vector<Point2f>& points, bool closeSegment = true);
+
+		Polygon(const Polygon& other) = delete;
+		Polygon(Polygon&& other) noexcept = delete;
+		Polygon& operator=(const Polygon& other) = delete;
+		Polygon& operator=(Polygon&& other) noexcept = delete;
 		virtual ~Polygon() = default;
 
 		bool Recreate(const std::vector<Point2f>& points, bool closeSegment = true);
@@ -56,6 +65,10 @@ namespace jela
 		Arc(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
 		Arc(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
 
+		Arc(const Arc& other) = delete;
+		Arc(Arc&& other) noexcept = delete;
+		Arc& operator=(const Arc& other) = delete;
+		Arc& operator=(Arc&& other) noexcept = delete;
 		virtual ~Arc() = default;
 
 		bool Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
