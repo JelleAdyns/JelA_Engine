@@ -3,6 +3,7 @@
 
 namespace jela
 {
+    enum class MouseButtons;
     class BaseGame
     {
     public:
@@ -23,10 +24,11 @@ namespace jela
         virtual void KeyDownThisFrame(int) {}
         virtual void KeyUp(int) {}
         virtual void HandleControllerInput() {}
-        virtual void MouseDown(bool, float, float) {}
-        virtual void MouseUp(bool, float, float) {}
-        virtual void MouseMove(float, float, int) {}
-        virtual void MouseWheelTurn(float, float, int, int) {}
+        virtual void MouseDown(MouseButtons, float, float, MouseButtons) {}
+        virtual void MouseUp(MouseButtons, float, float, MouseButtons) {}
+        virtual void MouseDoubleClick(MouseButtons, float, float, MouseButtons) {}
+        virtual void MouseMove(float, float, MouseButtons) {}
+        virtual void MouseWheelTurn(float, float, int, MouseButtons) {}
     };
 
 }

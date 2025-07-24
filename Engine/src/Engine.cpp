@@ -5,6 +5,11 @@
 
 namespace jela
 {
+    bool operator==(jela::MouseButtons lhs, jela::MouseButtons rhs)
+    {
+        return (static_cast<int>(lhs) & static_cast<int>(rhs)) > 0;
+    }
+
     LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         return ENGINE.HandleMessages(hWnd, message, wParam, lParam);
@@ -54,18 +59,15 @@ namespace jela
         bool wasHandled = false;
         if (m_pGame)
         {
-
-            float xCoordinate = std::round(
-                (GET_X_LPARAM(lParam) - m_ViewPortTranslationX) / 
-                (m_WindowWidth - m_ViewPortTranslationX * 2) * m_GameWidth);
-
-            float yCoordinate = std::round(
-                (GET_Y_LPARAM(lParam) - m_ViewPortTranslationY) /
-                (m_WindowHeight - m_ViewPortTranslationY * 2) *m_GameHeight);
+            float xCoordinate = (GET_X_LPARAM(lParam) - m_ViewPortTranslationX) / (m_WindowWidth - m_ViewPortTranslationX * 2) * m_GameWidth;
+            xCoordinate = std::round(xCoordinate);
+            float yCoordinate = (GET_Y_LPARAM(lParam) - m_ViewPortTranslationY) / (m_WindowHeight - m_ViewPortTranslationY * 2) * m_GameHeight;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
             yCoordinate = m_GameHeight - yCoordinate;
 #endif // MATHEMATICAL_COORDINATESYSTEM
+
+            yCoordinate = std::round(yCoordinate);
 
             switch (message)
             {
@@ -95,16 +97,18 @@ namespace jela
                 {
                     //If error occurs, it will be returned by EndDraw()
                     m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
-    
+
                     m_WindowWidth = static_cast<int>(std::round(GetRenderTargetSize().width));
                     m_WindowHeight = static_cast<int>(std::round(GetRenderTargetSize().height));
-    
+
                     float scaleX{ m_WindowWidth / (m_GameWidth * m_WindowScale) };
                     float scaleY{ m_WindowHeight / (m_GameHeight * m_WindowScale) };
                     float minScale{ std::min<float>(scaleX,scaleY) };
 
                     m_ViewPortTranslationX = (m_WindowWidth - (m_GameWidth * m_WindowScale) * minScale) / 2.f;
                     m_ViewPortTranslationY = (m_WindowHeight - (m_GameHeight * m_WindowScale) * minScale) / 2.f;
+
+                    CalculateWindowPos();
 
                     Paint();
                 }
@@ -122,6 +126,14 @@ namespace jela
             break;
             case WM_DISPLAYCHANGE:
             {
+                Paint();
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+            case WM_MOVE:
+            {
+                CalculateWindowPos();
                 Paint();
             }
             result = 0;
@@ -157,39 +169,83 @@ namespace jela
             result = 0;
             wasHandled = true;
             break;
-    
+
+            case WM_LBUTTONDBLCLK:
+                m_pGame->MouseDoubleClick(MouseButtons::Left, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
+                result = 0;
+                wasHandled = true;
+                break;
             case WM_LBUTTONDOWN:
-                m_pGame->MouseDown(true, xCoordinate, yCoordinate);
+                m_pGame->MouseDown(MouseButtons::Left, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
                 result = 0;
                 wasHandled = true;
                 break;
             case WM_LBUTTONUP:
-                m_pGame->MouseUp(true, xCoordinate, yCoordinate);
+                m_pGame->MouseUp(MouseButtons::Left, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_RBUTTONDBLCLK:
+                m_pGame->MouseDoubleClick(MouseButtons::Right, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
                 result = 0;
                 wasHandled = true;
                 break;
             case WM_RBUTTONDOWN:
-                m_pGame->MouseDown(false, xCoordinate, yCoordinate);
+                m_pGame->MouseDown(MouseButtons::Right, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
                 result = 0;
                 wasHandled = true;
                 break;
             case WM_RBUTTONUP:
-                m_pGame->MouseUp(false, xCoordinate, yCoordinate);
+                m_pGame->MouseUp(MouseButtons::Right, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_MBUTTONDBLCLK:
+                m_pGame->MouseDoubleClick(MouseButtons::Middle, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_MBUTTONDOWN:
+                m_pGame->MouseDown(MouseButtons::Middle, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
+                result = 0;
+                wasHandled = true;
+                break;
+            case WM_MBUTTONUP:
+                m_pGame->MouseUp(MouseButtons::Middle, xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
                 result = 0;
                 wasHandled = true;
                 break;
             case WM_MOUSEMOVE:
-                m_pGame->MouseMove(xCoordinate, yCoordinate, static_cast<int>(wParam));
+                m_pGame->MouseMove(xCoordinate, yCoordinate, static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
                 result = 0;
                 wasHandled = true;
                 break;
             case WM_MOUSEWHEEL:
-                m_pGame->MouseWheelTurn(xCoordinate, yCoordinate, GET_WHEEL_DELTA_WPARAM(wParam), LOWORD(wParam));
+            {
+                float screenPosX = (GET_X_LPARAM(lParam) - m_WindowPosX - m_ViewPortTranslationX);
+                if (!m_IsFullscreen) screenPosX -= GetSystemMetrics(SM_CXFIXEDFRAME) + m_WindowPosOffset;
+                float screenWindowWidth = (m_WindowWidth - m_ViewPortTranslationX * 2);
+
+                float xWheelCoordinate = screenPosX / screenWindowWidth * m_GameWidth;
+                xWheelCoordinate = std::round(xWheelCoordinate);
+
+                float screenPosY = (GET_Y_LPARAM(lParam) - m_WindowPosY - m_ViewPortTranslationY);
+                if (!m_IsFullscreen) screenPosY -= GetSystemMetrics(SM_CXFIXEDFRAME) + m_WindowPosOffset + GetSystemMetrics(SM_CYCAPTION);
+                float screenWindowHeight = (m_WindowHeight - m_ViewPortTranslationY * 2);
+
+                float yWheelCoordinate = screenPosY / screenWindowHeight * m_GameHeight;
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+                yWheelCoordinate = m_GameHeight - yWheelCoordinate;
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+                yWheelCoordinate = std::round(yWheelCoordinate);
+            
+                m_pGame->MouseWheelTurn(xWheelCoordinate, yWheelCoordinate, GET_WHEEL_DELTA_WPARAM(wParam), static_cast<MouseButtons>(GET_KEYSTATE_WPARAM(wParam)));
                 result = 0;
                 wasHandled = true;
+            }
                 break;
-
-
             case WM_DESTROY:
                 PostQuitMessage(0);
                 result = 1;
@@ -242,7 +298,7 @@ namespace jela
 
             if (m_IsVSyncEnabled || currentCount.QuadPart >= m_TriggerCount.QuadPart)
             {
-               SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
+                SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
                 lastCount = currentCount;
 
                 if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
@@ -320,7 +376,7 @@ namespace jela
     
             wcex.cbSize = sizeof(WNDCLASSEX);
     
-            wcex.style = CS_HREDRAW | CS_VREDRAW;
+            wcex.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
             wcex.lpfnWndProc = WndProc;
             wcex.cbClsExtra = 0;
             wcex.cbWndExtra = 0;
@@ -1105,17 +1161,17 @@ namespace jela
             m_WindowWidth = static_cast<int>(m_GameWidth * m_WindowScale);
             m_WindowHeight = static_cast<int>(m_GameHeight * m_WindowScale);
 
-            int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + m_WindowWidth + 10) };
+            int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + m_WindowWidth + m_WindowPosOffset * 2) };
             int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
-                                GetSystemMetrics(SM_CYCAPTION) + m_WindowHeight + 10) };
+                                GetSystemMetrics(SM_CYCAPTION) + m_WindowHeight + m_WindowPosOffset * 2) };
            
             windowWidth = static_cast<int>(windowWidth * dpi / 96.f);
             windowHeight = static_cast<int>(windowHeight * dpi / 96.f);
             
-            int xPos{ mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - windowWidth / 2 };
-            int yPos{ mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - windowHeight / 2 };
-
-            ::SetWindowPos(m_hWindow, NULL, xPos, yPos, windowWidth, windowHeight, SWP_FRAMECHANGED);
+            m_WindowPosX = mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - windowWidth / 2;
+            m_WindowPosY = mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - windowHeight / 2;
+            
+            ::SetWindowPos(m_hWindow, NULL, m_WindowPosX, m_WindowPosY, windowWidth, windowHeight, SWP_FRAMECHANGED);
         }
     
         if (m_pGame)
@@ -1140,16 +1196,25 @@ namespace jela
             m_WindowWidth = static_cast<int>(mi.rcMonitor.right - mi.rcMonitor.left);
             m_WindowHeight = static_cast<int>(mi.rcMonitor.bottom - mi.rcMonitor.top);
 
-            ::SetWindowPos(m_hWindow, NULL, mi.rcMonitor.left, mi.rcMonitor.top,
-                m_WindowWidth,
-                m_WindowHeight,
-                SWP_FRAMECHANGED);
+            m_WindowPosX = mi.rcMonitor.left;
+            m_WindowPosY = mi.rcMonitor.top;
+
+            ::SetWindowPos(m_hWindow, NULL, m_WindowPosX, m_WindowPosY, m_WindowWidth, m_WindowHeight, SWP_FRAMECHANGED);
         }
         if (m_pGame)
         {
             ShowWindow(m_hWindow, SW_DENORMAL);
             UpdateWindow(m_hWindow);
         }
+    }
+    void Engine::CalculateWindowPos()
+    {
+        LPRECT lpRect{ new RECT{} };
+        ::GetWindowRect(m_hWindow, lpRect);
+        m_WindowPosX = lpRect->left;
+        m_WindowPosY = lpRect->top;
+
+        delete lpRect;
     }
     void Engine::SetDeltaTime(float elapsedSec)
     {

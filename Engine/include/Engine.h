@@ -16,6 +16,16 @@
 
 namespace jela
 {
+    enum class MouseButtons
+    {
+        Left = MK_LBUTTON,
+        Right = MK_RBUTTON,
+        Shift = MK_SHIFT,
+        Control = MK_CONTROL,
+        Middle = MK_MBUTTON
+    };
+    bool operator==(jela::MouseButtons lhs, jela::MouseButtons rhs);
+
 
     class Engine final
     {
@@ -209,6 +219,7 @@ namespace jela
         HRESULT MakeWindow();
         HRESULT CreateRenderTargets();
         void ResetRenderTargets();
+        void CalculateWindowPos();
 
         //Win32
         HWND                            m_hWindow;
@@ -243,6 +254,9 @@ namespace jela
         int                             m_GameHeight{};
         int                             m_WindowWidth{};
         int                             m_WindowHeight{};
+        int                             m_WindowPosX{};
+        int                             m_WindowPosY{};
+        int                             m_WindowPosOffset{5};
 
         float                           m_SecondsPerFrame{};
         float                           m_DeltaTime{};

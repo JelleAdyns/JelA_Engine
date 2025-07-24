@@ -60,21 +60,19 @@ void Game::KeyUp(int /*virtualKeycode*/)
 void Game::HandleControllerInput()
 {
 }
-void Game::MouseDown(bool /*isLeft*/, float /*x*/, float /*y*/)
+void Game::MouseDown(jela::MouseButtons /*buttonDownThisFrame*/, float /*x*/, float /*y*/, jela::MouseButtons /*allDownButtons*/)
 {
-
 }
-void Game::MouseUp(bool /*isLeft*/, float /*x*/, float /*y*/)
+void Game::MouseUp(jela::MouseButtons /*buttonDownThisFrame*/, float /*x*/, float /*y*/, jela::MouseButtons /*allDownButtons*/)
 {
-	
 }
-void Game::MouseMove(float /*x*/, float /*y*/, int /*keyDown*/)
+void Game::MouseDoubleClick(jela::MouseButtons /*buttonDownThisFrame*/, float /*x*/, float /*y*/, jela::MouseButtons /*allDownButtons*/)
 {
-	//See this link to check which keys could be represented in the keyDown parameter
-	//https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
 }
-void Game::MouseWheelTurn(float /*x*/, float /*y*/, int /*turnDistance*/, int /*keyDown*/)
+void Game::MouseMove(float /*x*/, float /*y*/, jela::MouseButtons /*allDownButtons*/)
 {
-	//See this link to check which keys could be represented in the keyDown parameter and what the turnDistance is for
-	//https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousewheel
+}
+void Game::MouseWheelTurn(float /*x*/, float /*y*/, int /*turnDistance*/, jela::MouseButtons /*allDownButtons*/)
+{
+	//See this link for more information:https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousewheel
 }

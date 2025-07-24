@@ -23,10 +23,11 @@ public:
     virtual void KeyDownThisFrame(int virtualKeycode) override;
     virtual void KeyUp(int virtualKeycode) override;
     virtual void HandleControllerInput() override;
-    virtual void MouseDown(bool isLeft, float x, float y) override;
-    virtual void MouseUp(bool isLeft, float x, float y) override;
-    virtual void MouseMove(float x, float y, int keyDown) override;
-    virtual void MouseWheelTurn(float x, float y, int turnDistance, int keyDown) override;
+    virtual void MouseDown(jela::MouseButtons buttonDownThisFrame, float x, float y, jela::MouseButtons allDownButtons) override;
+    virtual void MouseUp(jela::MouseButtons buttonUpThisFrame, float x, float y, jela::MouseButtons allDownButtons) override;
+    virtual void MouseDoubleClick(jela::MouseButtons buttonUpThisFrame, float x, float y, jela::MouseButtons allDownButtons) override;
+    virtual void MouseMove(float x, float y, jela::MouseButtons allDownButtons) override;
+    virtual void MouseWheelTurn(float x, float y, int turnDistance, jela::MouseButtons allDownButtons) override;
 private:
 
 };
