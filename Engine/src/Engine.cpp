@@ -7,7 +7,7 @@ namespace jela
 {
     bool operator==(jela::MouseButtons lhs, jela::MouseButtons rhs)
     {
-        return (static_cast<int>(lhs) & static_cast<int>(rhs)) > 0;
+        return (static_cast<int>(lhs) & static_cast<int>(rhs)) == static_cast<int>(rhs);
     }
 
     LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -301,7 +301,7 @@ namespace jela
                 SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
                 lastCount = currentCount;
 
-                if (IsAnyButtonPressed()) m_IsKeyboardActive = false;
+                if (IsAnyControllerButtonPressed()) m_IsKeyboardActive = false;
 
                 for (auto& controller : m_pVecControllers)
                 {
@@ -1359,9 +1359,7 @@ namespace jela
         {
             m_pVecControllers.emplace_back(std::make_unique<Controller>(static_cast<uint8_t>(m_pVecControllers.size())));
         }
-    #ifdef _DEBUG
         else OutputDebugString(_T( "Max amount of controllers already reached.\n"));
-    #endif // _DEBUG
     }
     
     void Engine::PopController()
@@ -1374,7 +1372,7 @@ namespace jela
         m_pVecControllers.clear();
     }
     
-    bool Engine::IsAnyButtonPressed() const
+    bool Engine::IsAnyControllerButtonPressed() const
     {
         for (const auto& pController : m_pVecControllers)
         {
@@ -1397,7 +1395,32 @@ namespace jela
     {
         return m_pVecControllers.at(controllerIndex)->IsPressed(button);
     }
-    
+    void Engine::VibrateController(int strengthPercentage, uint8_t controllerIndex) const
+    {
+        if (controllerIndex < m_pVecControllers.size())
+        {
+            m_pVecControllers.at(controllerIndex)->Vibrate(strengthPercentage);
+        }
+        else OutputDebugString((_T("Trying to vibrate controller, but controller for controllerIndex ") + to_tstring(controllerIndex) + _T(" not found.\n")).c_str());
+    }
+    Vector2f Engine::GetControllerJoystickValue(bool leftJoystick, uint8_t controllerIndex) const
+    {
+        return m_pVecControllers.at(controllerIndex)->GetJoystickValue(leftJoystick);
+    }
+    float Engine::GetControllerTriggerValue(bool leftTrigger, uint8_t controllerIndex) const
+    {
+        return m_pVecControllers.at(controllerIndex)->GetTriggerValue(leftTrigger);
+    }
+    void Engine::SetJoystickDeadzone(bool left, int percentage, uint8_t controllerIndex)
+    {
+        return m_pVecControllers.at(controllerIndex)->SetJoystickDeadzone(left, percentage);
+    }
+    void Engine::SetTriggerDeadzone(bool left, int percentage, uint8_t controllerIndex)
+    {
+        return m_pVecControllers.at(controllerIndex)->SetTriggerDeadzone(left, percentage);
+    }
+
+
     void Engine::ShowMouse(bool show)
     {
         ShowCursor(show);

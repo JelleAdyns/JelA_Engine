@@ -43,6 +43,8 @@ namespace jela
 		bool IsUpThisFrame(Button button)  const;
 		bool IsPressed(Button button)  const;
 
+		void SetJoystickDeadzone(bool left, int percentage);
+		void SetTriggerDeadzone(bool left, int percentage);
 		/*void AddCommand(const std::shared_ptr<Command>& pCommand, ControllerButton button, KeyState keyState);
 		void RemoveCommand(ControllerButton button, KeyState keyState);
 		void RemoveAllCommands();
@@ -50,10 +52,11 @@ namespace jela
 		void DeactivateAllCommands();
 		void ActivateAllCommands();*/
 
-		void Vibrate(int strengthPercantage);
-		Vector2f GetJoystickValue(bool leftJoystick);
-		float GetTriggerValue(bool leftTrigger);
+		void Vibrate(int strengthPercentage) const;
+		Vector2f GetJoystickValue(bool leftJoystick) const;
+		float GetTriggerValue(bool leftTrigger) const;
 		static int AmountOfConnectedControllers();
+
 	private:
 
 		class ControllerImpl;

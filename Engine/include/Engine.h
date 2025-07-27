@@ -140,10 +140,15 @@ namespace jela
         void AddController();
         void PopController();
         void PopAllControllers();
-        bool IsAnyButtonPressed() const;
+        bool IsAnyControllerButtonPressed() const;
         bool ButtonDownThisFrame(Controller::Button button, uint8_t controllerIndex) const;
         bool ButtonUpThisFrame(Controller::Button button, uint8_t controllerIndex) const;
-        bool ButtonPressed(Controller::Button button, uint8_t controllerIndex)  const;
+        bool ButtonPressed(Controller::Button button, uint8_t controllerIndex) const;
+        void VibrateController(int strengthPercentage, uint8_t controllerIndex) const;
+        Vector2f GetControllerJoystickValue(bool leftJoystick, uint8_t controllerIndex) const;
+        float GetControllerTriggerValue(bool leftTrigger, uint8_t controllerIndex) const;
+        void SetJoystickDeadzone(bool left, int percentage, uint8_t controllerIndex);
+        void SetTriggerDeadzone(bool left, int percentage, uint8_t controllerIndex);
 
         // Transform stuff
 

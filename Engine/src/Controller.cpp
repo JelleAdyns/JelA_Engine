@@ -49,6 +49,9 @@ namespace jela
 		bool IsUpThisFrameImpl(Button button)  const;
 		bool IsPressedImpl(Button button)  const;
 
+		void SetJoystickDeadzone(bool left, int percentage);
+		void SetTriggerDeadzone(bool left, int percentage);
+
 		//void AddCommandImpl(const std::shared_ptr<Command>& pCommand, ControllerButton button, KeyState keyState);
 		//void RemoveCommandImpl(ControllerButton button, KeyState keyState);
 		//void RemoveAllCommandsImpl();
@@ -56,9 +59,9 @@ namespace jela
 		//void DeactivateAllCommandsImpl();
 		//void ActivateAllCommandsImpl();
 
-		void VibrateImpl(int strengthPercentage);
-		Vector2f GetJoystickValueImpl(bool leftJoystick);
-		float GetTriggerValueImpl(bool leftJoystick);
+		void VibrateImpl(int strengthPercentage) const;
+		Vector2f GetJoystickValueImpl(bool leftJoystick) const;
+		float GetTriggerValueImpl(bool leftJoystick) const;
 
 		static int AmountOfConnectedControllersImpl();
 
@@ -68,7 +71,10 @@ namespace jela
 		XINPUT_STATE m_CurrentState{};
 		int m_ButtonsPressedThisFrame{};
 		int m_ButtonsReleasedThisFrame{};
-
+		int m_LJoystickDeadZonePercentage{};
+		int m_RJoystickDeadZonePercentage{};
+		int m_LTriggerDeadZonePercentage{};
+		int m_RTriggerDeadZonePercentage{};
 		/*struct ControllerState
 		{
 			ControllerButton button;
@@ -109,9 +115,7 @@ namespace jela
 
 		static float m_MaxVibrationValue;
 		static float m_MaxJoystickValue;
-		static float m_JoystickDeadZonePercentage;
 		static float m_MaxTriggerValue;
-		static float m_TriggerDeadZonePercentage;
 
 		//void HandleInputImpl() const;
 	};
@@ -119,9 +123,8 @@ namespace jela
 
 	float Controller::ControllerImpl::m_MaxVibrationValue = static_cast<float>(USHRT_MAX);
 	float Controller::ControllerImpl::m_MaxJoystickValue = static_cast<float>(SHRT_MAX);
-	float Controller::ControllerImpl::m_JoystickDeadZonePercentage = 30.f;
 	float Controller::ControllerImpl::m_MaxTriggerValue = static_cast<float>(_UI8_MAX);
-	float Controller::ControllerImpl::m_TriggerDeadZonePercentage = 50.f;
+
 
 	//void Controller::ControllerImpl::HandleInputImpl() const
 	//{
@@ -162,30 +165,30 @@ namespace jela
 		xR = currentState.Gamepad.sThumbRX / m_MaxJoystickValue;
 		yR = currentState.Gamepad.sThumbRY / m_MaxJoystickValue;
 
-		if (std::abs(xL) < m_JoystickDeadZonePercentage / 100.f) xL = 0;
-		if (std::abs(yL) < m_JoystickDeadZonePercentage / 100.f) yL = 0;
-		if (std::abs(xR) < m_JoystickDeadZonePercentage / 100.f) xR = 0;
-		if (std::abs(yR) < m_JoystickDeadZonePercentage / 100.f) yR = 0;
+		if (std::abs(xL) < m_LJoystickDeadZonePercentage / 100.f) xL = 0;
+		if (std::abs(yL) < m_LJoystickDeadZonePercentage / 100.f) yL = 0;
+		if (std::abs(xR) < m_RJoystickDeadZonePercentage / 100.f) xR = 0;
+		if (std::abs(yR) < m_RJoystickDeadZonePercentage / 100.f) yR = 0;
 
 		//Triggers
 		float valueL, valueR;
 		valueL = currentState.Gamepad.bLeftTrigger / m_MaxTriggerValue;
 		valueR = currentState.Gamepad.bRightTrigger / m_MaxTriggerValue;
 
-		if (valueL < m_TriggerDeadZonePercentage / 100.f) valueL = 0;
-		if (valueR < m_TriggerDeadZonePercentage / 100.f) valueR = 0;
+		if (valueL < m_LTriggerDeadZonePercentage / 100.f) valueL = 0;
+		if (valueR < m_RTriggerDeadZonePercentage / 100.f) valueR = 0;
 
+		constexpr float pressTreshhold{ 0.2f };
 		return (buttonChanges ||
-			xL >= 0.2f ||
-			yL >= 0.2f ||
-			xR >= 0.2f ||
-			yR >= 0.2f ||
-			valueL >= 0.2f ||
-			valueR >= 0.2f);
+			xL >= pressTreshhold ||
+			yL >= pressTreshhold ||
+			xR >= pressTreshhold ||
+			yR >= pressTreshhold ||
+			valueL >= pressTreshhold ||
+			valueR >= pressTreshhold);
 	}
 	void Controller::ControllerImpl::ProcessInputImpl()
 	{
-
 		m_PreviousState = m_CurrentState;
 		m_CurrentState = XINPUT_STATE{};
 		XInputGetState(m_ControllerIndex, &m_CurrentState);
@@ -194,8 +197,6 @@ namespace jela
 		m_ButtonsPressedThisFrame = buttonChanges & m_CurrentState.Gamepad.wButtons;
 		m_ButtonsReleasedThisFrame = buttonChanges & (~m_CurrentState.Gamepad.wButtons);
 		//HandleInputImpl();
-
-
 	}
 
 	bool Controller::ControllerImpl::IsDownThisFrameImpl(Button button) const
@@ -209,6 +210,20 @@ namespace jela
 	bool Controller::ControllerImpl::IsPressedImpl(Button button) const
 	{
 		return m_CurrentState.Gamepad.wButtons & static_cast<int>(button);
+	}
+
+	void Controller::ControllerImpl::SetJoystickDeadzone(bool left, int percentage)
+	{
+		assert((percentage >= 0 && percentage <= 100) && _T("Percentage value needs to be between 0 and 100."));
+		if (left) m_LJoystickDeadZonePercentage = percentage;
+		else m_RJoystickDeadZonePercentage = percentage;
+	}
+
+	void Controller::ControllerImpl::SetTriggerDeadzone(bool left, int percentage)
+	{
+		assert((percentage >= 0 && percentage <= 100) && _T("Percentage value needs to be between 0 and 100."));
+		if (left) m_LTriggerDeadZonePercentage = percentage;
+		else m_RTriggerDeadZonePercentage = percentage;
 	}
 
 	//void Controller::ControllerImpl::AddCommandImpl(const std::shared_ptr<Command>& pCommand, ControllerButton button, KeyState keyState)
@@ -253,42 +268,51 @@ namespace jela
 	//}
 	//
 
-	void Controller::ControllerImpl::VibrateImpl(int strengthPercentage)
+	void Controller::ControllerImpl::VibrateImpl(int strengthPercentage) const
 	{
+		assert((strengthPercentage >= 0 && strengthPercentage <= 100) && _T("Percentage value needs to be between 0 and 100."));
 		XINPUT_VIBRATION vibration;
 		ZeroMemory(&vibration, sizeof(XINPUT_VIBRATION));
-		vibration.wLeftMotorSpeed = static_cast<WORD>(m_MaxVibrationValue / 100 * strengthPercentage);
-		vibration.wRightMotorSpeed = static_cast<WORD>(m_MaxVibrationValue / 100 * strengthPercentage);
+		float percentage{ strengthPercentage / 100.f };
+		vibration.wLeftMotorSpeed = static_cast<WORD>(m_MaxVibrationValue * percentage);
+		vibration.wRightMotorSpeed = static_cast<WORD>(m_MaxVibrationValue * percentage);
 		XInputSetState(m_ControllerIndex, &vibration);
 	}
 
-	Vector2f Controller::ControllerImpl::GetJoystickValueImpl(bool leftJoystick)
+	Vector2f Controller::ControllerImpl::GetJoystickValueImpl(bool leftJoystick) const
 	{
 		float x, y;
 		if (leftJoystick)
 		{
 			x = m_CurrentState.Gamepad.sThumbLX / m_MaxJoystickValue;
-			y = m_CurrentState.Gamepad.sThumbLY / m_MaxJoystickValue;
+			y = m_CurrentState.Gamepad.sThumbLY / m_MaxJoystickValue;	
+			if (std::abs(x) < m_LJoystickDeadZonePercentage / 100.f) x = 0;
+			if (std::abs(y) < m_LJoystickDeadZonePercentage / 100.f) y = 0;
 		}
 		else
 		{
 			x = m_CurrentState.Gamepad.sThumbRX / m_MaxJoystickValue;
 			y = m_CurrentState.Gamepad.sThumbRY / m_MaxJoystickValue;
+			if (std::abs(x) < m_RJoystickDeadZonePercentage / 100.f) x = 0;
+			if (std::abs(y) < m_RJoystickDeadZonePercentage / 100.f) y = 0;
 		}
-
-		if (std::abs(x) < m_JoystickDeadZonePercentage / 100.f) x = 0;
-		if (std::abs(y) < m_JoystickDeadZonePercentage / 100.f) y = 0;
 
 		return Vector2f{ x, -y };
 	}
 
-	float Controller::ControllerImpl::GetTriggerValueImpl(bool leftJoystick)
+	float Controller::ControllerImpl::GetTriggerValueImpl(bool leftJoystick) const
 	{
 		float value;
-		if (leftJoystick) value = m_CurrentState.Gamepad.bLeftTrigger / m_MaxTriggerValue;
-		else value = m_CurrentState.Gamepad.bRightTrigger / m_MaxTriggerValue;
-
-		if (value < m_TriggerDeadZonePercentage / 100.f) value = 0;
+		if (leftJoystick)
+		{
+			value = m_CurrentState.Gamepad.bLeftTrigger / m_MaxTriggerValue;
+			if (value < m_LTriggerDeadZonePercentage / 100.f) value = 0;
+		}
+		else
+		{
+			value = m_CurrentState.Gamepad.bRightTrigger / m_MaxTriggerValue;
+			if (value < m_RTriggerDeadZonePercentage / 100.f) value = 0;
+		}
 
 		return value;
 	}
@@ -341,6 +365,14 @@ namespace jela
 		return m_pImpl->IsPressedImpl(button);
 	}
 
+	void Controller::SetJoystickDeadzone(bool left, int percentage)
+	{
+		m_pImpl->SetJoystickDeadzone(left, percentage);
+	}
+	void Controller::SetTriggerDeadzone(bool left, int percentage)
+	{
+		m_pImpl->SetTriggerDeadzone(left, percentage);
+	}
 	//void Controller::AddCommand(const std::shared_ptr<Command>& pCommand, ControllerButton button, KeyState keyState)
 	//{
 	//	m_pImpl->AddCommandImpl(pCommand, button, keyState);
@@ -366,17 +398,17 @@ namespace jela
 	//	m_pImpl->ActivateAllCommandsImpl();
 	//}
 
-	void Controller::Vibrate(int strengthPercantage)
+	void Controller::Vibrate(int strengthPercentage) const
 	{
-		m_pImpl->VibrateImpl(strengthPercantage);
+		m_pImpl->VibrateImpl(strengthPercentage);
 	}
 
-	Vector2f Controller::GetJoystickValue(bool leftJoystick)
+	Vector2f Controller::GetJoystickValue(bool leftJoystick) const
 	{
 		return m_pImpl->GetJoystickValueImpl(leftJoystick);
 	}
 
-	float Controller::GetTriggerValue(bool leftTrigger)
+	float Controller::GetTriggerValue(bool leftTrigger) const
 	{
 		return m_pImpl->GetTriggerValueImpl(leftTrigger);
 	}
