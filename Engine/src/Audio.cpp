@@ -38,6 +38,8 @@ namespace jela
 		{
 			m_pPlayer->Stop();
 			m_pPlayer->Shutdown();
+
+			CPlayer::ReleaseVolume();
 			SafeRelease(&m_pPlayer);
 		}
 
@@ -162,8 +164,16 @@ namespace jela
 		void ToggleMuteImpl()
 		{
 			m_IsMute = !m_IsMute;
-			if (m_IsMute) PauseAllSoundsImpl();
-			else ResumeAllSoundsImpl();
+			
+			static uint8_t previousVolume{};
+
+			if (m_IsMute)
+			{
+				previousVolume = GetMasterVolumeImpl();
+				SetMasterVolumeImpl(0);
+			}
+			else SetMasterVolumeImpl(previousVolume);
+
 		}
 		void PauseSoundImpl(SoundID id)
 		{
