@@ -253,7 +253,17 @@ namespace jela
                     hr = OnNewPresentation(pEvent);
                     break;
                 case MESessionTopologySet:
-                    hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
+                
+                    if (m_pMasterVolume)
+                    { 
+                        float volume{};
+                        m_pMasterVolume->GetMasterVolume(&volume);
+                        SafeRelease(&m_pMasterVolume);
+                        hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
+                        if (m_pMasterVolume) m_pMasterVolume->SetMasterVolume(volume);
+                    } 
+                    else hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
+                
                     break;
 
                 default:
@@ -306,8 +316,18 @@ namespace jela
             case MENewPresentation:
                 hr = OnNewPresentation(pEvent);
                 break;
-            case MESessionTopologySet:
-                hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
+            case MESessionTopologySet: 
+
+                if (m_pMasterVolume)
+                {
+                    float volume{};
+                    m_pMasterVolume->GetMasterVolume(&volume);
+                    SafeRelease(&m_pMasterVolume);
+                    hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
+                    if (m_pMasterVolume) m_pMasterVolume->SetMasterVolume(volume);
+                }
+                else hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
+
                 break;
 
             default:
@@ -332,7 +352,10 @@ namespace jela
         uint8_t newVolume = std::min(m_MaxVolume, std::max(m_MinVolume, volumePercentage));
         return m_pMasterVolume->SetMasterVolume(newVolume / static_cast<float>(m_MaxVolume));
     }
-
+    void CPlayer::ReleaseVolume()
+    {
+        SafeRelease(&m_pMasterVolume);
+    }
     //  Release all resources held by this object.
     HRESULT CPlayer::Shutdown()
     {
@@ -357,7 +380,7 @@ namespace jela
         HRESULT hr = pEvent->GetUINT32(MF_EVENT_TOPOLOGY_STATUS, &status);
         if (SUCCEEDED(hr) && (status == MF_TOPOSTATUS_READY))
         {
-            m_state = PlayerState::ReadyToStart; //Setting the state 'stopped' because we want to manually play the file
+            m_state = PlayerState::ReadyToStart; //Setting the state 'ReadyToStart' because we want to manually play the file
             return hr;
         }
 

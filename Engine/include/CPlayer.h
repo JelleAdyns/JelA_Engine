@@ -56,10 +56,13 @@ namespace jela
         HRESULT                         Shutdown();
         HRESULT                         HandleEvent(UINT_PTR pEventPtr);
         PlayerState                     GetState() const { return m_state; }
+
+        // Volume
         static constexpr uint8_t        GetMaxVolume() { return m_MaxVolume; }
         static constexpr uint8_t        GetMinVolume() { return m_MinVolume; }
         static uint8_t                  GetVolume();
         static HRESULT                  SetVolume(uint8_t volumePercentage);
+        static void                     ReleaseVolume();
 
         static const UINT WM_APP_PLAYER_EVENT = WM_APP + 1;
     protected:
@@ -88,8 +91,8 @@ namespace jela
         long                    m_nRefCount;        // Reference count.
         bool                    m_Repeat;
 
-        IMFMediaSession* m_pSession;
-        IMFMediaSource* m_pSource;
+        IMFMediaSession*        m_pSession;
+        IMFMediaSource*         m_pSource;
 
         HWND                    m_hwndAudio;        // Audio window.
         PlayerState             m_state;            // Current state of the media session.
