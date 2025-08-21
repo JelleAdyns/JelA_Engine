@@ -1,4 +1,5 @@
 #include "Structs.h"
+#include <numbers>
 
 namespace jela
 {
@@ -7,13 +8,13 @@ namespace jela
 		x{ x },
 		y{ y }
 	{}
-	bool Point2f::operator==(const Point2f& rhs)
+	bool Point2f::operator==(const Point2f& rhs) const
 	{
-		return x == rhs.x and y == rhs.y;
+		return (abs(x - rhs.x) < FLT_EPSILON) && (abs(y - rhs.y) < FLT_EPSILON);
 	}
-	bool Point2f::operator!=(const Point2f& rhs)
+	bool Point2f::operator!=(const Point2f& rhs) const
 	{
-		return x != rhs.x or y != rhs.y;
+		return !(*this == rhs);
 	}
 
 
@@ -95,16 +96,17 @@ namespace jela
 	}
 	float Vector2f::AngleBetween(const Vector2f& first, const Vector2f& second)
 	{
-		return atan2(first.x * second.y - second.x * first.y, first.x * second.x + first.y * second.y);
+		return atan2(first.x * second.y - second.x * first.y, first.x * second.x + first.y * second.y) * 180 / std::numbers::pi_v<float>;
 	}
 	Vector2f Vector2f::Reflect(const Vector2f& vector, const Vector2f& surfaceNormal)
 	{
-		return vector - (2.f * Dot(vector, surfaceNormal) * surfaceNormal);
+		return vector - (2.f * Dot(vector, surfaceNormal.Normalized()) * surfaceNormal.Normalized());
 	}
 
-	tstring Vector2f::ToString() const
+	tstring Vector2f::ToString(uint8_t decimalPrecision) const
 	{
-		return _T("( ") + to_tstring(x) + _T(", ") + to_tstring(y) + _T(" )");
+		return _T("( ") + std::format(_T("{:.{}f}"), x, decimalPrecision) +
+			_T(", ") + std::format(_T("{:.{}f}"), y, decimalPrecision) + _T(" )");
 	}
 	float Vector2f::Length() const
 	{
@@ -156,31 +158,7 @@ namespace jela
 		return { x + rhs.x, y + rhs.y };
 	}
 
-	Vector2f Vector2f::operator*(auto rhs) const
-	{
-		return { x * rhs, y * rhs };
-	}
-
-	Vector2f Vector2f::operator/(auto rhs) const
-	{
-		assert((rhs != 0));
-
-		return { x / rhs, y / rhs };
-	}
-	Vector2f& Vector2f::operator*=(auto rhs)
-	{
-		x *= rhs;
-		y *= rhs;
-		return *this;
-	}
-	Vector2f& Vector2f::operator/=(auto rhs)
-	{
-		assert((rhs != 0));
-
-		x /= rhs;
-		y /= rhs;
-		return *this;
-	}
+	
 	Vector2f& Vector2f::operator+=(const Vector2f& rhs)
 	{
 		x += rhs.x;
@@ -193,20 +171,18 @@ namespace jela
 		y -= rhs.y;
 		return *this;
 	}
+
 	bool Vector2f::operator==(const Vector2f& rhs) const
 	{
-		return (abs(x - rhs.x) < 0.0001f) && (abs(y - rhs.y) < 0.0001f);
+		return (abs(x - rhs.x) < FLT_EPSILON) && (abs(y - rhs.y) < FLT_EPSILON);
 	}
 	bool Vector2f::operator!=(const Vector2f& rhs) const
 	{
-		return not (*this == rhs);
+		return !(*this == rhs);
 	}
 
 	// non-member
-	Vector2f operator*(float lhs, Vector2f rhs)
-	{
-		return rhs * lhs;
-	}
+	
 	tostream& operator<< (tostream& lhs, const Vector2f& rhs)
 	{
 		lhs << rhs.ToString();
