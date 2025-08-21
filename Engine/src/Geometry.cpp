@@ -30,26 +30,28 @@ namespace jela
 	{
 		HRESULT hr = Geometry::Recreate();
 
-		ID2D1GeometrySink* pSink{};
+		m_Points = points;
 
-		if (SUCCEEDED(hr))
+		if (!m_Points.empty())
 		{
-			hr = GetGeometry()->Open(&pSink);
-		}
-		if (SUCCEEDED(hr))
-		{
+			ID2D1GeometrySink* pSink{};
 
-			if (!m_Points.empty())
+			if (SUCCEEDED(hr))
 			{
-				std::vector<D2D1_POINT_2F> D2points(points.size());
+				hr = GetGeometry()->Open(&pSink);
+			}
+			if (SUCCEEDED(hr))
+			{
 
-				for (size_t i = 0; i < points.size(); i++)
+				std::vector<D2D1_POINT_2F> D2points(m_Points.size());
+
+				for (size_t i = 0; i < m_Points.size(); i++)
 				{
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 
-					D2points[i] = D2D1::Point2F(points[i].x, ENGINE.GetWindowRect().height - points[i].y);
+					D2points[i] = D2D1::Point2F(m_Points[i].x, ENGINE.GetWindowRect().height - m_Points[i].y);
 #else
-					D2points[i] = D2D1::Point2F(points[i].x, points[i].y);
+					D2points[i] = D2D1::Point2F(m_Points[i].x, m_Points[i].y);
 
 #endif // MATHEMATICAL_COORDINATESYSTEM
 				}
@@ -57,13 +59,16 @@ namespace jela
 				pSink->BeginFigure(D2points.front(), D2D1_FIGURE_BEGIN_FILLED);
 				pSink->AddLines(D2points.data(), (UINT32)D2points.size());
 				pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+				
+				
 			}
 
-			hr = pSink->Close();
+			HRESULT closeHr = pSink->Close();
+			if (SUCCEEDED(hr)) hr = closeHr;
+
+			SafeRelease(&pSink);
+	
 		}
-
-		SafeRelease(&pSink);
-
 		return hr == S_OK;
 	}
 
