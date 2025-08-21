@@ -742,14 +742,6 @@ namespace jela
     }
 
     //Ellipses  
-    void Engine::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness)const
-    {
-        DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness);
-    }
-    void Engine::DrawEllipse(const Ellipsef& ellipse, float lineThickness)const
-    {
-        DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness);
-    }
     void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
@@ -762,10 +754,6 @@ namespace jela
             lineThickness
         );
 
-    }
-    void Engine::DrawCircle(const Circlef& circle, float lineThickness) const
-    {
-        DrawEllipse(circle.center, circle.rad, circle.rad, lineThickness);
     }
 
     //-----------------
@@ -822,28 +810,18 @@ namespace jela
     }
 
     //Ellipses
-    void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const
-    {
-        FillEllipse(Ellipsef{ centerX, centerY, radiusX, radiusY });
-    }
-    void Engine::FillEllipse(const Point2f& center, float radiusX, float radiusY)const
-    {
-        FillEllipse(Ellipsef{ center, radiusX, radiusY });
-    }
-    void Engine::FillEllipse(const Ellipsef& ellipse)const
+
+    void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillEllipse(
             D2D1::Ellipse(
-                D2D1::Point2F(ellipse.center.x, m_GameHeight - ellipse.center.y),
-                ellipse.radiusX, ellipse.radiusY
+                D2D1::Point2F(centerX, m_GameHeight - centerY),
+                radiusX, radiusY
             ),
             m_pDColorBrush);
     }
-    void Engine::FillCircle(const Circlef& circle) const
-    {
-        FillEllipse(circle.center, circle.rad, circle.rad);
-    }
+
 #else
 
     //Lines
@@ -1005,14 +983,7 @@ namespace jela
         }
     }
     //Ellipse
-    void Engine::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness)const
-    {
-        DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness);
-    }
-    void Engine::DrawEllipse(const Ellipsef& ellipse, float lineThickness)const
-    {
-       DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness);
-    }
+
     void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
@@ -1069,14 +1040,6 @@ namespace jela
     }
 
     //Ellipse
-    void Engine::FillEllipse(const Point2f& center, float radiusX, float radiusY)const
-    {
-        FillEllipse(center.x, center.y, radiusX, radiusY);
-    }
-    void Engine::FillEllipse(const Ellipsef& ellipse)const
-    {
-        FillEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY);
-    }
     void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const
     {
         SetTransform();
@@ -1086,6 +1049,34 @@ namespace jela
     }
     #endif // MATHEMATICAL_COORDINATSYSTEM
 
+    //Ellipse
+    void Engine::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness)const
+    {
+        DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness);
+    }
+    void Engine::DrawEllipse(const Ellipsef& ellipse, float lineThickness)const
+    {
+        DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness);
+    }
+    void Engine::DrawCircle(const Circlef& circle, float lineThickness) const
+    {
+        DrawEllipse(circle.center, circle.rad, circle.rad, lineThickness);
+    }
+
+    void Engine::FillEllipse(const Point2f& center, float radiusX, float radiusY)const
+    {
+        FillEllipse(center.x, center.y, radiusX, radiusY);
+    }
+    void Engine::FillEllipse(const Ellipsef& ellipse)const
+    {
+        FillEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY);
+    }
+    void Engine::FillCircle(const Circlef& circle) const
+    {
+        FillEllipse(circle.center, circle.rad, circle.rad);
+    }
+
+    //Geometry
     void Engine::DrawPolygon(const Polygon& polygon, float lineThickness)
     {
         DrawGeometry(&polygon, lineThickness);
@@ -1106,7 +1097,6 @@ namespace jela
         FillGeometry(&arc);
     }
     
-    //Geometry
     void Engine::DrawGeometry(const Geometry* const pGeometryObject, float lineThickness)
     {
         PushTransform();
@@ -1296,9 +1286,11 @@ namespace jela
         if (!m_VecTransformMatrices.empty())
         {
             auto& lastMatrix = m_VecTransformMatrices.back();
-            lastMatrix = D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(xPivotPoint, yPivotPoint)) * lastMatrix;
+            lastMatrix = D2D1::Matrix3x2F::Rotation(-angle, D2D1::Point2F(xPivotPoint, yPivotPoint)) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
+
+        m_TransformChanged = true;
     }
     void Engine::Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom)
     {
