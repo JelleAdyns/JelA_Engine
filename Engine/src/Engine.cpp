@@ -1419,7 +1419,7 @@ namespace jela
 
         InvalidateRect(m_hWindow, NULL, true);
     }
-    void Engine::SetVSync(bool enable)
+    void Engine::UseSystemFramerate(bool enable)
     {
         m_IsVSyncEnabled = enable;
         ResetRenderTargets();

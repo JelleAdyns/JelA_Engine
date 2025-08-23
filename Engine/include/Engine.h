@@ -169,7 +169,7 @@ namespace jela
         // Setters
 
         void ShowMouse(bool show);
-        void SetVSync(bool enable);
+        void UseSystemFramerate(bool enable);
         void SetFont(const Font* const pFont);
         void SetTextFormat(TextFormat* const pTextFormat);
         void SetColor(COLORREF newColor, float opacity = 1.F);
