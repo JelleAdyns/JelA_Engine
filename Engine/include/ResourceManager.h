@@ -46,7 +46,7 @@ namespace jela
     class Font final
     {
     public:
-        Font(const tstring& fontname, bool fromFile = false);
+        explicit Font(const tstring& fontname, bool fromFile = false);
 
         Font(const Font& other) = delete;
         Font(Font&& other) noexcept = delete;
@@ -89,7 +89,7 @@ namespace jela
             Bottom,
         };
 
-        TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign);
+        explicit TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign);
 
         TextFormat(const TextFormat& other) = delete;
         TextFormat(TextFormat&& other) noexcept = delete;
@@ -106,7 +106,7 @@ namespace jela
         {
             if(pFont) SetFont(pFont);
         }
-        virtual void OnSubjectDestroy() override
+        virtual void OnSubjectDestroy(Subject<const Font* const>*) override
         {
         }
 
@@ -233,8 +233,8 @@ namespace jela
             void RemoveInvalidRefs()
             {
                 std::erase_if(vecPointersToRefs, [&](const ResourceType* const* const refToPointer)
-                        {
-                            return (*refToPointer) != (&resource);
+                    {
+                        return (*refToPointer) != (&resource);
                     });
             }
             void SetReferencesToNull()

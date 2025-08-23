@@ -2,6 +2,7 @@
 #define OBSERVER_H
 
 #include <vector>
+#include <stdexcept>
 
 namespace jela
 {
@@ -17,7 +18,7 @@ namespace jela
         {
             for (Observer< Args... >* pObserver : m_pVecObservers)
             {
-                pObserver->OnSubjectDestroy();
+                pObserver->OnSubjectDestroy(this);
             }
         }
 
@@ -42,19 +43,16 @@ namespace jela
         {
             if (m_pVecObservers.size() > 0)
             {
-                auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
-                if (pos != m_pVecObservers.cend()) m_pVecObservers.erase(pos);
-#ifndef NDEBUG
-                else OutputDebugString(_T("Couldn't find Observer to remove in the vector. Continuing.\n"));
-#endif // !NDEBUG
+                auto amountErased = std::erase(m_pVecObservers, pObserver);
+                if (amountErased == 0) OutputDebugString(_T("Couldn't find Observer to remove in the vector. Continuing.\n"));
             }
         }
 
-        void NotifyObservers(Args...  pSubjectOwner)
+        void NotifyObservers(Args...  args)
         {
             for (Observer<Args... >* pObserver : m_pVecObservers)
             {
-                pObserver->Notify(pSubjectOwner...);
+                pObserver->Notify(args...);
             }
         }
     private:
@@ -77,7 +75,7 @@ namespace jela
         Observer& operator= (Observer&&) noexcept = delete;
 
         virtual void Notify(Args...  args) = 0;
-        virtual void OnSubjectDestroy() = 0;
+        virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
 
     protected:
         Observer() = default;
