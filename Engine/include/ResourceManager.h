@@ -145,15 +145,15 @@ namespace jela
         void Start();
 
         template <typename ResourceType>
-        struct ReferencePtr
+        struct ResourcePtr
         {
             const ResourceType* pObject = nullptr;
 
-            ~ReferencePtr()
+            ~ResourcePtr()
             {
                 auto resMan = GetResourceManager();
                 if (resMan)
-                    resMan->RemoveReferencePtr(&pObject);
+                    resMan->RemoveResourcePtr(&pObject);
             }
         };
 
@@ -162,11 +162,11 @@ namespace jela
         ResourceManager& operator= (const ResourceManager&) = delete;
         ResourceManager& operator= (ResourceManager&&) noexcept = delete;
 
-        void GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo);
+        void GetTexture(const tstring& file, ResourcePtr<Texture>& pointerToAssignTo);
         void RemoveTexture(const tstring& file);
         void RemoveAllTextures();
 
-        void GetFont(const tstring& fontName, ReferencePtr<Font>& pointerToAssignTo, bool fromFile = false);
+        void GetFont(const tstring& fontName, ResourcePtr<Font>& pointerToAssignTo, bool fromFile = false);
         void RemoveFont(const tstring& fontName);
         void RemoveAllFonts();
 
@@ -232,13 +232,10 @@ namespace jela
 
             void RemoveInvalidRefs()
             {
-                vecPointersToRefs.erase(
-                    std::remove_if(vecPointersToRefs.begin(), vecPointersToRefs.end(), [&](const ResourceType* const* const refToPointer)
+                std::erase_if(vecPointersToRefs, [&](const ResourceType* const* const refToPointer)
                         {
                             return (*refToPointer) != (&resource);
-                        }
-                    ),
-                    vecPointersToRefs.end());
+                    });
             }
             void SetReferencesToNull()
             {
@@ -249,9 +246,7 @@ namespace jela
             }
             void EraseRefPointerReference(const ResourceType** const referencePointer)
             {
-                vecPointersToRefs.erase(
-                    std::remove(vecPointersToRefs.begin(), vecPointersToRefs.end(), referencePointer),
-                    vecPointersToRefs.end());
+                std::erase(vecPointersToRefs, referencePointer);
             }
         };
 
@@ -269,12 +264,12 @@ namespace jela
         const Font*                     m_pCurrentFont{ nullptr };
         TextFormat*                     m_pCurrentTextFormat{ nullptr };
 
-        ReferencePtr<Font>              m_pDefaultFont{};
+        ResourcePtr<Font>              m_pDefaultFont{};
         std::unique_ptr<TextFormat>     m_pDefaultTextFormat{ nullptr };
         //------------------------------------------------------
 
         template <typename ResourceType>
-        void RemoveReferencePtr(const ResourceType** const referencePointer)
+        void RemoveResourcePtr(const ResourceType** const referencePointer)
         {
             if constexpr (std::is_same_v<ResourceType, Texture>)
                 EraseRefPointerReference(m_MapTextures, referencePointer);
@@ -314,7 +309,7 @@ namespace jela
     };
 
     template <typename ResourceType>
-    using ReferencePtr = ResourceManager::ReferencePtr<ResourceType>;
+    using ResourcePtr = ResourceManager::ResourcePtr<ResourceType>;
     //---------------------------------------------------------------
 
 }

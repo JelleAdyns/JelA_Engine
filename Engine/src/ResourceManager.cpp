@@ -97,7 +97,7 @@ namespace jela
                 CLSCTX_ALL,
                 IID_PPV_ARGS(&m_pWICFactory)
             );
-            assert((SUCCEEDED(creationResult)));
+            if (!SUCCEEDED(creationResult)) throw std::runtime_error("WIC Factory not created correctly.");
         }
     }
     void Texture::DestroyFactory()
@@ -321,7 +321,7 @@ namespace jela
         SetCurrentTextFormat(m_pDefaultTextFormat.get());
     }
 
-    void ResourceManager::GetTexture(const tstring& file, ReferencePtr<Texture>& pointerToAssignTo)
+    void ResourceManager::GetTexture(const tstring& file, ResourcePtr<Texture>& pointerToAssignTo)
     {
         m_MapTextures.try_emplace(file, file);
 
@@ -349,7 +349,7 @@ namespace jela
         m_MapTextures.clear();
     }
 
-    void ResourceManager::GetFont(const tstring& fontName, ReferencePtr<Font>& pointerToAssignTo, bool fromFile)
+    void ResourceManager::GetFont(const tstring& fontName, ResourcePtr<Font>& pointerToAssignTo, bool fromFile)
     {
         m_MapFonts.try_emplace(fontName, fontName, fromFile);
 
