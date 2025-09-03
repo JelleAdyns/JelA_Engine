@@ -1,6 +1,7 @@
 #include "AudioService.h"
 #include <iostream>
 #include <windows.h>
+#include <format>
 #include "Defines.h"
 
 namespace jela
@@ -9,73 +10,73 @@ namespace jela
 
 	void LogAudio::AddSound(const tstring& path, SoundID id)
 	{
+		OutputDebugString(std::format(_T("LogAudio: \nAddSound: path: {}, id: {}\n"), path, id).c_str());
 		m_pRealService->AddSound(path, id);
-		OutputDebugString((_T("\nAddSound: path: ") + path + _T(", id: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void LogAudio::RemoveSound(SoundID id)
 	{
+		OutputDebugString(std::format(_T("LogAudio: \nRemoveSound: id: {}\n"), id).c_str());
 		m_pRealService->RemoveSound(id);
-		OutputDebugString((_T("\nRemoveSound: id: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void LogAudio::PlaySoundClip(SoundID id, bool repeat) const
 	{
+		OutputDebugString(std::format(_T("LogAudio: \nPlaySoundClip: id: {}, repeat: {}\n"), id, repeat).c_str());
 		m_pRealService->PlaySoundClip(id, repeat);
-		OutputDebugString((_T("\nPlaySoundClip: id: ") + to_tstring(id) + _T(", repeat: ") + to_tstring(repeat) + _T('\n')).c_str());
 	}
 	uint8_t LogAudio::GetMasterVolume() const
 	{
-		uint8_t volume = m_pRealService->GetMasterVolume();
-		OutputDebugString((_T("\nReturned volume: ") + to_tstring(volume) + _T('\n')).c_str());
+		const uint8_t volume = m_pRealService->GetMasterVolume();
+		OutputDebugString(std::format(_T("LogAudio: \nReturned master volume: {}\n"), volume).c_str());
 		return volume;
 	}
 	void LogAudio::SetMasterVolume(uint8_t newVolume)
 	{
+		OutputDebugString(std::format(_T("LogAudio: \nNew master volume: {}\n"), newVolume).c_str());
 		m_pRealService->SetMasterVolume(newVolume);
-		OutputDebugString((_T("\nNew volume: ") + to_tstring(newVolume) + _T('\n')).c_str());
 	}
 	void LogAudio::IncrementMasterVolume()
 	{
+		OutputDebugString(_T("LogAudio: \nIncrement master volume.\n"));
 		m_pRealService->IncrementMasterVolume();
-		OutputDebugString(_T("\nIncrement volume.\n"));
 	}
 	void LogAudio::DecrementMasterVolume()
 	{
+		OutputDebugString(_T("LogAudio: \nDecrement master volume.\n"));
 		m_pRealService->DecrementMasterVolume();
-		OutputDebugString(_T("\nDecrement volume.\n"));
 	}
 	void LogAudio::ToggleMute()
 	{
+		OutputDebugString(_T("LogAudio: \nToggling mute.\n"));
 		m_pRealService->ToggleMute();
-		OutputDebugString(_T("\nToggling mute.\n"));
 	}
 	void LogAudio::PauseSound(SoundID id) const
 	{
+		OutputDebugString(std::format(_T("LogAudio: \nPauseSound: id: {}\n"), id).c_str());
 		m_pRealService->PauseSound(id);
-		OutputDebugString((_T("\nPauseSound: id: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void LogAudio::PauseAllSounds() const
 	{
+		OutputDebugString(_T("LogAudio: \nPauseAllSounds\n"));
 		m_pRealService->PauseAllSounds();
-		OutputDebugString(_T("\nPauseAllSounds\n"));
 	}
 	void LogAudio::ResumeSound(SoundID id) const
 	{
+		OutputDebugString(std::format(_T("LogAudio: \nResumeSound: id: {}\n"), id).c_str());
 		m_pRealService->ResumeSound(id);
-		OutputDebugString((_T("\nResumeSound: id: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void LogAudio::ResumeAllSounds() const
 	{
+		OutputDebugString(_T("LogAudio: \nResumeAllSounds\n"));
 		m_pRealService->ResumeAllSounds();
-		OutputDebugString(_T("\nResumeAllSounds\n"));
 	}
 	void LogAudio::StopSound(SoundID id) const
 	{
+		OutputDebugString(std::format(_T("LogAudio: \nStopSound: id: {}\n"), id).c_str());
 		m_pRealService->StopSound(id);
-		OutputDebugString((_T("\nStopSound: id: ") + to_tstring(id) + _T('\n')).c_str());
 	}
 	void LogAudio::StopAllSounds() const
 	{
+		OutputDebugString(_T("LogAudio: \nStopAllSounds\n"));
 		m_pRealService->StopAllSounds();
-		OutputDebugString(_T("\nStopAllSounds\n"));
 	}
 }
