@@ -33,14 +33,47 @@ namespace jela
         virtual void StopSound(SoundID id) const override;
         virtual void StopAllSounds() const override;
 
-
-
     private:
 
         class AudioFile;
 
         class AudioImpl;
         AudioImpl* m_pImpl;
+    };
+
+    class XAudioService final : public AudioService
+    {
+    public:
+
+        XAudioService();
+        virtual ~XAudioService();
+
+        XAudioService(const XAudioService&) = delete;
+        XAudioService(XAudioService&&) noexcept = delete;
+        XAudioService& operator= (const XAudioService&) = delete;
+        XAudioService& operator= (XAudioService&&) noexcept = delete;
+
+        virtual void AddSound(const tstring& filename, SoundID id) override;
+        virtual void RemoveSound(SoundID id) override;
+        virtual void PlaySoundClip(SoundID id, bool repeat) const override;
+        virtual uint8_t GetMasterVolume() const override;
+        virtual void SetMasterVolume(uint8_t newVolume) override;
+        virtual void IncrementMasterVolume() override;
+        virtual void DecrementMasterVolume() override;
+        virtual void ToggleMute() override;
+        virtual void PauseSound(SoundID id) const override;
+        virtual void PauseAllSounds() const override;
+        virtual void ResumeSound(SoundID id) const override;
+        virtual void ResumeAllSounds() const override;
+        virtual void StopSound(SoundID id) const override;
+        virtual void StopAllSounds() const override;
+
+    private:
+        class AudioImpl;
+        AudioImpl* m_pImpl;
+
+        class AudioFile;
+
     };
 
 }

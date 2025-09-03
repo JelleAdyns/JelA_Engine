@@ -13,7 +13,7 @@
 
 namespace jela
 {
-	class Audio::AudioFile
+	class Audio::AudioFile final
 	{
 	public:
 
@@ -105,7 +105,7 @@ namespace jela
 
 
 	//Implementation
-	class Audio::AudioImpl
+	class Audio::AudioImpl final
 	{
 	public:
 		AudioImpl() { m_Thread = std::jthread{ &Audio::AudioImpl::HandleRequests, this }; }

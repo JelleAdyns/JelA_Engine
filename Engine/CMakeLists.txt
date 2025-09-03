@@ -17,6 +17,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     "mf"
     "mfplat"
     "mfuuid"
+    "xaudio2"
 )
 
 target_include_directories(${PROJECT_NAME}
