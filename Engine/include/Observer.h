@@ -22,10 +22,10 @@ namespace jela
             }
         }
 
-        Subject(const Subject&) = delete;
-        Subject(Subject&&) noexcept = delete;
-        Subject& operator= (const Subject&) = delete;
-        Subject& operator= (Subject&&) noexcept = delete;
+        Subject(const Subject&) = default;
+        Subject(Subject&&) noexcept = default;
+        Subject& operator= (const Subject&) = default;
+        Subject& operator= (Subject&&) noexcept = default;
 
         void AddObserver(Observer<Args... >* pObserver)
         {
@@ -34,9 +34,9 @@ namespace jela
                 auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
                 if (pos == m_pVecObservers.cend())
                 {
-                    m_pVecObservers.push_back(pObserver);
+                    m_pVecObservers.emplace_back(pObserver);
                 }
-                else throw std::runtime_error("Observer already subscribed to Subject");
+                else OutputDebugString(_T("Observer already subscribed to Subject"));
             }
         }
         void RemoveObserver(Observer<Args... >* pObserver)
@@ -69,16 +69,141 @@ namespace jela
 
         virtual ~Observer() = default;
 
-        Observer(Observer&) = delete;
-        Observer(Observer&&) noexcept = delete;
-        Observer& operator= (Observer&) = delete;
-        Observer& operator= (Observer&&) noexcept = delete;
+        Observer(const Observer&) = default;
+        Observer(Observer&&) noexcept = default;
+        Observer& operator= (const Observer&) = default;
+        Observer& operator= (Observer&&) noexcept = default;
 
         virtual void Notify(Args...  args) = 0;
         virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
 
     protected:
         Observer() = default;
+    };
+
+
+
+
+    template <typename... Args>
+    class TrackSubjectsObserver : public Observer<Args...>
+    {
+    public:
+
+        virtual ~TrackSubjectsObserver()
+        {
+            for (auto& pSubject : m_pVecSubjects)
+            {
+                if(pSubject) pSubject->RemoveObserver(this);
+            }
+        }
+
+        TrackSubjectsObserver(const TrackSubjectsObserver& other)
+            : m_pVecSubjects{ other.m_pVecSubjects }
+        {
+            for (auto& pSubject : m_pVecSubjects)
+            {
+                if (pSubject) pSubject->AddObserver(this);
+            }
+        }
+        TrackSubjectsObserver(TrackSubjectsObserver&& other) noexcept
+            : m_pVecSubjects{ std::move(other.m_pVecSubjects)}
+        {
+            for (auto& pSubject : m_pVecSubjects)
+            {
+                if (pSubject)
+                {
+                    pSubject->RemoveObserver(&other);
+                    pSubject->AddObserver(this);
+                }
+            }
+        }
+        TrackSubjectsObserver& operator= (const TrackSubjectsObserver& other)
+        {
+            m_pVecSubjects = other.m_pVecSubjects;
+
+            for (auto& pSubject : m_pVecSubjects)
+            {
+                if (pSubject) pSubject->AddObserver(this);
+            }
+        }
+        TrackSubjectsObserver& operator= (TrackSubjectsObserver&& other) noexcept
+        {
+            m_pVecSubjects = std::move(other.m_pVecSubjects);
+            
+            for (auto& pSubject : m_pVecSubjects)
+            {
+                if (pSubject)
+                {
+                    pSubject->RemoveObserver(&other);
+                    pSubject->AddObserver(this);
+                }
+            }
+        }
+
+        virtual void Notify(Args...  args) = 0;
+        virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
+        virtual void SaveSubject(Subject<Args...>* pSubject) = 0;
+
+    protected:
+        TrackSubjectsObserver() : Observer<Args...>{} {};
+    
+        std::vector<Subject<Args...>*> m_pVecSubjects{};
+    };
+
+
+
+
+    template <typename... Args>
+    class SingleSubjectObserver : public Observer<Args...>
+    {
+    public:
+
+        virtual ~SingleSubjectObserver()
+        {
+            if (m_pSubject) m_pSubject->RemoveObserver(this);
+        }
+
+        SingleSubjectObserver(const SingleSubjectObserver& other)
+            : m_pSubject{ other.m_pSubject }
+        {
+            if (m_pSubject) m_pSubject->AddObserver(this); 
+        }
+
+        SingleSubjectObserver(SingleSubjectObserver&& other) noexcept
+            : m_pSubject{ std::move(other.m_pSubject) }
+        {
+            if (m_pSubject)
+            {
+                m_pSubject->RemoveObserver(&other);
+                m_pSubject->AddObserver(this);
+            }
+        }
+
+        SingleSubjectObserver& operator= (const SingleSubjectObserver& other)
+        {
+            m_pSubject = other.m_pSubject;
+            if (m_pSubject) m_pSubject->AddObserver(this);
+        }
+
+        SingleSubjectObserver& operator= (SingleSubjectObserver&& other) noexcept
+        {
+            m_pSubject = std::move(other.m_pSubject);
+
+            if (m_pSubject)
+            {
+                m_pSubject->RemoveObserver(&other);
+                m_pSubject->AddObserver(this);
+            }
+        }
+
+        virtual void Notify(Args...  args) = 0;
+        virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
+        virtual void SaveSubject(Subject<Args...>* pSubject) = 0;
+
+    protected:
+        SingleSubjectObserver() : Observer<Args...>{} {};
+
+        Subject<Args...>* m_pSubject{};
     };
 }
 

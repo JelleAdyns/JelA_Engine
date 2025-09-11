@@ -144,16 +144,97 @@ namespace jela
 
         void Start();
 
+       /* template <typename ResourceType>
+        struct ManagedResource;
         template <typename ResourceType>
-        struct ResourcePtr
+        struct ResourcePtr final : public Observer<>
         {
             const ResourceType* pObject = nullptr;
 
-            ~ResourcePtr()
+            virtual ~ResourcePtr()
             {
-                auto resMan = GetResourceManager();
-                if (resMan)
-                    resMan->RemoveResourcePtr(&pObject);
+               if(pResourceSubject) pResourceSubject->RemoveObserver(this);
+            }
+            ResourcePtr(const ResourcePtr& other) 
+                : pObject{other.pObject}
+                , pResourceSubject{other.pResourceSubject}
+            {
+                pResourceSubject->AddObserver(this);
+            }
+            ResourcePtr(ResourcePtr&& other) noexcept
+                : pObject{other.pObject}
+                , pResourceSubject{other.pResourceSubject}
+            {
+                other.pResourceSubject->RemoveObserver(&other);
+
+                other.pObject = nullptr;
+                other.pResourceSubject = nullptr;
+
+                pResourceSubject->AddObserver(this);
+            }
+            ResourcePtr& operator= (const ResourcePtr& other)
+            {
+                pObject = other.pObject;
+                pResourceSubject = other.pResourceSubject;
+
+                pResourceSubject->AddObserver(this);
+            }
+            ResourcePtr& operator= (ResourcePtr&& other) noexcept
+            {
+                pObject = other.pObject;
+                pResourceSubject = other.pResourceSubject;
+
+                other.pResourceSubject->RemoveObserver(&other);
+
+                other.pObject = nullptr;
+                other.pResourceSubject = nullptr;
+
+                pResourceSubject->AddObserver(this);
+            }
+        private:
+            friend struct ManagedResource<ResourceType>;
+            virtual void Notify() override
+            {
+                pObject = nullptr;
+            }
+            virtual void OnSubjectDestroy(Subject<>* pSubject) override
+            {
+                if (pSubject == pResourceSubject) pResourceSubject = nullptr;
+            }
+
+            void SaveSingleSubject(Subject<>* subject)
+            {
+                pResourceSubject = subject;
+            }
+
+            Subject<>* pResourceSubject{};
+        };*/
+        template <typename ResourceType>
+        struct ManagedResource;
+        template <typename ResourceType>
+        struct ResourcePtr final : public SingleSubjectObserver<>
+        {
+            const ResourceType* pObject = nullptr;
+            
+        private:
+
+            friend struct ManagedResource<ResourceType>;
+            virtual void Notify() override
+            {
+                pObject = nullptr;
+            }
+            virtual void OnSubjectDestroy(Subject<>* pSubject) override
+            {
+                if (pSubject == m_pSubject) m_pSubject = nullptr;
+            }
+            virtual void SaveSubject(Subject<>* pSubject) override
+            {
+                if (!pSubject)
+                {
+                    OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr SingleSubjectsObserver."));
+                    return;
+                }
+                m_pSubject = pSubject;
             }
         };
 
@@ -216,10 +297,15 @@ namespace jela
         template <typename ResourceType>
         struct ManagedResource
         {
+
             template <typename ...Args>
             ManagedResource(Args&&... args) :
                 resource{ args... }
+            {}
+
+            ~ManagedResource()
             {
+                onResourceDestroy.NotifyObservers();
             }
 
             ManagedResource(const ManagedResource&) = delete;
@@ -230,6 +316,13 @@ namespace jela
             ResourceType resource;
             std::vector<const ResourceType**> vecPointersToRefs = {};
 
+            void HandleObserver(ResourcePtr<ResourceType>& resourcePtr)
+            {
+                if (resourcePtr.pObject) resourcePtr.m_pSubject->RemoveObserver(&resourcePtr);
+                onResourceDestroy.AddObserver(&resourcePtr);
+                resourcePtr.SaveSubject(&onResourceDestroy);
+                resourcePtr.pObject = &resource;
+            }
             void RemoveInvalidRefs()
             {
                 std::erase_if(vecPointersToRefs, [&](const ResourceType* const* const refToPointer)
@@ -248,6 +341,8 @@ namespace jela
             {
                 std::erase(vecPointersToRefs, referencePointer);
             }
+        private:
+            Subject<> onResourceDestroy{};
         };
 
         template<typename ResourceType>

@@ -324,17 +324,17 @@ namespace jela
     void ResourceManager::GetTexture(const tstring& file, ResourcePtr<Texture>& pointerToAssignTo)
     {
         m_MapTextures.try_emplace(file, file);
-
-        m_MapTextures.at(file).vecPointersToRefs.push_back(&(pointerToAssignTo.pObject));
-        pointerToAssignTo.pObject = &(m_MapTextures.at(file).resource);
+        m_MapTextures.at(file).HandleObserver(pointerToAssignTo);
+        //m_MapTextures.at(file).vecPointersToRefs.push_back(&(pointerToAssignTo.pObject));
+        //pointerToAssignTo.pObject = &(m_MapTextures.at(file).resource);
     }
 
     void ResourceManager::RemoveTexture(const tstring& file)
     {
         if (m_MapTextures.contains(file))
         {
-            RemoveInvalidRefs(m_MapTextures);
-            m_MapTextures.at(file).SetReferencesToNull();
+            //RemoveInvalidRefs(m_MapTextures);
+            //m_MapTextures.at(file).SetReferencesToNull();
 
             m_MapTextures.erase(file);
         }
@@ -343,8 +343,8 @@ namespace jela
 
     void ResourceManager::RemoveAllTextures()
     {
-        RemoveInvalidRefs(m_MapTextures);
-        SetReferencesToNull(m_MapTextures);
+        //RemoveInvalidRefs(m_MapTextures);
+        //SetReferencesToNull(m_MapTextures);
 
         m_MapTextures.clear();
     }
@@ -352,17 +352,17 @@ namespace jela
     void ResourceManager::GetFont(const tstring& fontName, ResourcePtr<Font>& pointerToAssignTo, bool fromFile)
     {
         m_MapFonts.try_emplace(fontName, fontName, fromFile);
-
-        m_MapFonts.at(fontName).vecPointersToRefs.push_back(&(pointerToAssignTo.pObject));
-        pointerToAssignTo.pObject = &(m_MapFonts.at(fontName).resource);
+        m_MapFonts.at(fontName).HandleObserver(pointerToAssignTo);
+        //m_MapFonts.at(fontName).vecPointersToRefs.push_back(&(pointerToAssignTo.pObject));
+        //pointerToAssignTo.pObject = &(m_MapFonts.at(fontName).resource);
     }
 
     void ResourceManager::RemoveFont(const tstring& fontName)
     {
         if (m_MapFonts.contains(fontName))
         {
-            RemoveInvalidRefs(m_MapFonts);
-            m_MapFonts.at(fontName).SetReferencesToNull();
+            //RemoveInvalidRefs(m_MapFonts);
+            //m_MapFonts.at(fontName).SetReferencesToNull();
 
             m_MapFonts.erase(fontName);
         }
@@ -371,8 +371,8 @@ namespace jela
 
     void ResourceManager::RemoveAllFonts()
     {
-        RemoveInvalidRefs(m_MapFonts);
-        SetReferencesToNull(m_MapFonts);
+        //RemoveInvalidRefs(m_MapFonts);
+        //SetReferencesToNull(m_MapFonts);
 
         m_MapFonts.clear();
     }
