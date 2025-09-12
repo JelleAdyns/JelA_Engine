@@ -78,6 +78,7 @@ namespace jela
         {
             OutputDebugStringW((L"ERROR! File \"" + filePath + L"\" couldn't load correctly").c_str());
         }
+        m_FileName = filename;
         SafeRelease(&pDecoder);
         SafeRelease(&pSource);
         SafeRelease(&pConverter);
@@ -321,21 +322,16 @@ namespace jela
         SetCurrentTextFormat(m_pDefaultTextFormat.get());
     }
 
-    void ResourceManager::GetTexture(const tstring& file, ResourcePtr<Texture>& pointerToAssignTo)
+    void ResourceManager::GetTexture(const tstring& file, ResourcePtr<Texture>& resourcePtr)
     {
         m_MapTextures.try_emplace(file, file);
-        m_MapTextures.at(file).HandleObserver(pointerToAssignTo);
-        //m_MapTextures.at(file).vecPointersToRefs.push_back(&(pointerToAssignTo.pObject));
-        //pointerToAssignTo.pObject = &(m_MapTextures.at(file).resource);
+        m_MapTextures.at(file).HandleObserver(resourcePtr);
     }
 
     void ResourceManager::RemoveTexture(const tstring& file)
     {
         if (m_MapTextures.contains(file))
         {
-            //RemoveInvalidRefs(m_MapTextures);
-            //m_MapTextures.at(file).SetReferencesToNull();
-
             m_MapTextures.erase(file);
         }
         else OutputDebugString((_T("\nTexture to remove is not present. File: ") + file + _T("\n\n")).c_str());
@@ -343,27 +339,19 @@ namespace jela
 
     void ResourceManager::RemoveAllTextures()
     {
-        //RemoveInvalidRefs(m_MapTextures);
-        //SetReferencesToNull(m_MapTextures);
-
         m_MapTextures.clear();
     }
 
-    void ResourceManager::GetFont(const tstring& fontName, ResourcePtr<Font>& pointerToAssignTo, bool fromFile)
+    void ResourceManager::GetFont(const tstring& fontName, ResourcePtr<Font>& resourcePtr, bool fromFile)
     {
         m_MapFonts.try_emplace(fontName, fontName, fromFile);
-        m_MapFonts.at(fontName).HandleObserver(pointerToAssignTo);
-        //m_MapFonts.at(fontName).vecPointersToRefs.push_back(&(pointerToAssignTo.pObject));
-        //pointerToAssignTo.pObject = &(m_MapFonts.at(fontName).resource);
+        m_MapFonts.at(fontName).HandleObserver(resourcePtr);
     }
 
     void ResourceManager::RemoveFont(const tstring& fontName)
     {
         if (m_MapFonts.contains(fontName))
         {
-            //RemoveInvalidRefs(m_MapFonts);
-            //m_MapFonts.at(fontName).SetReferencesToNull();
-
             m_MapFonts.erase(fontName);
         }
         else OutputDebugString((_T("Font to remove is not present. File: ") + fontName).c_str());
@@ -371,10 +359,42 @@ namespace jela
 
     void ResourceManager::RemoveAllFonts()
     {
-        //RemoveInvalidRefs(m_MapFonts);
-        //SetReferencesToNull(m_MapFonts);
-
         m_MapFonts.clear();
+    }
+
+    void ResourceManager::SetCurrentFont(const Font* const pFont)
+    {
+        if (pFont != m_pCurrentFont)
+        {
+            if (pFont == nullptr && pFont != m_pDefaultFont.pObject)
+            {
+                m_pCurrentFont = m_pDefaultFont.pObject;
+                OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
+            }
+            else m_pCurrentFont = pFont;
+
+            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+        }
+    }
+
+    void ResourceManager::SetCurrentTextFormat(TextFormat* const pTextFormat)
+    {
+        if (pTextFormat != m_pCurrentTextFormat)
+        {
+            m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
+
+            if (pTextFormat == nullptr && pTextFormat != m_pDefaultTextFormat.get())
+            {
+                m_pCurrentTextFormat = m_pDefaultTextFormat.get();
+                OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
+            }
+            else m_pCurrentTextFormat = pTextFormat;
+
+            m_OnFontChange.AddObserver(m_pCurrentTextFormat);
+
+
+            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+        }
     }
 
     ResourceManager* const ResourceManager::GetResourceManager()

@@ -25,6 +25,7 @@ namespace jela
         ID2D1Bitmap* const  GetBitmap() const { return m_pDBitmap; }
         float GetWidth() const { return m_TextureWidth; }
         float GetHeight() const { return m_TextureHeight; }
+        const tstring& GetFileName() const { return m_FileName; }
 
         static void InitFactory();
         static void DestroyFactory();
@@ -36,6 +37,7 @@ namespace jela
 
         float m_TextureWidth;
         float m_TextureHeight;
+        tstring m_FileName{};
     };
     //---------------------------------------------------------------
 
@@ -144,89 +146,79 @@ namespace jela
 
         void Start();
 
-       /* template <typename ResourceType>
-        struct ManagedResource;
+        ResourceManager(const ResourceManager&) = delete;
+        ResourceManager(ResourceManager&&) noexcept = delete;
+        ResourceManager& operator= (const ResourceManager&) = delete;
+        ResourceManager& operator= (ResourceManager&&) noexcept = delete;
+
         template <typename ResourceType>
-        struct ResourcePtr final : public Observer<>
+        struct ResourcePtr;
+
+        void GetTexture(const tstring& file, ResourcePtr<Texture>& resourcePtr);
+        void RemoveTexture(const tstring& file);
+        void RemoveAllTextures();
+
+        void GetFont(const tstring& fontName, ResourcePtr<Font>& resourcePtr, bool fromFile = false);
+        void RemoveFont(const tstring& fontName);
+        void RemoveAllFonts();
+
+        const tstring& GetDataPath() const { return m_DataPath; }
+        const Font* const GetCurrentFont() const { return m_pCurrentFont; }
+        const TextFormat* const GetCurrentTextFormat() const { return m_pCurrentTextFormat; }
+
+        void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
+        void SetCurrentFont(const Font* const pFont);
+        void SetCurrentTextFormat(TextFormat* const pTextFormat);
+    private:
+
+        //-----------------------------------------------------------------------------------------------------------------
+        // Private ManagedResource struct
+
+        template <typename ResourceType>
+        struct ManagedResource
         {
-            const ResourceType* pObject = nullptr;
+            template <typename ...Args>
+            ManagedResource(Args&&... args) :
+                resource{ args... },
+                pOnResourceDestroy{std::make_unique<Subject<>>()}
+            {}
 
-            virtual ~ResourcePtr()
+            ~ManagedResource() { pOnResourceDestroy->NotifyObservers(); }
+
+            ManagedResource(const ManagedResource&) = delete;
+            ManagedResource(ManagedResource&&) noexcept = delete;
+            ManagedResource& operator= (const ManagedResource&) = delete;
+            ManagedResource& operator= (ManagedResource&&) noexcept = delete;
+
+            ResourceType resource;
+
+            void HandleObserver(ResourcePtr<ResourceType>& resourcePtr)
             {
-               if(pResourceSubject) pResourceSubject->RemoveObserver(this);
+                if (resourcePtr.pObject) resourcePtr.m_pSubject->RemoveObserver(&resourcePtr);
+                pOnResourceDestroy->AddObserver(&resourcePtr);
+                resourcePtr.SaveSubject(pOnResourceDestroy.get());
+                resourcePtr.pObject = &resource;
             }
-            ResourcePtr(const ResourcePtr& other) 
-                : pObject{other.pObject}
-                , pResourceSubject{other.pResourceSubject}
-            {
-                pResourceSubject->AddObserver(this);
-            }
-            ResourcePtr(ResourcePtr&& other) noexcept
-                : pObject{other.pObject}
-                , pResourceSubject{other.pResourceSubject}
-            {
-                other.pResourceSubject->RemoveObserver(&other);
-
-                other.pObject = nullptr;
-                other.pResourceSubject = nullptr;
-
-                pResourceSubject->AddObserver(this);
-            }
-            ResourcePtr& operator= (const ResourcePtr& other)
-            {
-                pObject = other.pObject;
-                pResourceSubject = other.pResourceSubject;
-
-                pResourceSubject->AddObserver(this);
-            }
-            ResourcePtr& operator= (ResourcePtr&& other) noexcept
-            {
-                pObject = other.pObject;
-                pResourceSubject = other.pResourceSubject;
-
-                other.pResourceSubject->RemoveObserver(&other);
-
-                other.pObject = nullptr;
-                other.pResourceSubject = nullptr;
-
-                pResourceSubject->AddObserver(this);
-            }
+            
         private:
-            friend struct ManagedResource<ResourceType>;
-            virtual void Notify() override
-            {
-                pObject = nullptr;
-            }
-            virtual void OnSubjectDestroy(Subject<>* pSubject) override
-            {
-                if (pSubject == pResourceSubject) pResourceSubject = nullptr;
-            }
+            std::unique_ptr<Subject<>> pOnResourceDestroy{};
+        };
+        //-----------------------------------------------------------------------------------------------------------------
 
-            void SaveSingleSubject(Subject<>* subject)
-            {
-                pResourceSubject = subject;
-            }
+    public:
 
-            Subject<>* pResourceSubject{};
-        };*/
-        template <typename ResourceType>
-        struct ManagedResource;
+        //-----------------------------------------------------------------------------------------------------------------
+        // Public ResourcePtr struct
         template <typename ResourceType>
         struct ResourcePtr final : public SingleSubjectObserver<>
         {
             const ResourceType* pObject = nullptr;
-            
-        private:
 
+        private:
             friend struct ManagedResource<ResourceType>;
-            virtual void Notify() override
-            {
-                pObject = nullptr;
-            }
-            virtual void OnSubjectDestroy(Subject<>* pSubject) override
-            {
-                if (pSubject == m_pSubject) m_pSubject = nullptr;
-            }
+
+            virtual void Notify() override { pObject = nullptr; }
+            virtual void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
             virtual void SaveSubject(Subject<>* pSubject) override
             {
                 if (!pSubject)
@@ -237,117 +229,12 @@ namespace jela
                 m_pSubject = pSubject;
             }
         };
+        //-----------------------------------------------------------------------------------------------------------------
 
-        ResourceManager(const ResourceManager&) = delete;
-        ResourceManager(ResourceManager&&) noexcept = delete;
-        ResourceManager& operator= (const ResourceManager&) = delete;
-        ResourceManager& operator= (ResourceManager&&) noexcept = delete;
-
-        void GetTexture(const tstring& file, ResourcePtr<Texture>& pointerToAssignTo);
-        void RemoveTexture(const tstring& file);
-        void RemoveAllTextures();
-
-        void GetFont(const tstring& fontName, ResourcePtr<Font>& pointerToAssignTo, bool fromFile = false);
-        void RemoveFont(const tstring& fontName);
-        void RemoveAllFonts();
-
-
-        const tstring& GetDataPath() const { return m_DataPath; }
-        const Font* const GetCurrentFont() const { return m_pCurrentFont; }
-        const TextFormat* const GetCurrentTextFormat() const { return m_pCurrentTextFormat; }
-
-        void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
-        void SetCurrentFont(const Font* const pFont)
-        {
-            if (pFont != m_pCurrentFont)
-            {
-                if (pFont == nullptr && pFont != m_pDefaultFont.pObject)
-                {
-                    m_pCurrentFont = m_pDefaultFont.pObject;
-                    OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
-                }
-                else m_pCurrentFont = pFont;
-
-                m_OnFontChange.NotifyObservers(m_pCurrentFont);
-            }
-        }
-        void SetCurrentTextFormat(TextFormat* const pTextFormat)
-        {
-            if (pTextFormat != m_pCurrentTextFormat)
-            {
-                m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
-
-                if (pTextFormat == nullptr && pTextFormat != m_pDefaultTextFormat.get())
-                {
-                    m_pCurrentTextFormat = m_pDefaultTextFormat.get();
-                    OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
-                }
-                else m_pCurrentTextFormat = pTextFormat;
-
-                m_OnFontChange.AddObserver(m_pCurrentTextFormat);
-
-
-                m_OnFontChange.NotifyObservers(m_pCurrentFont);
-            }
-        }
     private:
-
-        tstring m_DataPath;
-
-        template <typename ResourceType>
-        struct ManagedResource
-        {
-
-            template <typename ...Args>
-            ManagedResource(Args&&... args) :
-                resource{ args... }
-            {}
-
-            ~ManagedResource()
-            {
-                onResourceDestroy.NotifyObservers();
-            }
-
-            ManagedResource(const ManagedResource&) = delete;
-            ManagedResource(ManagedResource&&) noexcept = delete;
-            ManagedResource& operator= (const ManagedResource&) = delete;
-            ManagedResource& operator= (ManagedResource&&) noexcept = delete;
-
-            ResourceType resource;
-            std::vector<const ResourceType**> vecPointersToRefs = {};
-
-            void HandleObserver(ResourcePtr<ResourceType>& resourcePtr)
-            {
-                if (resourcePtr.pObject) resourcePtr.m_pSubject->RemoveObserver(&resourcePtr);
-                onResourceDestroy.AddObserver(&resourcePtr);
-                resourcePtr.SaveSubject(&onResourceDestroy);
-                resourcePtr.pObject = &resource;
-            }
-            void RemoveInvalidRefs()
-            {
-                std::erase_if(vecPointersToRefs, [&](const ResourceType* const* const refToPointer)
-                    {
-                        return (*refToPointer) != (&resource);
-                    });
-            }
-            void SetReferencesToNull()
-            {
-                for (const ResourceType** const pRefPointer : vecPointersToRefs)
-                {
-                    (*pRefPointer) = nullptr;
-                }
-            }
-            void EraseRefPointerReference(const ResourceType** const referencePointer)
-            {
-                std::erase(vecPointersToRefs, referencePointer);
-            }
-        private:
-            Subject<> onResourceDestroy{};
-        };
 
         template<typename ResourceType>
         using ResourceMap = std::unordered_map<tstring, ManagedResource<ResourceType>>;
-
         //------------------------------------------------------
         // RESOURCES
         ResourceMap<Texture>            m_MapTextures{};
@@ -361,46 +248,13 @@ namespace jela
 
         ResourcePtr<Font>              m_pDefaultFont{};
         std::unique_ptr<TextFormat>     m_pDefaultTextFormat{ nullptr };
+
+        // DATA PATH
+        tstring m_DataPath;
         //------------------------------------------------------
 
-        template <typename ResourceType>
-        void RemoveResourcePtr(const ResourceType** const referencePointer)
-        {
-            if constexpr (std::is_same_v<ResourceType, Texture>)
-                EraseRefPointerReference(m_MapTextures, referencePointer);
-            else if constexpr (std::is_same_v<ResourceType, Font>)
-                EraseRefPointerReference(m_MapFonts, referencePointer);
-        }
-
-        template <typename ResourceType>
-        void EraseRefPointerReference(ResourceMap<ResourceType>& resourceMap, const ResourceType** const referencePointer)
-        {
-            for (auto& [filename, managedResource] : resourceMap)
-            {
-                managedResource.EraseRefPointerReference(referencePointer);
-            }
-        }
-
-        template <typename ResourceType>
-        void SetReferencesToNull(ResourceMap<ResourceType>& resourceMap)
-        {
-            for (auto& [fileName, managedResource] : resourceMap)
-            {
-                managedResource.SetReferencesToNull();
-            }
-        }
-
-        template <typename ResourceType>
-        void RemoveInvalidRefs(ResourceMap<ResourceType>& resourceMap)
-        {
-            for (auto& [fileName, managedResource] : resourceMap)
-            {
-                managedResource.RemoveInvalidRefs();
-            }
-        }
 
         static ResourceManager* const GetResourceManager();
-
     };
 
     template <typename ResourceType>

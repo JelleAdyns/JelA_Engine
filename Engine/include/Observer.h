@@ -2,7 +2,6 @@
 #define OBSERVER_H
 
 #include <vector>
-#include <stdexcept>
 
 namespace jela
 {
@@ -116,6 +115,8 @@ namespace jela
                     pSubject->AddObserver(this);
                 }
             }
+
+            other.m_pVecSubjects.clear();
         }
         TrackSubjectsObserver& operator= (const TrackSubjectsObserver& other)
         {
@@ -138,11 +139,25 @@ namespace jela
                     pSubject->AddObserver(this);
                 }
             }
+
+            other.m_pVecSubjects.clear();
         }
 
         virtual void Notify(Args...  args) = 0;
         virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
-        virtual void SaveSubject(Subject<Args...>* pSubject) = 0;
+        virtual void SaveSubject(Subject<Args...>* pSubject)
+        {
+            if (!pSubject)
+            {
+                OutputDebugString(_T("Subject was nullptr when trying to save it to a TrackSubjectsObserver."));
+                return;
+            }
+
+            auto itSubjectPtr = std::ranges::find(m_pVecSubjects, pSubject);
+            if (itSubjectPtr == m_pVecSubjects.cend())
+                m_pVecSubjects.emplace_back(pSubject);
+            else OutputDebugString(_T("Subject pointer already added to the TrackSubjectsObserver."));
+        }
 
     protected:
         TrackSubjectsObserver() : Observer<Args...>{} {};
@@ -177,6 +192,8 @@ namespace jela
                 m_pSubject->RemoveObserver(&other);
                 m_pSubject->AddObserver(this);
             }
+
+            other.m_pSubject = nullptr;
         }
 
         SingleSubjectObserver& operator= (const SingleSubjectObserver& other)
@@ -194,11 +211,17 @@ namespace jela
                 m_pSubject->RemoveObserver(&other);
                 m_pSubject->AddObserver(this);
             }
+
+            other.m_pSubject = nullptr;
         }
 
         virtual void Notify(Args...  args) = 0;
         virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
-        virtual void SaveSubject(Subject<Args...>* pSubject) = 0;
+        virtual void SaveSubject(Subject<Args...>* pSubject)
+        {
+            if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to a SingleSubjectsObserver."));
+            else m_pSubject = pSubject;
+        }
 
     protected:
         SingleSubjectObserver() : Observer<Args...>{} {};
