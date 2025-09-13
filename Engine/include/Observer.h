@@ -2,6 +2,7 @@
 #define OBSERVER_H
 
 #include <vector>
+#include "Defines.h"
 
 namespace jela
 {
@@ -30,13 +31,10 @@ namespace jela
         {
             if (pObserver)
             {
-                auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
-                if (pos == m_pVecObservers.cend())
-                {
-                    m_pVecObservers.emplace_back(pObserver);
-                }
-                else OutputDebugString(_T("Observer already subscribed to Subject"));
+                if (!HasObserver(pObserver)) m_pVecObservers.emplace_back(pObserver);
+                else OutputDebugString(_T("Observer already subscribed to Subject."));
             }
+            else OutputDebugString(_T("Tried to add a nullptr to the Subject."));
         }
         void RemoveObserver(Observer<Args... >* pObserver)
         {
@@ -46,7 +44,11 @@ namespace jela
                 if (amountErased == 0) OutputDebugString(_T("Couldn't find Observer to remove in the vector. Continuing.\n"));
             }
         }
-
+        bool HasObserver(Observer<Args... >* pObserver)
+        {       
+            auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
+            return pos != m_pVecObservers.cend();
+        }
         void NotifyObservers(Args...  args)
         {
             for (Observer<Args... >* pObserver : m_pVecObservers)
