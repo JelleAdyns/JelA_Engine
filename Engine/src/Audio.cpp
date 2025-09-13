@@ -402,8 +402,9 @@ namespace jela
 	{
 		m_pImpl->RemoveSoundImpl(id);
 	}
-	void Audio::PlaySoundClip(SoundID id, bool repeat) const
+	void Audio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const
 	{
+		if (volume != 100) OutputDebugString(_T("Different volume not supported in the 'Audio' Service."));
 		m_pImpl->PlaySoundClipImpl(id, repeat);
 	}
 	uint8_t Audio::GetMasterVolume() const

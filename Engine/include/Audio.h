@@ -20,7 +20,7 @@ namespace jela
 
         virtual void AddSound(const tstring& filename, SoundID id) override;
         virtual void RemoveSound(SoundID id) override;
-        virtual void PlaySoundClip(SoundID id, bool repeat) const override;
+        virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100) const override;
         virtual uint8_t GetMasterVolume() const override;
         virtual void SetMasterVolume(uint8_t newVolume) override;
         virtual void IncrementMasterVolume() override;
@@ -41,21 +41,21 @@ namespace jela
         AudioImpl* m_pImpl;
     };
 
-    class XAudioService final : public AudioService
+    class XAudio final : public AudioService
     {
     public:
 
-        XAudioService();
-        virtual ~XAudioService();
+        XAudio();
+        virtual ~XAudio();
 
-        XAudioService(const XAudioService&) = delete;
-        XAudioService(XAudioService&&) noexcept = delete;
-        XAudioService& operator= (const XAudioService&) = delete;
-        XAudioService& operator= (XAudioService&&) noexcept = delete;
+        XAudio(const XAudio&) = delete;
+        XAudio(XAudio&&) noexcept = delete;
+        XAudio& operator= (const XAudio&) = delete;
+        XAudio& operator= (XAudio&&) noexcept = delete;
 
         virtual void AddSound(const tstring& filename, SoundID id) override;
         virtual void RemoveSound(SoundID id) override;
-        virtual void PlaySoundClip(SoundID id, bool repeat) const override;
+        virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100) const override;
         virtual uint8_t GetMasterVolume() const override;
         virtual void SetMasterVolume(uint8_t newVolume) override;
         virtual void IncrementMasterVolume() override;

@@ -6,7 +6,7 @@
 namespace jela
 {
 	//Implementation
-	class XAudioService::AudioImpl final
+	class XAudio::AudioImpl final
 	{
 	public:
 		AudioImpl() 
@@ -241,69 +241,74 @@ namespace jela
 	};
 
 
+
 	//Audio
-	XAudioService::XAudioService() :
+	XAudio::XAudio() :
 		m_pImpl{ new AudioImpl{} }
 	{
 	}
 
-	XAudioService::~XAudioService()
+	XAudio::~XAudio()
 	{
 		delete m_pImpl;
 	}
-	void XAudioService::AddSound(const tstring& filename, SoundID id)
+	void XAudio::AddSound(const tstring& filename, SoundID id)
 	{
 		m_pImpl->AddSoundImpl(filename, id);
 	}
-	void XAudioService::RemoveSound(SoundID id)
+	void XAudio::RemoveSound(SoundID id)
 	{
 		m_pImpl->RemoveSoundImpl(id);
 	}
-	void XAudioService::PlaySoundClip(SoundID id, bool repeat) const
+	void XAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const
 	{
-		m_pImpl->PlaySoundClipImpl(id, repeat);
+		m_pImpl->PlaySoundClipImpl(id, repeat, volume);
 	}
 	uint8_t XAudioService::GetMasterVolume() const
+	uint8_t XAudio::GetMasterVolume() const
 	{
 		return m_pImpl->GetMasterVolumeImpl();
 	}
-	void XAudioService::SetMasterVolume(uint8_t newVolume)
+	void XAudio::SetMasterVolume(uint8_t newVolume)
 	{
 		m_pImpl->SetMasterVolumeImpl(newVolume);
 	}
-	void XAudioService::IncrementMasterVolume()
+	void XAudio::IncrementMasterVolume()
 	{
 		m_pImpl->IncrementMasterVolumeImpl();
 	}
-	void XAudioService::DecrementMasterVolume()
+	void XAudio::DecrementMasterVolume()
 	{
 		m_pImpl->DecrementMasterVolumeImpl();
 	}
-	void XAudioService::ToggleMute()
+	void XAudio::ToggleMute()
 	{
 		m_pImpl->ToggleMuteImpl();
 	}
-	void XAudioService::PauseSound(SoundID id) const
+	void XAudio::PauseSound(SoundID id) const
 	{
 		m_pImpl->PauseSoundImpl(id);
 	}
 	void XAudioService::PauseAllSounds() const
+	void XAudio::PauseAllSounds() const
 	{
 		m_pImpl->PauseAllSoundsImpl();
 	}
-	void XAudioService::ResumeSound(SoundID id) const
+	void XAudio::ResumeSound(SoundID id) const
 	{
 		m_pImpl->ResumeSoundImpl(id);
 	}
 	void XAudioService::ResumeAllSounds() const
+	void XAudio::ResumeAllSounds() const
 	{
 		m_pImpl->ResumeAllSoundsImpl();
 	}
-	void XAudioService::StopSound(SoundID id) const
+	void XAudio::StopSound(SoundID id) const
 	{
 		m_pImpl->StopSoundImpl(id);
 	}
 	void XAudioService::StopAllSounds() const
+	void XAudio::StopAllSounds() const
 	{
 		m_pImpl->StopAllSoundsImpl();
 	}

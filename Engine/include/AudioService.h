@@ -23,7 +23,7 @@ namespace jela
 
 		virtual void AddSound(const tstring& filename, SoundID id) = 0;
 		virtual void RemoveSound(SoundID id) = 0;
-		virtual void PlaySoundClip(SoundID id, bool repeat) const = 0;
+		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100) const = 0;
 		virtual uint8_t GetMasterVolume() const = 0;
 		virtual void SetMasterVolume(uint8_t newVolume) = 0;
 		virtual void IncrementMasterVolume() = 0;
@@ -51,7 +51,7 @@ namespace jela
 
 		virtual void AddSound(const tstring&, SoundID) override {}
 		virtual void RemoveSound(SoundID) override {}
-		virtual void PlaySoundClip(SoundID, bool) const override {}
+		virtual void PlaySoundClip(SoundID, bool, uint8_t = 100) const override { }
 		virtual uint8_t GetMasterVolume() const override { return 0; }
 		virtual void SetMasterVolume(uint8_t) override {}
 		virtual void IncrementMasterVolume() override {}
@@ -81,7 +81,7 @@ namespace jela
 
 		virtual void AddSound(const tstring& filename, SoundID id) override;
 		virtual void RemoveSound(SoundID id) override;
-		virtual void PlaySoundClip(SoundID id, bool repeat) const override;
+		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100) const override;
 		virtual uint8_t GetMasterVolume() const override;
 		virtual void SetMasterVolume(uint8_t newVolume) override;
 		virtual void IncrementMasterVolume() override;
