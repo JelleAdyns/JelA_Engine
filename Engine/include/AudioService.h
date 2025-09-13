@@ -3,12 +3,40 @@
 
 #include <string>
 #include <memory>
+#include "Observer.h"
 #include "Defines.h"
 
 namespace jela
 {
 
 	using SoundID = unsigned int;
+	struct SoundInstanceID final : public Observer<uint8_t, SoundInstanceID*&>
+	{
+		std::optional<uint8_t> GetID() const { return id; }
+
+		SoundInstanceID() = default;
+
+		//--------------------------------------------------------------
+		// IMPLEMENTED
+
+		virtual ~SoundInstanceID();
+		SoundInstanceID(const SoundInstanceID& other);
+		SoundInstanceID(SoundInstanceID&& other) noexcept;
+		SoundInstanceID& operator= (const SoundInstanceID& other);
+		SoundInstanceID& operator= (SoundInstanceID&& other) noexcept;
+		//--------------------------------------------------------------
+
+		void Init(uint8_t index);
+		void SaveSubject(Subject<uint8_t, SoundInstanceID*&>* pSubject);
+	private:
+
+		virtual void Notify(uint8_t index, SoundInstanceID*& pThisObserver) override;
+		virtual void OnSubjectDestroy(Subject<uint8_t, SoundInstanceID*&>* pSubject) override;
+
+		std::optional<uint8_t> id{};
+
+		Subject<uint8_t, SoundInstanceID*&>* m_pSubject{};
+	};
 
 	class AudioService
 	{
@@ -24,16 +52,20 @@ namespace jela
 		virtual void AddSound(const tstring& filename, SoundID id) = 0;
 		virtual void RemoveSound(SoundID id) = 0;
 		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100) const = 0;
+		virtual void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume = 100) const = 0;
 		virtual uint8_t GetMasterVolume() const = 0;
 		virtual void SetMasterVolume(uint8_t newVolume) = 0;
 		virtual void IncrementMasterVolume() = 0;
 		virtual void DecrementMasterVolume() = 0;
 		virtual void ToggleMute() = 0;
 		virtual void PauseSound(SoundID id) const = 0;
+		virtual void PauseSound(SoundID id, const SoundInstanceID& instanceId) const = 0;
 		virtual void PauseAllSounds() const = 0;
 		virtual void ResumeSound(SoundID id) const = 0;
+		virtual void ResumeSound(SoundID id, const SoundInstanceID& instanceId) const = 0;
 		virtual void ResumeAllSounds() const = 0;
 		virtual void StopSound(SoundID id) const = 0;
+		virtual void StopSound(SoundID id, const SoundInstanceID& instanceId) const = 0;
 		virtual void StopAllSounds() const = 0;
 
 	};
@@ -52,17 +84,21 @@ namespace jela
 		virtual void AddSound(const tstring&, SoundID) override {}
 		virtual void RemoveSound(SoundID) override {}
 		virtual void PlaySoundClip(SoundID, bool, uint8_t = 100) const override { }
+		virtual void PlaySoundInstance(SoundID, bool, SoundInstanceID&, uint8_t = 100) const override {};
 		virtual uint8_t GetMasterVolume() const override { return 0; }
 		virtual void SetMasterVolume(uint8_t) override {}
 		virtual void IncrementMasterVolume() override {}
 		virtual void DecrementMasterVolume() override {}
 		virtual void ToggleMute() override {}
-		virtual void PauseSound(SoundID) const override {}
-		virtual void PauseAllSounds() const override {}
-		virtual void ResumeSound(SoundID) const override {};
-		virtual void ResumeAllSounds() const override {};
-		virtual void StopSound(SoundID) const override {}
-		virtual void StopAllSounds() const override {}
+		virtual void PauseSound(SoundID) const override {};
+		virtual void PauseSound(SoundID, const SoundInstanceID&) const override{};
+		virtual void PauseAllSounds() const override{};
+		virtual void ResumeSound(SoundID) const override{};
+		virtual void ResumeSound(SoundID, const SoundInstanceID&) const override{};
+		virtual void ResumeAllSounds() const override{};
+		virtual void StopSound(SoundID) const override{};
+		virtual void StopSound(SoundID, const SoundInstanceID&) const override{};
+		virtual void StopAllSounds() const override{};
 	};
 
 	class LogAudio final : public AudioService
@@ -82,16 +118,20 @@ namespace jela
 		virtual void AddSound(const tstring& filename, SoundID id) override;
 		virtual void RemoveSound(SoundID id) override;
 		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100) const override;
+		virtual void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume = 100) const override;
 		virtual uint8_t GetMasterVolume() const override;
 		virtual void SetMasterVolume(uint8_t newVolume) override;
 		virtual void IncrementMasterVolume() override;
 		virtual void DecrementMasterVolume() override;
 		virtual void ToggleMute() override;
 		virtual void PauseSound(SoundID id) const override;
+		virtual void PauseSound(SoundID id, const SoundInstanceID& instanceId) const override;
 		virtual void PauseAllSounds() const override;
 		virtual void ResumeSound(SoundID id) const override;
+		virtual void ResumeSound(SoundID id, const SoundInstanceID& instanceId) const override;
 		virtual void ResumeAllSounds() const override;
 		virtual void StopSound(SoundID id) const override;
+		virtual void StopSound(SoundID id, const SoundInstanceID& instanceId) const override;
 		virtual void StopAllSounds() const override;
 	private:
 
