@@ -210,24 +210,72 @@ namespace jela
         //-----------------------------------------------------------------------------------------------------------------
         // Public ResourcePtr struct
         template <typename ResourceType>
-        struct ResourcePtr final : public SingleSubjectObserver<>
+        struct ResourcePtr final : public Observer<>
         {
             const ResourceType* pObject = nullptr;
+            
+            ResourcePtr() = default;
+
+            virtual ~ResourcePtr() { if (m_pSubject) m_pSubject->RemoveObserver(this); }
+
+            ResourcePtr(const ResourcePtr& other)
+                : m_pSubject{ other.m_pSubject }
+                , pObject{ other.pObject }
+            {
+                if (m_pSubject) m_pSubject->AddObserver(this);
+            }
+
+            ResourcePtr(ResourcePtr&& other) noexcept
+                : m_pSubject{ std::move(other.m_pSubject) }
+                , pObject{ std::move(other.pObject) }
+            {
+                if (m_pSubject)
+                {
+                    m_pSubject->RemoveObserver(&other);
+                    m_pSubject->AddObserver(this);
+                }
+
+                other.m_pSubject = nullptr;
+                other.pObject = nullptr;
+            }
+
+            ResourcePtr& operator= (const ResourcePtr& other)
+            {
+                pObject = other.pObject;
+                m_pSubject = other.m_pSubject;
+                if (m_pSubject) m_pSubject->AddObserver(this);
+                
+                return *this;
+            }
+
+            ResourcePtr& operator= (ResourcePtr&& other) noexcept
+            {
+                m_pSubject = std::move(other.m_pSubject);
+                pObject = std::move(other.pObject);
+
+                if (m_pSubject)
+                {
+                    m_pSubject->RemoveObserver(&other);
+                    m_pSubject->AddObserver(this);
+                }
+
+                other.m_pSubject = nullptr;
+                other.pObject = nullptr;
+                
+                return *this;
+            }
 
         private:
             friend struct ManagedResource<ResourceType>;
 
             virtual void Notify() override { pObject = nullptr; }
             virtual void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
-            virtual void SaveSubject(Subject<>* pSubject) override
+            void SaveSubject(Subject<>* pSubject)
             {
-                if (!pSubject)
-                {
-                    OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr SingleSubjectsObserver."));
-                    return;
-                }
-                m_pSubject = pSubject;
+                if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr SingleSubjectsObserver."));
+                else m_pSubject = pSubject;
             }
+            Subject<>* m_pSubject{};
         };
         //-----------------------------------------------------------------------------------------------------------------
 
@@ -246,7 +294,7 @@ namespace jela
         const Font*                     m_pCurrentFont{ nullptr };
         TextFormat*                     m_pCurrentTextFormat{ nullptr };
 
-        ResourcePtr<Font>              m_pDefaultFont{};
+        ResourcePtr<Font>               m_pDefaultFont{};
         std::unique_ptr<TextFormat>     m_pDefaultTextFormat{ nullptr };
 
         // DATA PATH
