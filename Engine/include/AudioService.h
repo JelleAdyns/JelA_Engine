@@ -10,7 +10,7 @@ namespace jela
 {
 
 	using SoundID = unsigned int;
-	struct SoundInstanceID final : public Observer<uint8_t, SoundInstanceID*&>
+	struct SoundInstanceID final : public Observer<uint8_t, std::vector<SoundInstanceID*>&>
 	{
 		std::optional<uint8_t> GetID() const { return id; }
 
@@ -27,15 +27,15 @@ namespace jela
 		//--------------------------------------------------------------
 
 		void Init(uint8_t index);
-		void SaveSubject(Subject<uint8_t, SoundInstanceID*&>* pSubject);
+		void SaveSubject(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject);
 	private:
 
-		virtual void Notify(uint8_t index, SoundInstanceID*& pThisObserver) override;
-		virtual void OnSubjectDestroy(Subject<uint8_t, SoundInstanceID*&>* pSubject) override;
+		virtual void Notify(uint8_t index, std::vector<SoundInstanceID*>& vecThisObservers) override;
+		virtual void OnSubjectDestroy(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject) override;
 
 		std::optional<uint8_t> id{};
 
-		Subject<uint8_t, SoundInstanceID*&>* m_pSubject{};
+		Subject<uint8_t, std::vector<SoundInstanceID*>&>* m_pSubject{};
 	};
 
 	class AudioService

@@ -66,22 +66,22 @@ namespace jela
 		if (!id.has_value()) id = index;
 		else OutputDebugString(_T("SoundInstanceID was already initialized when trying to initialize."));
 	}
-	void SoundInstanceID::SaveSubject(Subject<uint8_t, SoundInstanceID*&>* pSubject)
+	void SoundInstanceID::SaveSubject(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject)
 	{
 		if (pSubject) m_pSubject = pSubject;
 		else OutputDebugString(_T("Subject was nullptr when trying to save it to a SoundInstanceID SingleSubjectsObserver."));
 	}
 
-	void SoundInstanceID::Notify(uint8_t index, SoundInstanceID*& pThisObserver)
+	void SoundInstanceID::Notify(uint8_t index, std::vector<SoundInstanceID*>& vecThisObservers)
 	{
 		if (id.has_value() && id.value() == index)
 		{
 			id = std::nullopt;
 			m_pSubject = nullptr;
-			pThisObserver = this;
+			vecThisObservers.emplace_back(this);
 		}
 	}
-	void SoundInstanceID::OnSubjectDestroy(Subject<uint8_t, SoundInstanceID*&>* pSubject)
+	void SoundInstanceID::OnSubjectDestroy(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject)
 	{
 		if (pSubject == m_pSubject) id = std::nullopt;
 		m_pSubject = nullptr;
@@ -102,7 +102,7 @@ namespace jela
 	}
 	void LogAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const
 	{
-		OutputDebugString(std::format(_T("LogAudio: PlaySoundClip: id: {}, repeat: {}, Volume {}\n"), id, repeat, volume).c_str());
+		OutputDebugString(std::format(_T("LogAudio: PlaySoundClip: id: {}, repeat: {}, Volume {}\n"), id, repeat, (int)volume).c_str());
 		m_pRealService->PlaySoundClip(id, repeat, volume);
 	}
 	void LogAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const
