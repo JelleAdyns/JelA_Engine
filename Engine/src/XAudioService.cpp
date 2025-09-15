@@ -12,6 +12,16 @@
 
 namespace jela
 {
+	void XAudio::SetNrOfChannelsPerFormat(uint16_t amount) 
+	{ 
+		if (m_ChannelPoolCreated)
+		{
+			OutputDebugString(std::format(_T("WARNING! When setting the amount of channels per format to {1}, a channel pool was already created with a amount of {0} channels. From this point, channel pools will create {1} channels.\n"),
+				m_NrOfChannelsPerFormat, amount).c_str());
+			OutputDebugString(_T("Tip: use SetNrOfChannelsPerFormat before you add any audio file if you want a consistent amount of channels for every WAVE format.\n\n"));
+		}
+		m_NrOfChannelsPerFormat = amount;
+	}
 	bool operator==(const WAVEFORMATEX& lhs, const WAVEFORMATEX& rhs)
 	{
 		return lhs.cbSize == rhs.cbSize &&
@@ -544,10 +554,14 @@ namespace jela
 
 				for (size_t i = 0; i < amountOfChannels; i++)
 					idleChannelPtrs.emplace_back(std::make_unique<Channel>(pAudioSystem, pFormat));
+
+				m_ChannelPoolCreated = true;
 			}
 			
-			static constexpr size_t amountOfChannels{ 20 };
+			static constexpr size_t amountOfChannels{ 64 };
 
+			// We store unique ptrs in order for the Channel objects to stay in the same place in memory
+			// This is necessary for the async callback (in the Channel class) that points to a channel object somewhere in memory
 			std::vector<std::unique_ptr<AudioImpl::Channel>> idleChannelPtrs{};
 			std::vector<std::unique_ptr<AudioImpl::Channel>> activeChannelPtrs{};
 		};

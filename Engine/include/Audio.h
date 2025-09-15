@@ -76,9 +76,14 @@ namespace jela
         virtual void StopSound(SoundID id, const SoundInstanceID& instanceId) const override;
         virtual void StopAllSounds() const override;
 
+        static void SetNrOfChannelsPerFormat(uint16_t amount);
+
     private:
         class AudioImpl;
         AudioImpl* m_pImpl;
+
+        inline static uint16_t m_NrOfChannelsPerFormat{ 64 };
+        inline static bool m_ChannelPoolCreated{ false };
 
     };
 
