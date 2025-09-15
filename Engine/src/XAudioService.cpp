@@ -3,6 +3,7 @@
 #include <xaudio2.h>
 #include <ranges>
 #include <filesystem>
+#include <mutex>
 
 // Shoutout: ChiliTomatoNoodle
 // https://www.youtube.com/watch?v=T51Eqbbald4&t=2888s
@@ -36,9 +37,9 @@ namespace jela
 		~AudioImpl()
 		{
 			m_ChannelPools.clear(); // First destroy the channels because, in their destructor, they still need acces to the audio files.
-			m_VecSupportedFormats.clear();
-
 			m_MapAudioFiles.clear();
+
+			m_VecSupportedFormats.clear();
 
 			SafeRelease(&m_pAudioEngine);
 			m_pMasteringVoice = nullptr;
@@ -267,7 +268,8 @@ namespace jela
 
 						unsigned int fileSize{ 0 };
 						filePosition = file.read(reinterpret_cast<char*>(&fileSize), nrOfFourccChars).tellg();
-						if (fileSize <= 16)
+						fileSize += 8;
+						if (fileSize <= 44)
 							return _T("ERROR! Expected a filesize larger than 16 bytes when reading Sound file.\n");
 
 						filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
@@ -330,6 +332,7 @@ namespace jela
 
 			void RemoveChannel(AudioImpl::Channel* pChannel)
 			{
+				std::lock_guard<std::mutex> lock{ m_ChannelsMutex };
 				for (std::size_t index = 0; index < m_ActiveChannelPtrs.size(); ++index)
 				{
 					auto& pCurrChannel = m_ActiveChannelPtrs.at(index);
@@ -346,6 +349,7 @@ namespace jela
 			}
 			void AddChannel(AudioImpl::Channel* pChannel, SoundInstanceID& instanceId)
 			{
+				// No lock_guard needed, because AddChannel will never be called when the audio voice already started.
 				for (std::size_t index = 0; index < m_ActiveChannelPtrs.size(); ++index)
 				{
 					auto& pCurrChannel= m_ActiveChannelPtrs.at(index);
@@ -362,9 +366,10 @@ namespace jela
 				}
 			}
 
+			std::mutex m_ChannelsMutex{};
+			tstring m_FileName{};
 			std::vector<BYTE> m_pData{};
 			std::vector<AudioImpl::Channel*> m_ActiveChannelPtrs{};
-			tstring m_FileName{};
 			const WAVEFORMATEX* m_pFormat{};
 			AudioImpl* const m_pAudioSystem{};
 
@@ -382,7 +387,7 @@ namespace jela
 				m_pFormat{ pFormat },
 				m_pAudioSystem{ pAudioSystem }
 			{
-				static VoiceCallback vcb;
+				static VoiceCallback vcb{};
 				ZeroMemory(&m_XAudioBuffer, sizeof(m_XAudioBuffer));
 				m_XAudioBuffer.pContext = this;
 				pAudioSystem->m_pAudioEngine->CreateSourceVoice(&m_pAudioVoice, pFormat, 0u, 2.0f, & vcb);
@@ -429,6 +434,7 @@ namespace jela
 					m_pAudioFile = nullptr;
 					m_pAudioSystem->DeactivateChannel(*this);
 					m_pAudioVoice->FlushSourceBuffers();
+					m_IsPaused = false;
 				}
 			}
 			void Pause()
@@ -485,12 +491,15 @@ namespace jela
 				return (*itFormat).get();
 
 			auto pFormat = m_VecSupportedFormats.emplace_back(std::make_unique<WAVEFORMATEX>(extractedFormat)).get();
+
+			std::lock_guard<std::mutex> lock{ m_ChannelMutex };
 			m_ChannelPools.try_emplace(pFormat, FormatChannelPool{ this, pFormat });
 
 			return pFormat;
 		}
 		void PlayAudioFile(class AudioFile& s, bool repeat, float vol, SoundInstanceID& instanceId)
 		{
+			std::lock_guard<std::mutex> lock{ m_ChannelMutex };
 			const WAVEFORMATEX* const pSoundFormat{ s.GetFormatPtr() };
 			if (m_ChannelPools.contains(pSoundFormat))
 			{
@@ -508,6 +517,7 @@ namespace jela
 		}
 		void DeactivateChannel(Channel& channel)
 		{
+			std::lock_guard<std::mutex> lock{ m_ChannelMutex };
 			if (m_ChannelPools.contains(channel.GetFormatPtr()))
 			{
 				auto& [idles, actives] = m_ChannelPools.at(channel.GetFormatPtr());
@@ -545,6 +555,7 @@ namespace jela
 		std::map<SoundID, AudioFile> m_MapAudioFiles{};
 		std::vector<std::unique_ptr<WAVEFORMATEX>> m_VecSupportedFormats{};
 		std::unordered_map<const WAVEFORMATEX*, FormatChannelPool> m_ChannelPools{};
+		std::mutex m_ChannelMutex{};
 
 		bool m_IsMute{ false };
 		uint8_t m_LatestVolume{ 100 };
