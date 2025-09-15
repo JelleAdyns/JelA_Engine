@@ -38,7 +38,7 @@ namespace jela
         }
         void RemoveObserver(Observer<Args... >* pObserver)
         {
-            if (m_pVecObservers.size() > 0)
+            if (!m_pVecObservers.empty() && pObserver)
             {
                 auto amountErased = std::erase(m_pVecObservers, pObserver);
                 if (amountErased == 0) OutputDebugString(_T("Couldn't find Observer to remove in the vector. Continuing.\n"));
@@ -46,8 +46,7 @@ namespace jela
         }
         bool HasObserver(Observer<Args... >* pObserver)
         {       
-            auto pos = std::find(m_pVecObservers.cbegin(), m_pVecObservers.cend(), pObserver);
-            return pos != m_pVecObservers.cend();
+            return std::ranges::find(m_pVecObservers, pObserver) != m_pVecObservers.cend();
         }
         void NotifyObservers(Args...  args)
         {
