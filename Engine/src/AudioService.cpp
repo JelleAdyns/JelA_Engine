@@ -100,18 +100,19 @@ namespace jela
 		OutputDebugString(std::format(_T("LogAudio: RemoveSound: id: {}\n"), id).c_str());
 		m_pRealService->RemoveSound(id);
 	}
-	void LogAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const
+	void LogAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const
 	{
-		OutputDebugString(std::format(_T("LogAudio: PlaySoundClip: id: {}, repeat: {}, Volume {}\n"), id, repeat, (int)volume).c_str());
-		m_pRealService->PlaySoundClip(id, repeat, volume);
+		OutputDebugString(std::format(_T("LogAudio: PlaySoundClip: id: {}, repeat: {}, Volume {}, Frequency {}\n"), id, repeat, (int)volume, frequency).c_str());
+		m_pRealService->PlaySoundClip(id, repeat, volume, frequency);
 	}
-	void LogAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const
+	void LogAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const
 	{
-		OutputDebugString(std::format(_T("LogAudio: PlaySoundInstance: id: {}, repeat: {}, Instance id: {}, Volume {}\n"),
+		OutputDebugString(std::format(_T("LogAudio: PlaySoundInstance: id: {}, repeat: {}, Instance id: {}, Volume {}, Frequency {}\n"),
 			id,
 			repeat,
 			instanceId.GetID().has_value() ? to_tstring(instanceId.GetID().value()) : _T("std::nullopt"),
-			volume
+			volume,
+			frequency
 		).c_str());
 		m_pRealService->PlaySoundInstance(id, repeat, instanceId, volume);
 	}

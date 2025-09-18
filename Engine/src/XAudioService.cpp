@@ -68,22 +68,22 @@ namespace jela
 		{
 			m_MapAudioFiles.erase(id);
 		}
-		void PlaySoundInstanceImpl(SoundID id, bool repeat, uint8_t volume, SoundInstanceID& instanceId)
+		void PlaySoundInstanceImpl(SoundID id, bool repeat, uint8_t volume, SoundInstanceID& instanceId, float frequency)
 		{
 			if (m_MapAudioFiles.contains(id))
 			{
 				float fVolume = volume / 100.f;
-				PlayAudioFile(m_MapAudioFiles.at(id), repeat, fVolume, instanceId);
+				PlayAudioFile(m_MapAudioFiles.at(id), repeat, fVolume, frequency, instanceId);
 			}
 			else OutputDebugString(std::format(_T("Sound file with id {} was not added before trying to play the sound."), id).c_str());
 		}
-		void PlaySoundClipImpl(SoundID id, bool repeat, uint8_t volume)
+		void PlaySoundClipImpl(SoundID id, bool repeat, uint8_t volume, float frequency)
 		{
 			if (m_MapAudioFiles.contains(id))
 			{
 				float fVolume = volume / 100.f;
 				SoundInstanceID instanceId{};
-				PlayAudioFile(m_MapAudioFiles.at(id), repeat, fVolume, instanceId);
+				PlayAudioFile(m_MapAudioFiles.at(id), repeat, fVolume, frequency, instanceId);
 			}
 			else OutputDebugString(std::format(_T("Sound file with id {} was not added before trying to play the sound."), id).c_str());
 		}
@@ -422,7 +422,7 @@ namespace jela
 			}
 			const WAVEFORMATEX* const GetFormatPtr() const { return m_pFormat; }
 
-			void Play(AudioFile& s, bool repeat, float vol, SoundInstanceID& instanceId)
+			void Play(AudioFile& s, bool repeat, float vol, float frequency, SoundInstanceID& instanceId)
 			{
 				assert(m_pAudioVoice && !m_pAudioFile);
 				s.AddChannel(this, instanceId);
@@ -432,6 +432,7 @@ namespace jela
 				m_XAudioBuffer.pAudioData = s.m_pData.data();
 				m_XAudioBuffer.AudioBytes = static_cast<UINT32>(s.m_pData.size());
 				m_pAudioVoice->SubmitSourceBuffer(&m_XAudioBuffer, nullptr);
+				m_pAudioVoice->SetFrequencyRatio(frequency);
 				m_pAudioVoice->SetVolume(vol);
 				m_pAudioVoice->Start();
 			}
@@ -507,7 +508,7 @@ namespace jela
 
 			return pFormat;
 		}
-		void PlayAudioFile(class AudioFile& s, bool repeat, float vol, SoundInstanceID& instanceId)
+		void PlayAudioFile(class AudioFile& s, bool repeat, float vol, float frequency, SoundInstanceID& instanceId)
 		{
 			std::lock_guard<std::mutex> lock{ m_ChannelMutex };
 			const WAVEFORMATEX* const pSoundFormat{ s.GetFormatPtr() };
@@ -522,7 +523,7 @@ namespace jela
 				
 				actives.emplace_back(std::move(idles.back()));
 				idles.pop_back();
-				actives.back()->Play(s, repeat, vol, instanceId);
+				actives.back()->Play(s, repeat, vol, frequency, instanceId);
 			}
 		}
 		void DeactivateChannel(Channel& channel)
@@ -595,13 +596,13 @@ namespace jela
 	{
 		m_pImpl->RemoveSoundImpl(id);
 	}
-	void XAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const
+	void XAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const
 	{
-		m_pImpl->PlaySoundClipImpl(id, repeat, volume);
+		m_pImpl->PlaySoundClipImpl(id, repeat, volume, frequency);
 	}
-	void XAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const
+	void XAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const
 	{
-		m_pImpl->PlaySoundInstanceImpl(id, repeat, volume, instanceId);
+		m_pImpl->PlaySoundInstanceImpl(id, repeat, volume, instanceId, frequency);
 	}
 	uint8_t XAudio::GetMasterVolume() const
 	{
