@@ -38,8 +38,14 @@ namespace jela
 	public:
 		AudioImpl()
 		{	
+
+#ifdef _DEBUG
+			HRESULT hr = XAudio2Create(&m_pAudioEngine, XAUDIO2_DEBUG_ENGINE, XAUDIO2_DEFAULT_PROCESSOR);
+#else
 			HRESULT hr = XAudio2Create(&m_pAudioEngine, 0, XAUDIO2_DEFAULT_PROCESSOR);
+#endif // _DEBUG
 			if (FAILED(hr)) OutputDebugString(_T("ERROR! Unable to create the XAudio2 Engine!"));
+
 
 			hr = m_pAudioEngine->CreateMasteringVoice(&m_pMasteringVoice);
 			if (FAILED(hr)) OutputDebugString(_T("ERROR! Unable to create the XAudio2 Mastering Voice!"));
@@ -62,7 +68,8 @@ namespace jela
 
 		void AddSoundImpl(const tstring& filename, SoundID id)
 		{
-			m_MapAudioFiles.try_emplace(id, filename, this);
+			if (m_MapAudioFiles.contains(id)) OutputDebugString(std::format(_T("\nSoundID {} bound to file {} was already added.\n\n"), id, filename).c_str());
+			else m_MapAudioFiles.try_emplace(id, filename, this);
 		}
 		void RemoveSoundImpl(SoundID id)
 		{
@@ -397,10 +404,10 @@ namespace jela
 				m_pFormat{ pFormat },
 				m_pAudioSystem{ pAudioSystem }
 			{
-				static VoiceCallback vcb{};
 				ZeroMemory(&m_XAudioBuffer, sizeof(m_XAudioBuffer));
 				m_XAudioBuffer.pContext = this;
-				pAudioSystem->m_pAudioEngine->CreateSourceVoice(&m_pAudioVoice, pFormat, 0u, 2.0f, & vcb);
+				HRESULT hr = pAudioSystem->m_pAudioEngine->CreateSourceVoice(&m_pAudioVoice, pFormat, 0u, 2.0f, &m_Callback);
+				if (FAILED(hr)) OutputDebugString(std::format(_T("Creating Source Voice failed. HRESULT {}"), hr).c_str());
 			}
 			Channel(const Channel&) = delete;
 			Channel(Channel&&) noexcept = delete;
@@ -482,13 +489,15 @@ namespace jela
 			};
 
 			XAUDIO2_BUFFER m_XAudioBuffer{};
-			IXAudio2SourceVoice* m_pAudioVoice = nullptr;
+			IXAudio2SourceVoice* m_pAudioVoice{ nullptr };
 			// does this need to be synchronized?
 			// (no--no overlap of callback thread and main thread here)
-			AudioFile* m_pAudioFile = nullptr;
-			const WAVEFORMATEX* const m_pFormat = nullptr;
-			AudioImpl* const m_pAudioSystem = nullptr;
+			AudioFile* m_pAudioFile{ nullptr };
+			const WAVEFORMATEX* const m_pFormat { nullptr };
+			AudioImpl* const m_pAudioSystem { nullptr };
 			bool m_IsPaused{ false };
+
+			inline static VoiceCallback m_Callback{};
 		};
 		//----------------------------------------------------------------------------------------------------------------------------
 
