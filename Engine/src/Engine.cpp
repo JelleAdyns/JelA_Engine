@@ -1392,8 +1392,11 @@ namespace jela
         if (controllerIndex < m_pVecControllers.size())
         {
             m_pVecControllers.at(controllerIndex)->Vibrate(strengthPercentage);
-        }
-        else OutputDebugString(std::format(_T("Trying to vibrate controller, but controller for controllerIndex {} not found.\n"), controllerIndex).c_str());
+        } else
+            OutputDebugString(
+                std::format(
+                    _T("Trying to vibrate controller, but controller for controllerIndex {} not found.\n"),
+                    controllerIndex).c_str());
     }
     Vector2f Engine::GetControllerJoystickValue(bool leftJoystick, uint8_t controllerIndex) const
     {

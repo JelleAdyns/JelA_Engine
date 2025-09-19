@@ -347,8 +347,7 @@ namespace jela
 				return std::format(_T("Audio File {} was succesfully loaded! Format:\n{}\n"), fileName, formatStringSummary);
 			}
 
-			void RemoveChannel(const AudioImpl::Channel* pChannel)
-			{
+			void RemoveChannel(const AudioImpl::Channel *pChannel) {
 				std::lock_guard<std::mutex> lock{ m_ChannelsMutex };
 				for (std::size_t index = 0; index < m_ActiveChannelPtrs.size(); ++index)
 				{

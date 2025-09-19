@@ -192,7 +192,8 @@ namespace jela
 
         if (!SUCCEEDED(hr))
         {
-            OutputDebugStringW(std::format(L"Something went wrong in the Font constructor using {}.\n", fontName).c_str());
+            OutputDebugStringW(
+                std::format(L"Something went wrong in the Font constructor using {}.\n", fontName).c_str());
         }
         else
         {
@@ -333,8 +334,8 @@ namespace jela
         if (m_MapTextures.contains(file))
         {
             m_MapTextures.erase(file);
-        }
-        else OutputDebugString(std::format(_T("\nTexture to remove is not present. File: {}\n\n"), file).c_str());
+        } else
+            OutputDebugString(std::format(_T("\nTexture to remove is not present. File: {}\n\n"), file).c_str());
     }
 
     void ResourceManager::RemoveAllTextures()
@@ -353,8 +354,8 @@ namespace jela
         if (m_MapFonts.contains(fontName))
         {
             m_MapFonts.erase(fontName);
-        }
-        else OutputDebugString(std::format(_T("Font to remove is not present. File: {}\n"), fontName).c_str());
+        } else
+            OutputDebugString(std::format(_T("Font to remove is not present. File: {}\n"), fontName).c_str());
     }
 
     void ResourceManager::RemoveAllFonts()
