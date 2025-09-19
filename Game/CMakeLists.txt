@@ -2,7 +2,7 @@ project(GameProjectTitle)
 
 set(GUI_TYPE WIN32)
 
-#Setup the source fiels of the Game Project
+#Setup the source files of the Game Project
 set(SOURCES 
 	"Main.cpp"
 	"Game.cpp"
@@ -28,7 +28,7 @@ message(STATUS "BINARY DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 add_custom_target(copyResources ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/Resources
-    ${CMAKE_CURRENT_BINARY_DIR}/Resources
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/Resources
     COMMENT "Copying resources into the binary folder"
 )
 

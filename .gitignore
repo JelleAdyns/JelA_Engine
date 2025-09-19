@@ -362,6 +362,9 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# CLION
+.idea
+
 # Media files
 *.wav
 *.mp3
