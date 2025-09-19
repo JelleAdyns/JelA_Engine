@@ -76,7 +76,7 @@ namespace jela
 
         if (!SUCCEEDED(creationResult))
         {
-            OutputDebugStringW((L"ERROR! File \"" + filePath + L"\" couldn't load correctly").c_str());
+            OutputDebugStringW(std::format(L"ERROR! File \"{}\" couldn't load correctly", filePath).c_str());
         }
         m_FileName = filename;
         SafeRelease(&pDecoder);
@@ -124,7 +124,7 @@ namespace jela
         {
             std::wstring filePath = to_wstring(ENGINE.ResourceMngr()->GetDataPath() + fontName);
             HRESULT hr = Initialize(filePath);
-            if (hr != S_OK) Engine::NotifyError(NULL, _T("Font wasn't intialized properly"), hr);
+            if (hr != S_OK) Engine::NotifyError(NULL, _T("Font wasn't initialized properly"), hr);
         }
         else
         {
@@ -192,7 +192,7 @@ namespace jela
 
         if (!SUCCEEDED(hr))
         {
-            OutputDebugStringW((L"Something went wrong in the Font constructor using " + fontName).c_str());
+            OutputDebugStringW(std::format(L"Something went wrong in the Font constructor using {}.\n", fontName).c_str());
         }
         else
         {
@@ -334,7 +334,7 @@ namespace jela
         {
             m_MapTextures.erase(file);
         }
-        else OutputDebugString((_T("\nTexture to remove is not present. File: ") + file + _T("\n\n")).c_str());
+        else OutputDebugString(std::format(_T("\nTexture to remove is not present. File: {}\n\n"), file).c_str());
     }
 
     void ResourceManager::RemoveAllTextures()
@@ -354,7 +354,7 @@ namespace jela
         {
             m_MapFonts.erase(fontName);
         }
-        else OutputDebugString((_T("Font to remove is not present. File: ") + fontName).c_str());
+        else OutputDebugString(std::format(_T("Font to remove is not present. File: {}\n"), fontName).c_str());
     }
 
     void ResourceManager::RemoveAllFonts()
