@@ -11,12 +11,10 @@ namespace jela
 
     IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
 
-    Texture::Texture(const tstring& filename) :
-        m_pDBitmap{ NULL },
-        m_TextureWidth{ 0 },
-        m_TextureHeight{ 0 }
+    Texture::Texture(const tstring& filename) : m_pDBitmap{ NULL },
+                                                m_TextureWidth{ 0 },
+                                                m_TextureHeight{ 0 }
     {
-
         HRESULT creationResult = S_OK;
 
         IWICBitmapDecoder* pDecoder = NULL;
@@ -188,8 +186,8 @@ namespace jela
     {
         HRESULT hr = S_OK;
 
-        IDWriteFontSetBuilder1* pFontSetBuilder{nullptr};
-        IDWriteFontSet* pFontSet{nullptr};
+        IDWriteFontSetBuilder1* pFontSetBuilder{ nullptr };
+        IDWriteFontSet* pFontSet{ nullptr };
         IDWriteFontFile* pFontFile{nullptr};
         m_pFontCollection = nullptr;
 
@@ -202,8 +200,8 @@ namespace jela
 
         if (SUCCEEDED(hr)) hr = m_pDWriteFactory->CreateFontCollectionFromFontSet(pFontSet, &m_pFontCollection);
 
-        IDWriteFontFamily* pFontFamily{nullptr};
-        IDWriteLocalizedStrings* pStrings{nullptr};
+        IDWriteFontFamily* pFontFamily{ nullptr };
+        IDWriteLocalizedStrings* pStrings{ nullptr };
 
         UINT32 length{};
         std::wstring name{};
