@@ -57,17 +57,15 @@ namespace jela
 				}
 
 				pSink->BeginFigure(D2points.front(), D2D1_FIGURE_BEGIN_FILLED);
-				pSink->AddLines(D2points.data(), (UINT32)D2points.size());
-				pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-				
-				
-			}
+                pSink->AddLines(D2points.data(), static_cast<UINT32>(D2points.size()));
+                pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+            }
 
-			HRESULT closeHr = pSink->Close();
-			if (SUCCEEDED(hr)) hr = closeHr;
+            HRESULT closeHr = pSink->Close();
+            if (SUCCEEDED(hr)) hr = closeHr;
 
-			SafeRelease(&pSink);
-	
+            SafeRelease(&pSink);
+
 		}
 		return hr == S_OK;
 	}
@@ -113,8 +111,8 @@ namespace jela
 
 		if (point.x < xMin || point.x > xMax || point.y < yMin || point.y > yMax) return false;
 
-		// 2. Draw a virtual ray from anywhere outside the polygon to the point 
-		//    and count how often it hits any side of the polygon. 
+        // 2. Draw a virtual ray from anywhere outside the polygon to the point
+        //    and count how often it hits any side of the polygon.
 		//    If the number of hits is even, it's outside of the polygon, if it's odd, it's inside.
 		int numberOfIntersectionPoints{ 0 };
 		Point2f p2{ xMax + 10, yMax + 20 }; // random point outside the box
@@ -137,7 +135,7 @@ namespace jela
 		std::for_each(std::execution::par, m_Points.begin(), m_Points.end(), func);
 	}
 	//--------------------------------------------------------------------------------------------------------------------
-	
+
 
 	//--------------------------------------------------------------------------------------------------------------------
 	// Arc
@@ -240,9 +238,9 @@ namespace jela
 
 		m_Angle = clockwise ? -90.f : 90.f;
 
-		const auto& swapCenterPoint = [&](bool xComparison)							// CP1  _____P2
-		{																			//	   /   
-			if (xComparison) m_StartAngle += 90;									//	  /	    
+        const auto& swapCenterPoint = [&](bool xComparison) // CP1  _____P2
+        { //	   /
+            if (xComparison) m_StartAngle += 90; //	  /
 			if (xComparison == clockwise) SetPosition(point1.x, point2.y);			//   |
 		};																			//	 |
 																					// P1		 CP2
@@ -262,7 +260,7 @@ namespace jela
 			m_StartAngle = 180;
 			swapCenterPoint(point1.x > point2.x);
 		}
-		
+
 		if (!clockwise) m_StartAngle += 90;
 
 		return Recreate(m_Radius.x, m_Radius.y, m_StartAngle, m_Angle, closeSegment);

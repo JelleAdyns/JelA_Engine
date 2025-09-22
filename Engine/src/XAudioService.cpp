@@ -12,10 +12,10 @@
 
 namespace jela
 {
-	void XAudio::SetNrOfChannelsPerFormat(uint16_t amount) 
-	{ 
-		if (m_ChannelPoolCreated)
-		{
+    void XAudio::SetNrOfChannelsPerFormat(uint16_t amount)
+    {
+        if (m_ChannelPoolCreated)
+        {
 			OutputDebugString(std::format(_T("WARNING! When setting the amount of channels per format to {1}, a channel pool was already created with a amount of {0} channels. From this point, channel pools will create {1} channels.\n"),
 				m_NrOfChannelsPerFormat, amount).c_str());
 			OutputDebugString(_T("Tip: use SetNrOfChannelsPerFormat before you add any audio file if you want a consistent amount of channels for every WAVE format.\n\n"));
@@ -36,8 +36,8 @@ namespace jela
 	class XAudio::AudioImpl final
 	{
 	public:
-		AudioImpl()
-		{	
+        AudioImpl()
+		{
 
 #ifdef _DEBUG
 			HRESULT hr = XAudio2Create(&m_pAudioEngine, XAUDIO2_DEBUG_ENGINE, XAUDIO2_DEFAULT_PROCESSOR);
@@ -49,10 +49,12 @@ namespace jela
 
 			hr = m_pAudioEngine->CreateMasteringVoice(&m_pMasteringVoice);
 			if (FAILED(hr)) OutputDebugString(_T("ERROR! Unable to create the XAudio2 Mastering Voice!"));
-		}
-		~AudioImpl()
-		{
-			m_ChannelPools.clear(); // First destroy the channels because, in their destructor, they still need acces to the audio files.
+        }
+
+        ~AudioImpl()
+        {
+            m_ChannelPools.clear();
+            // First destroy the channels because, in their destructor, they still need access to the audio files.
 			m_MapAudioFiles.clear();
 
 			m_VecSupportedFormats.clear();
@@ -74,49 +76,54 @@ namespace jela
 		void RemoveSoundImpl(SoundID id)
 		{
 			m_MapAudioFiles.erase(id);
-		}
-		void PlaySoundInstanceImpl(SoundID id, bool repeat, uint8_t volume, SoundInstanceID& instanceId, float frequency)
+        }
+
+        void PlaySoundInstanceImpl(SoundID id, bool repeat, uint8_t volume, SoundInstanceID& instanceId, float frequency)
 		{
 			if (m_MapAudioFiles.contains(id))
 			{
-				float fVolume = volume / 100.f;
+				const float fVolume = volume / 100.f;
 				PlayAudioFile(m_MapAudioFiles.at(id), repeat, fVolume, frequency, instanceId);
-			}
-			else OutputDebugString(std::format(_T("Sound file with id {} was not added before trying to play the sound."), id).c_str());
+            }
+            else
+                OutputDebugString(
+                    std::format(_T("Sound file with id {} was not added before trying to play the sound."), id)
+                    .c_str());
 		}
 		void PlaySoundClipImpl(SoundID id, bool repeat, uint8_t volume, float frequency)
 		{
 			if (m_MapAudioFiles.contains(id))
 			{
-				float fVolume = volume / 100.f;
+				const float fVolume = volume / 100.f;
 				SoundInstanceID instanceId{};
 				PlayAudioFile(m_MapAudioFiles.at(id), repeat, fVolume, frequency, instanceId);
 			}
-			else OutputDebugString(std::format(_T("Sound file with id {} was not added before trying to play the sound."), id).c_str());
-		}
-		uint8_t GetMasterVolumeImpl() const
-		{
-			float fVolume{};
-			m_pMasteringVoice->GetVolume(&fVolume);
-			return static_cast<uint8_t>(std::round(fVolume * 100));
-		}
-		void SetMasterVolumeImpl(uint8_t newVolume)
-		{
-			m_IsMute = false;
-			float fVolume = newVolume / 100.f;
+			else OutputDebugString(std::format(_T("Sound file with id {} was not added before trying to play the sound."), id)
+                .c_str());
+        }
+
+        uint8_t GetMasterVolumeImpl() const
+        {
+            float fVolume{};
+            m_pMasteringVoice->GetVolume(&fVolume);
+            return static_cast<uint8_t>(std::round(fVolume * 100));
+        }
+
+        void SetMasterVolumeImpl(uint8_t newVolume)
+        {
+            m_IsMute = false;
+            const float fVolume = newVolume / 100.f;
 			m_pMasteringVoice->SetVolume(fVolume);
-			m_LatestVolume = newVolume;
+            m_LatestVolume = newVolume;
 		}
 		void IncrementMasterVolumeImpl()
 		{
-			uint8_t vol = GetMasterVolumeImpl();
-			if (vol < UINT8_MAX)
+			if (const uint8_t vol = GetMasterVolumeImpl(); vol < UINT8_MAX)
 				SetMasterVolumeImpl(vol + 1);
 		}
 		void DecrementMasterVolumeImpl()
 		{
-			uint8_t vol = GetMasterVolumeImpl();
-			if (vol > 0)
+			if (const uint8_t vol = GetMasterVolumeImpl(); vol > 0)
 				SetMasterVolumeImpl(vol - 1);
 		}
 		void ToggleMuteImpl()
@@ -176,7 +183,7 @@ namespace jela
 					audioFile.ResumeChannels();
 				});
 		}
-		
+
 		void StopSoundImpl(SoundID id)
 		{
 			if (m_MapAudioFiles.contains(id))
@@ -237,63 +244,76 @@ namespace jela
 			void PauseChannel(const SoundInstanceID& id) { m_ActiveChannelPtrs.at(id.GetID().value())->Pause(); }
 			void ResumeChannel(const SoundInstanceID& id) { m_ActiveChannelPtrs.at(id.GetID().value())->Resume(); }
 			void StopChannels() { std::ranges::for_each(m_ActiveChannelPtrs, [](const auto& pChannel) { if (pChannel) pChannel->Stop(); }); }
-			void PauseChannels() { std::ranges::for_each(m_ActiveChannelPtrs, [](const auto& pChannel) { if (pChannel) pChannel->Pause(); }); }
-			void ResumeChannels() { std::ranges::for_each(m_ActiveChannelPtrs, [](const auto& pChannel) { if (pChannel) pChannel->Resume(); }); }
+			void PauseChannels() { std::ranges::for_each(m_ActiveChannelPtrs, [](const auto& pChannel) { if (pChannel)
+                                                             pChannel->Pause();
+                                                         });
+            }
 
-		private:
+            void ResumeChannels() { std::ranges::for_each(m_ActiveChannelPtrs, [](const auto& pChannel) { if (pChannel)
+                                                              pChannel->Resume();
+                                                          });
+            }
 
-			enum class WaveCode
-			{
-
+        private:
+            enum class WaveCode
+            {
 #ifdef _XBOX //Big-Endian
-				RIFF = 'RIFF',
-				DATA = 'data',
-				FMT = 'fmt ',
-				WAVE = 'WAVE',
-				XWMA = 'XWMA',
+                RIFF='RIFF',
+                DATA='data',
+                FMT='fmt ',
+                WAVE='WAVE',
+                XWMA = 'XWMA',
 				DPDS = 'dpds'
 #endif
 
 #ifndef _XBOX //Little-Endian
-				RIFF = 'FFIR',
-				DATA = 'atad',
-				FMT = ' tmf',
-				WAVE = 'EVAW',
-				XWMA = 'AMWX',
-				DPDS = 'sdpd'
+                RIFF = 'FFIR',
+                DATA = 'atad',
+                FMT = ' tmf',
+                WAVE = 'EVAW',
+                XWMA = 'AMWX',
+                DPDS = 'sdpd'
 #endif
-			};
+            };
 
-			tstring OpenFile(const tstring& fileName)
-			{
-				constexpr static unsigned int nrOfFourccChars{ 4 };
-				WAVEFORMATEX extractedFormat{};
+            void OpenFile(const tstring& fileName)
+            {
+                constexpr static unsigned int nrOfFourccChars{4};
+                WAVEFORMATEX extractedFormat{};
 
-				std::streampos filePosition{ 0 }; // Debug Purposes
+                std::streampos filePosition{0}; // Debug Purposes
 
-				tstring pathString{ ENGINE.ResourceMngr()->GetDataPath() + fileName };
+                tstring pathString{ENGINE.ResourceMngr()->GetDataPath() + fileName};
 
-				if (std::filesystem::path filePath{ pathString }; std::filesystem::exists(filePath))
-				{
-					if (std::ifstream file{ filePath, std::ios_base::binary }; file.is_open())
-					{
-						int fourccResult{};
+                if (const std::filesystem::path filePath{pathString}; std::filesystem::exists(filePath))
+                {
+                    if (fileName.find(_T(".wav")) == std::string::npos)
+                        throw FileTypeNotSupportedException{
+                            std::format("File type of {} is not supported.", std::filesystem::path{fileName}.string()),
+                            {".wav"}
+                        };
 
-						filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
+                    if (std::ifstream file{filePath, std::ios_base::binary}; file.is_open())
+                    {
+                        int fourccResult{};
+
+                        filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
 						if (fourccResult != static_cast<int>(WaveCode::RIFF))
 							return std::format(_T("ERROR! Expected {} (WAVE_CODE_RIFF) when reading Sound file. Got {} instead.\n"), static_cast<int>(WaveCode::RIFF), fourccResult);
 
-						unsigned int fileSize{ 0 };
-						filePosition = file.read(reinterpret_cast<char*>(&fileSize), nrOfFourccChars).tellg();
-						fileSize += 8;
-						if (fileSize <= 44)
-							return _T("ERROR! Expected a filesize larger than 16 bytes when reading Sound file.\n");
+                        unsigned int fileSize{0};
+                        filePosition = file.read(reinterpret_cast<char*>(&fileSize), nrOfFourccChars).tellg();
+                        fileSize += 8;
+                        if (fileSize <= 44)
+                            throw FileLoadException{
+                                "Expected a filesize larger than 44 bytes when reading Sound file.\n"
+                            };
 
 						filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
 						if (fourccResult != static_cast<int>(WaveCode::WAVE))
 							return std::format(_T("ERROR! Expected {} (WAVE_CODE_WAVE) when reading Sound file. Got {} instead.\n"), static_cast<int>(WaveCode::WAVE), fourccResult);
 
-						unsigned int chunkSize{};
+                        unsigned int chunkSize{};
 
 						auto findChunk = [&](WaveCode waveCode) -> bool
 							{
@@ -340,14 +360,17 @@ namespace jela
 				m_Exists = true;
 				m_pFormat = m_pAudioSystem->AddFormat(extractedFormat);
 
-				tstring formatStringSummary = std::format(_T("wFormatTag: {}\nnChannels: {}\nnSamplesPerSec: {}\nnAvgBytesPerSec: {}\nnBlockAlign: {}\nwBitsPerSample: {}\ncbSize: {}\n"),
-					m_pFormat->wFormatTag, m_pFormat->nChannels, m_pFormat->nSamplesPerSec, m_pFormat->nAvgBytesPerSec, m_pFormat->nBlockAlign, m_pFormat->wBitsPerSample, m_pFormat->cbSize);
+                tstring formatStringSummary = std::format(
+                    _T(
+                        "wFormatTag: {}\nnChannels: {}\nnSamplesPerSec: {}\nnAvgBytesPerSec: {}\nnBlockAlign: {}\nwBitsPerSample: {}\ncbSize: {}\n"),
+                    m_pFormat->wFormatTag, m_pFormat->nChannels, m_pFormat->nSamplesPerSec, m_pFormat->nAvgBytesPerSec, m_pFormat->nBlockAlign, m_pFormat->wBitsPerSample, m_pFormat->cbSize);
 
 
 				return std::format(_T("Audio File {} was succesfully loaded! Format:\n{}\n"), fileName, formatStringSummary);
 			}
 
-			void RemoveChannel(const AudioImpl::Channel *pChannel) {
+			void RemoveChannel(const AudioImpl::Channel *pChannel)
+		    {
 				std::lock_guard<std::mutex> lock{ m_ChannelsMutex };
 				for (std::size_t index = 0; index < m_ActiveChannelPtrs.size(); ++index)
 				{
@@ -359,22 +382,23 @@ namespace jela
 						m_pOnChannelRelease->NotifyObservers(static_cast<uint8_t>(index), instanceIDs);
 						for (auto& id : instanceIDs)
 							m_pOnChannelRelease->RemoveObserver(id);
-						return;
-					}
-				}
-			}
-			void AddChannel(AudioImpl::Channel* pChannel, SoundInstanceID& instanceId)
-			{
-				// No lock_guard needed, because AddChannel will never be called when the audio voice already started.
+                        return;
+                    }
+                }
+            }
+
+            void AddChannel(AudioImpl::Channel* pChannel, SoundInstanceID& instanceId)
+            {
+                // No lock_guard needed, because AddChannel will never be called when the audio voice already started.
 				for (std::size_t index = 0; index < m_ActiveChannelPtrs.size(); ++index)
 				{
 					auto& pCurrChannel= m_ActiveChannelPtrs.at(index);
 					if (!pCurrChannel)
 					{
 						if(!m_pOnChannelRelease->HasObserver(&instanceId))
-							m_pOnChannelRelease->AddObserver(&instanceId);
+                            m_pOnChannelRelease->AddObserver(&instanceId);
 
-						instanceId.SaveSubject(m_pOnChannelRelease.get());
+                        instanceId.SaveSubject(m_pOnChannelRelease.get());
 						pCurrChannel = pChannel;
 						instanceId.Init(static_cast<uint8_t>(index));
 						return;
@@ -383,18 +407,19 @@ namespace jela
 			}
 
 			std::mutex m_ChannelsMutex{};
-			tstring m_FileName{};
-			std::vector<BYTE> m_pData{};
-			std::vector<AudioImpl::Channel*> m_ActiveChannelPtrs{};
-			const WAVEFORMATEX* m_pFormat{};
+            tstring m_FileName{};
+            std::vector<BYTE> m_pData{};
+            std::vector<AudioImpl::Channel*> m_ActiveChannelPtrs{};
+            const WAVEFORMATEX* m_pFormat{};
 			AudioImpl* const m_pAudioSystem{};
 
 			std::unique_ptr<Subject<uint8_t, std::vector<SoundInstanceID*>&>> m_pOnChannelRelease{ std::make_unique<Subject<uint8_t, std::vector<SoundInstanceID*>&>>() };
 			bool m_Exists{ false };
-		};
-		//----------------------------------------------------------------------------------------------------------------------------
+        };
 
-		//----------------------------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------------------------
+
+        //----------------------------------------------------------------------------------------------------------------------------
 		// Channel class
 		class Channel final
 		{
@@ -409,26 +434,30 @@ namespace jela
 				if (FAILED(hr)) OutputDebugString(std::format(_T("Creating Source Voice failed. HRESULT {}"), hr).c_str());
 			}
 			Channel(const Channel&) = delete;
-			Channel(Channel&&) noexcept = delete;
-			Channel& operator= (const Channel&) = delete;
-			Channel& operator= (Channel&&) noexcept = delete;
 
-			~Channel()
-			{
-				if(m_pAudioFile)
-				{
-					m_pAudioFile->RemoveChannel(this);
-					m_pAudioFile = nullptr;
-				}
-				if (m_pAudioVoice)
-				{
-					m_pAudioVoice->DestroyVoice();
-					m_pAudioVoice = nullptr;
-				}
-			}
-			const WAVEFORMATEX* const GetFormatPtr() const { return m_pFormat; }
+            Channel(Channel&&) noexcept = delete;
 
-			void Play(AudioFile& s, bool repeat, float vol, float frequency, SoundInstanceID& instanceId)
+            Channel& operator=(const Channel&) = delete;
+
+            Channel& operator=(Channel&&) noexcept = delete;
+
+            ~Channel()
+            {
+                if (m_pAudioFile)
+                {
+                    m_pAudioFile->RemoveChannel(this);
+                    m_pAudioFile = nullptr;
+                }
+                if (m_pAudioVoice)
+                {
+                    m_pAudioVoice->DestroyVoice();
+                    m_pAudioVoice = nullptr;
+                }
+            }
+
+            const WAVEFORMATEX* const GetFormatPtr() const { return m_pFormat; }
+
+            void Play(AudioFile& s, bool repeat, float vol, float frequency, SoundInstanceID& instanceId)
 			{
 				assert(m_pAudioVoice && !m_pAudioFile);
 				s.AddChannel(this, instanceId);
@@ -448,18 +477,19 @@ namespace jela
 				{
 					m_pAudioVoice->Stop();
 					m_pAudioFile->RemoveChannel(this);
-					m_pAudioFile = nullptr;
-					m_pAudioSystem->DeactivateChannel(*this);
-					m_pAudioVoice->FlushSourceBuffers();
-					m_IsPaused = false;
-				}
-			}
-			void Pause()
-			{
-				if (m_pAudioVoice && m_pAudioFile)
-				{
-					m_pAudioVoice->Stop();
-					m_IsPaused = true;
+                    m_pAudioFile = nullptr;
+                    m_pAudioSystem->DeactivateChannel(*this);
+                    m_pAudioVoice->FlushSourceBuffers();
+                    m_IsPaused = false;
+                }
+            }
+
+            void Pause()
+            {
+                if (m_pAudioVoice && m_pAudioFile)
+                {
+                    m_pAudioVoice->Stop();
+                    m_IsPaused = true;
 				}
 			}
 			void Resume()
@@ -471,15 +501,17 @@ namespace jela
 				}
 			}
 		private:
-			class VoiceCallback : public IXAudio2VoiceCallback
+			class VoiceCallback final : public IXAudio2VoiceCallback
 			{
 			public:
+				virtual ~VoiceCallback() = default;
+
 				virtual void STDMETHODCALLTYPE OnStreamEnd() override {}
 				virtual void STDMETHODCALLTYPE OnVoiceProcessingPassEnd() override {}
 				virtual void STDMETHODCALLTYPE OnVoiceProcessingPassStart(UINT32 ) override {}
 				virtual void STDMETHODCALLTYPE OnBufferEnd(void* pBufferContext) override
 				{
-					Channel& chan = *(Channel*)pBufferContext;
+					Channel& chan = *(static_cast<Channel *>(pBufferContext));
 					chan.Stop();
 				}
 				virtual void STDMETHODCALLTYPE OnBufferStart(void* ) override {}
@@ -504,12 +536,12 @@ namespace jela
 
 		WAVEFORMATEX* AddFormat(const WAVEFORMATEX& extractedFormat)
 		{
-			auto itFormat = std::ranges::find_if(m_VecSupportedFormats, [&](const auto& internalFormat) { return extractedFormat == *internalFormat; });
+			const auto itFormat = std::ranges::find_if(m_VecSupportedFormats, [&](const auto& internalFormat) { return extractedFormat == *internalFormat; });
 
 			if (itFormat != m_VecSupportedFormats.cend())
-				return (*itFormat).get();
+				return itFormat->get();
 
-			auto pFormat = m_VecSupportedFormats.emplace_back(std::make_unique<WAVEFORMATEX>(extractedFormat)).get();
+			const auto pFormat = m_VecSupportedFormats.emplace_back(std::make_unique<WAVEFORMATEX>(extractedFormat)).get();
 
 			std::lock_guard<std::mutex> lock{ m_ChannelMutex };
 			m_ChannelPools.try_emplace(pFormat, FormatChannelPool{ this, pFormat });
@@ -528,7 +560,7 @@ namespace jela
 					OutputDebugString(std::format(_T("WARNING! When trying to play {}, no channels were available.\n"), s.GetFileName()).c_str());
 					return;
 				}
-				
+
 				actives.emplace_back(std::move(idles.back()));
 				idles.pop_back();
 				actives.back()->Play(s, repeat, vol, frequency, instanceId);
@@ -566,7 +598,7 @@ namespace jela
 
 				m_ChannelPoolCreated = true;
 			}
-			
+
 			static constexpr size_t amountOfChannels{ 64 };
 
 			// We store unique ptrs in order for the Channel objects to stay in the same place in memory

@@ -158,14 +158,15 @@ namespace jela
 		return { x + rhs.x, y + rhs.y };
 	}
 
-	
-	Vector2f& Vector2f::operator+=(const Vector2f& rhs)
-	{
-		x += rhs.x;
-		y += rhs.y;
-		return *this;
-	}
-	Vector2f& Vector2f::operator-=(const Vector2f& rhs)
+
+    Vector2f& Vector2f::operator+=(const Vector2f& rhs)
+    {
+        x += rhs.x;
+        y += rhs.y;
+        return *this;
+    }
+
+    Vector2f& Vector2f::operator-=(const Vector2f& rhs)
 	{
 		x -= rhs.x;
 		y -= rhs.y;
@@ -182,7 +183,7 @@ namespace jela
 	}
 
 	// non-member
-	
+
 	tostream& operator<< (tostream& lhs, const Vector2f& rhs)
 	{
 		lhs << rhs.ToString();

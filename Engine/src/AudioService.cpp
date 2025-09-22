@@ -1,5 +1,4 @@
 #include "AudioService.h"
-#include <iostream>
 #include <windows.h>
 #include <format>
 #include "Defines.h"
@@ -16,15 +15,15 @@ namespace jela
 	SoundInstanceID::~SoundInstanceID() { if (m_pSubject) m_pSubject->RemoveObserver(this); }
 
 	SoundInstanceID::SoundInstanceID(const SoundInstanceID& other)
-		: m_pSubject{ other.m_pSubject }
-		, id{ other.id }
-	{
-		if (m_pSubject) m_pSubject->AddObserver(this);
-	}
+        : m_Id{other.m_Id}
+          , m_pSubject{other.m_pSubject}
+    {
+        if (m_pSubject) m_pSubject->AddObserver(this);
+    }
 
 	SoundInstanceID::SoundInstanceID(SoundInstanceID&& other) noexcept
-		: m_pSubject{ std::move(other.m_pSubject) }
-		, id{ std::move(other.id) }
+        : m_Id{std::move(other.m_Id)}
+          , m_pSubject{std::move(other.m_pSubject) }
 	{
 		if (m_pSubject)
 		{
@@ -33,13 +32,13 @@ namespace jela
 		}
 
 		other.m_pSubject = nullptr;
-		other.id = std::nullopt;
+        other.m_Id = std::nullopt;
 	}
 
 	SoundInstanceID& SoundInstanceID::operator= (const SoundInstanceID& other)
 	{
 		m_pSubject = other.m_pSubject;
-		id = other.id;
+		m_Id = other.m_Id;
 		if (m_pSubject) m_pSubject->AddObserver(this);
 
 		return *this;
@@ -48,22 +47,23 @@ namespace jela
 	SoundInstanceID& SoundInstanceID::operator= (SoundInstanceID&& other) noexcept
 	{
 		m_pSubject = std::move(other.m_pSubject);
-		id = std::move(other.id);
+        m_Id = std::move(other.m_Id);
 
 		if (m_pSubject)
 		{
 			m_pSubject->RemoveObserver(&other);
 			m_pSubject->AddObserver(this);
-		}
+        }
 
-		other.m_pSubject = nullptr;
-		other.id = std::nullopt;
+        other.m_pSubject = nullptr;
+		other.m_Id = std::nullopt;
 
 		return *this;
-	}
-	void SoundInstanceID::Init(uint8_t index)
+    }
+
+    void SoundInstanceID::Init(uint8_t index)
 	{
-		if (!id.has_value()) id = index;
+		if (!m_Id.has_value()) m_Id = index;
 		else OutputDebugString(_T("SoundInstanceID was already initialized when trying to initialize."));
 	}
 	void SoundInstanceID::SaveSubject(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject)
@@ -73,17 +73,17 @@ namespace jela
 	}
 
 	void SoundInstanceID::Notify(uint8_t index, std::vector<SoundInstanceID*>& vecThisObservers)
-	{
-		if (id.has_value() && id.value() == index)
+    {
+        if (m_Id.has_value() && m_Id.value() == index)
 		{
-			id = std::nullopt;
+			m_Id = std::nullopt;
 			m_pSubject = nullptr;
 			vecThisObservers.emplace_back(this);
 		}
 	}
 	void SoundInstanceID::OnSubjectDestroy(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject)
 	{
-		if (pSubject == m_pSubject) id = std::nullopt;
+		if (pSubject == m_pSubject) m_Id = std::nullopt;
 		m_pSubject = nullptr;
 	}
 	//------------------------------------------------------------------------------------------------------------------------------
@@ -101,8 +101,11 @@ namespace jela
 		m_pRealService->RemoveSound(id);
 	}
 	void LogAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const
-	{
-		OutputDebugString(std::format(_T("LogAudio: PlaySoundClip: id: {}, repeat: {}, Volume {}, Frequency {}\n"), id, repeat, (int)volume, frequency).c_str());
+    {
+        OutputDebugString(
+            std::format(
+                _T("LogAudio: PlaySoundClip: id: {}, repeat: {}, Volume {}, Frequency {}\n"), id, repeat,
+                static_cast<int>(volume), frequency).c_str());
 		m_pRealService->PlaySoundClip(id, repeat, volume, frequency);
 	}
 	void LogAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const

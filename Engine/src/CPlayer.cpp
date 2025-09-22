@@ -84,15 +84,15 @@ namespace jela
         // If FALSE, the app did not call Shutdown().
 
         // When CPlayer calls IMediaEventGenerator::BeginGetEvent on the
-        // media session, it causes the media session to hold a reference 
-        // count on the CPlayer. 
+        // media session, it causes the media session to hold a reference
+        // count on the CPlayer.
 
-        // This creates a circular reference count between CPlayer and the 
-        // media session. Calling Shutdown breaks the circular reference 
+        // This creates a circular reference count between CPlayer and the
+        // media session. Calling Shutdown breaks the circular reference
         // count.
 
-        // If CreateInstance fails, the application will not call 
-        // Shutdown. To handle that case, call Shutdown in the destructor. 
+        // If CreateInstance fails, the application will not call
+        // Shutdown. To handle that case, call Shutdown in the destructor.
 
         Shutdown();
     }
@@ -155,7 +155,7 @@ namespace jela
         if (SUCCEEDED(hr)) m_state = PlayerState::OpenPending;
         if (FAILED(hr)) m_state = PlayerState::Closed;
 
-        // If SetTopology succeeds, the media session will queue an 
+        // If SetTopology succeeds, the media session will queue an
         // MESessionTopologySet event.
 
         SafeRelease(&pSourcePD);
@@ -210,21 +210,21 @@ namespace jela
         // Get the event from the event queue.
         HRESULT hr = m_pSession->EndGetEvent(pResult, &pEvent);
 
-        // Get the event type. 
+        // Get the event type.
         if (SUCCEEDED(hr)) hr = pEvent->GetType(&meType);
 
-        // Check the application state. 
+        // Check the application state.
 
-        // If a call to IMFMediaSession::Close is pending, it means the 
+        // If a call to IMFMediaSession::Close is pending, it means the
         // application is waiting on the m_hCloseEvent event and
-        // the application's message loop is blocked. 
+        // the application's message loop is blocked.
 
-        // Otherwise, post a private window message to the application. 
+        // Otherwise, post a private window message to the application.
         if (SUCCEEDED(hr))
         {
             if (meType == MESessionClosed)
             {
-                // The session was closed. The application is waiting on the m_hCloseEvent event handle. 
+                // The session was closed. The application is waiting on the m_hCloseEvent event handle.
                 SetEvent(m_hCloseEvent);
             }
             else
@@ -253,17 +253,17 @@ namespace jela
                     hr = OnNewPresentation(pEvent);
                     break;
                 case MESessionTopologySet:
-                
+
                     if (m_pMasterVolume)
-                    { 
+                    {
                         float volume{};
                         m_pMasterVolume->GetMasterVolume(&volume);
                         SafeRelease(&m_pMasterVolume);
                         hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
                         if (m_pMasterVolume) m_pMasterVolume->SetMasterVolume(volume);
-                    } 
+                    }
                     else hr = MFGetService(m_pSession, MR_POLICY_VOLUME_SERVICE, IID_PPV_ARGS(&m_pMasterVolume));
-                
+
                     break;
 
                 default:
@@ -291,7 +291,7 @@ namespace jela
         // Get the event type.
         HRESULT hr = pEvent->GetType(&meType);
 
-        // Get the event status. If the operation that triggered the event 
+        // Get the event status. If the operation that triggered the event
         // did not succeed, the status is a failure code.
         if (SUCCEEDED(hr)) hr = pEvent->GetStatus(&hrStatus);
 
@@ -316,7 +316,7 @@ namespace jela
             case MENewPresentation:
                 hr = OnNewPresentation(pEvent);
                 break;
-            case MESessionTopologySet: 
+            case MESessionTopologySet:
 
                 if (m_pMasterVolume)
                 {
@@ -396,8 +396,8 @@ namespace jela
     }
 
     //  Handler for MENewPresentation event.
-    //  This event is sent if the media source has a new presentation, which 
-    //  requires a new topology. 
+    //  This event is sent if the media source has a new presentation, which
+    //  requires a new topology.
     HRESULT CPlayer::OnNewPresentation(IMFMediaEvent* pEvent)
     {
         IMFPresentationDescriptor* pPD = NULL;
@@ -440,13 +440,13 @@ namespace jela
         return hr;
     }
 
-    //  Close the media session. 
+    //  Close the media session.
     HRESULT CPlayer::CloseSession()
     {
-        //  The IMFMediaSession::Close method is asynchronous, but the 
+        //  The IMFMediaSession::Close method is asynchronous, but the
         //  CPlayer::CloseSession method waits on the MESessionClosed event.
         //  
-        //  MESessionClosed is guaranteed to be the last event that the 
+        //  MESessionClosed is guaranteed to be the last event that the
         //  media session fires.
 
         HRESULT hr = S_OK;
@@ -454,15 +454,13 @@ namespace jela
         // First close the media session.
         if (m_pSession)
         {
-            DWORD dwWaitResult = 0;
-
             m_state = PlayerState::Closing;
 
             hr = m_pSession->Close();
             // Wait for the close operation to complete
             if (SUCCEEDED(hr))
             {
-                dwWaitResult = WaitForSingleObject(m_hCloseEvent, 5000);
+                const DWORD dwWaitResult = WaitForSingleObject(m_hCloseEvent, 5000);
                 if (dwWaitResult == WAIT_TIMEOUT) assert(FALSE);
                 // Now there will be no more events from this session.
             }
@@ -484,7 +482,7 @@ namespace jela
         return hr;
     }
 
-    //  Start playback from the current position. 
+    //  Start playback from the current position.
     HRESULT CPlayer::StartPlayback(bool resume)
     {
         assert(m_pSession != NULL);
@@ -532,9 +530,9 @@ namespace jela
         // Create the source resolver.
         HRESULT hr = MFCreateSourceResolver(&pSourceResolver);
 
-        // Note: For simplicity this sample uses the synchronous method to create 
+        // Note: For simplicity this sample uses the synchronous method to create
         // the media source. However, creating a media source can take a noticeable
-        // amount of time, especially for a network source. For a more responsive 
+        // amount of time, especially for a network source. For a more responsive
         // UI, use the asynchronous BeginCreateObjectFromURL method.
         if (SUCCEEDED(hr)) hr = pSourceResolver->CreateObjectFromURL(to_wstring(fileName).c_str(), MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_READ, NULL, &ObjectType, &pSource);
 
@@ -642,8 +640,8 @@ namespace jela
     //
     //  For each stream, this function does the following:
     //
-    //    1. Creates a source node associated with the stream. 
-    //    2. Creates an output node for the renderer. 
+    //    1. Creates a source node associated with the stream.
+    //    2. Creates an output node for the renderer.
     //    3. Connects the two nodes.
     //
     //  The media session will add any decoders that are needed.
@@ -673,7 +671,7 @@ namespace jela
             // Connect the source node to the output node.
             if (SUCCEEDED(hr)) hr = pSourceNode->ConnectOutput(0, pOutputNode, 0);
         }
-        // else: If not selected, don't add the branch. 
+        // else: If not selected, don't add the branch.
 
         SafeRelease(&pSD);
         SafeRelease(&pSinkActivate);

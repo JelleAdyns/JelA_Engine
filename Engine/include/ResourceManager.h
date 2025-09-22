@@ -62,7 +62,7 @@ namespace jela
 
         std::wstring GetFontName() const { return m_FontName; }
     private:
-        // using friend class for tight coupling 
+        // using friend class for tight coupling
         friend class TextFormat;
         HRESULT Initialize(const std::wstring& filename);
 
@@ -120,17 +120,17 @@ namespace jela
         float m_Size;
     };
     //---------------------------------------------------------------
-    
-    
+
+
     //---------------------------------------------------------------
     class ResourceManager final
     {
     public:
         ResourceManager(const tstring& dataPath)
-        {         
+        {
             m_DataPath = dataPath;
             Texture::InitFactory();
-            Font::InitFactory(); 
+            Font::InitFactory();
         }
         ~ResourceManager()
         {
@@ -199,7 +199,7 @@ namespace jela
                 resourcePtr.SaveSubject(pOnResourceDestroy.get());
                 resourcePtr.pObject = &resource;
             }
-            
+
         private:
             std::unique_ptr<Subject<>> pOnResourceDestroy{};
         };
@@ -213,21 +213,21 @@ namespace jela
         struct ResourcePtr final : public Observer<>
         {
             const ResourceType* pObject = nullptr;
-            
+
             ResourcePtr() = default;
 
             virtual ~ResourcePtr() { if (m_pSubject) m_pSubject->RemoveObserver(this); }
 
             ResourcePtr(const ResourcePtr& other)
-                : m_pSubject{ other.m_pSubject }
-                , pObject{ other.pObject }
+                : pObject{other.pObject}
+                  , m_pSubject{other.m_pSubject}
             {
                 if (m_pSubject) m_pSubject->AddObserver(this);
             }
 
             ResourcePtr(ResourcePtr&& other) noexcept
-                : m_pSubject{ std::move(other.m_pSubject) }
-                , pObject{ std::move(other.pObject) }
+                : pObject{std::move(other.pObject)}
+                  , m_pSubject{std::move(other.m_pSubject)}
             {
                 if (m_pSubject)
                 {
@@ -244,7 +244,7 @@ namespace jela
                 pObject = other.pObject;
                 m_pSubject = other.m_pSubject;
                 if (m_pSubject) m_pSubject->AddObserver(this);
-                
+
                 return *this;
             }
 
@@ -261,7 +261,7 @@ namespace jela
 
                 other.m_pSubject = nullptr;
                 other.pObject = nullptr;
-                
+
                 return *this;
             }
 

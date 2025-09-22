@@ -7,9 +7,7 @@
 #include <functional>
 #include <thread>
 #include <mutex>
-#include <iostream>
-#include <algorithm>
-#include <thread>
+#include <ranges>
 
 namespace jela
 {
@@ -164,10 +162,10 @@ namespace jela
 		void ToggleMuteImpl()
 		{
 			m_IsMute = !m_IsMute;
-			
-			static uint8_t previousVolume{};
 
-			if (m_IsMute)
+            static uint8_t previousVolume{};
+
+            if (m_IsMute)
 			{
 				previousVolume = GetMasterVolumeImpl();
 				SetMasterVolumeImpl(0);
@@ -283,8 +281,8 @@ namespace jela
 			else OutputDebugString((_T("\nTrying to pause sound that isn't present. ID:") + to_tstring(id) + _T('\n')).c_str());
 		}
 		void PauseAll(std::map<SoundID, AudioInfo>& audioMap) const
-		{
-			for (auto& [soundId, audioInfo] : audioMap)
+        {
+            for (auto& audioInfo : audioMap | std::views::values)
 			{
 				audioInfo.pAudioFile->Pause();
 			}
@@ -299,10 +297,10 @@ namespace jela
 			else OutputDebugString((_T("\nTrying to resume sound that isn't present. ID: ") + to_tstring(id) + _T('\n')).c_str());
 		}
 		void ResumeAll(std::map<SoundID, AudioInfo>& audioMap) const
-		{
-			for (auto& [soundId, audioInfo] : audioMap)
-			{
-				AudioFile* audioFile = audioInfo.pAudioFile.get();
+        {
+            for (auto& audioInfo : audioMap | std::views::values)
+            {
+                const AudioFile* audioFile = audioInfo.pAudioFile.get();
 				if (audioFile->IsPaused()) audioFile->Play(audioInfo.repeat, true);
 			}
 		}
@@ -315,8 +313,8 @@ namespace jela
 			else OutputDebugString((_T("\nTrying to stop sound that isn't present. ID: ") + to_tstring(id) + _T('\n')).c_str());
 		}
 		void StopAll(std::map<SoundID, AudioInfo>& audioMap) const
-		{
-			for (auto& [soundId, audioInfo] : audioMap)
+        {
+            for (const auto& audioInfo : audioMap | std::views::values)
 			{
 				audioInfo.pAudioFile->Stop();
 			}

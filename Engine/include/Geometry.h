@@ -75,15 +75,16 @@ namespace jela
 		bool RecreateByRadius(float radiusX, float radiusY, bool closeSegment);
 		bool RecreateByAngle(float startAngle, float angle, bool closeSegment);
 		bool Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
-		
-		void SetPosition(const Point2f& center) { SetPosition(center.x, center.y); }
-		void SetPosition(float centerX, float centerY);
-		
-		// The center (position) of an Arc object is equal to the translation.
-		Point2f GetPosition() const { return Point2f{ GetTranslation().x, GetTranslation().y }; }
-		const Vector2f& GetRadius() const { return m_Radius; }
-		float GetStartAngle() const { return m_StartAngle; }
-		float GetAngle() const { return m_Angle; }
+
+        void SetPosition(const Point2f& center) { SetPosition(center.x, center.y); }
+
+        void SetPosition(float centerX, float centerY);
+
+        // The center (position) of an Arc object is equal to the translation.
+        Point2f GetPosition() const { return Point2f{GetTranslation().x, GetTranslation().y}; }
+        const Vector2f& GetRadius() const { return m_Radius; }
+        float GetStartAngle() const { return m_StartAngle; }
+        float GetAngle() const { return m_Angle; }
 	private:
 		Vector2f m_Radius;
 		float m_StartAngle;

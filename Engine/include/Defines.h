@@ -10,12 +10,12 @@
 #include <regex>
 
 
-#ifdef _UNICODE								
-	#define tchar			wchar_t
-	#define tstring			std::wstring
-	#define tcin			std::wcin
-	#define tcout			std::wcout
-	#define tstringstream	std::wstringstream
+#ifdef _UNICODE
+#define tchar			wchar_t
+#define tstring			std::wstring
+#define tcin			std::wcin
+#define tcout			std::wcout
+#define tstringstream	std::wstringstream
 	#define tofstream		std::wofstream
 	#define tifstream		std::wifstream
 	#define tfstream		std::wfstream
@@ -48,7 +48,7 @@
 
 
 #include <filesystem>
-static inline std::wstring to_wstring(const tstring& str) 
+static inline std::wstring to_wstring(const tstring& str)
 {
 	std::filesystem::path p{ str };
 	return p.wstring();

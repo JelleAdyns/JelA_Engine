@@ -88,6 +88,7 @@ namespace jela
     {
         SafeRelease(&m_pDBitmap);
     }
+
     void Texture::InitFactory()
     {
         if (!m_pWICFactory)
@@ -101,6 +102,7 @@ namespace jela
             if (!SUCCEEDED(creationResult)) throw std::runtime_error("WIC Factory not created correctly.");
         }
     }
+
     void Texture::DestroyFactory()
     {
         SafeRelease(&m_pWICFactory);
@@ -249,39 +251,42 @@ namespace jela
     {
         SafeRelease(&m_pTextFormat);
     }
+
     void TextFormat::SetHorizontalAllignment(HorAllignment allignment)
     {
         switch (allignment)
         {
-        case HorAllignment::Left:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-            break;
-        case HorAllignment::Center:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-            break;
-        case HorAllignment::Right:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-            break;
-        case HorAllignment::Justified:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-            break;
+            case HorAllignment::Left:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+                break;
+            case HorAllignment::Center:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+                break;
+            case HorAllignment::Right:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+                break;
+            case HorAllignment::Justified:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+                break;
         }
     }
+
     void TextFormat::SetVerticalAllignment(VertAllignment allignment)
     {
         switch (allignment)
         {
-        case VertAllignment::Top:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-            break;
-        case VertAllignment::Center:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-            break;
-        case VertAllignment::Bottom:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-            break;
+            case VertAllignment::Top:
+                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+                break;
+            case VertAllignment::Center:
+                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+                break;
+            case VertAllignment::Bottom:
+                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+                break;
         }
     }
+
     void TextFormat::SetFont(const Font* const pFont)
     {
         const auto vertAllign = m_pTextFormat->GetParagraphAlignment();
@@ -319,7 +324,8 @@ namespace jela
         GetFont(_T("Verdana"), m_pDefaultFont);
         SetCurrentFont(m_pDefaultFont.pObject);
 
-        m_pDefaultTextFormat = std::make_unique<TextFormat>(12.f, false, false, TextFormat::HorAllignment::Left, TextFormat::VertAllignment::Top);
+        m_pDefaultTextFormat = std::make_unique<TextFormat>(12.f, false, false, TextFormat::HorAllignment::Left,
+                                                            TextFormat::VertAllignment::Top);
         SetCurrentTextFormat(m_pDefaultTextFormat.get());
     }
 
