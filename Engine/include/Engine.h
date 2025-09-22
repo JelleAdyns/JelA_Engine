@@ -8,7 +8,6 @@
 #include "Audio.h"
 #include "framework.h"
 #include "Controller.h"
-#include "Observer.h"
 #include "ResourceManager.h"
 #include <vector>
 #include <chrono>
@@ -40,7 +39,7 @@ namespace jela
 
         void Shutdown();
         bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, const COLORREF& bgColor, const tstring& wndwName);
-      
+
 
         int Run(std::unique_ptr<BaseGame>&& game);
         LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -199,7 +198,7 @@ namespace jela
 
         static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
         {
-            const size_t MESSAGE_LEN = 512;
+            constexpr size_t MESSAGE_LEN = 512;
             TCHAR message[MESSAGE_LEN];
 
             if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, _T("%s (HRESULT = 0x%X)"),

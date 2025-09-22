@@ -10,8 +10,8 @@
 #include <regex>
 
 
-#ifdef _UNICODE								
-	#define tchar			wchar_t
+#ifdef _UNICODE
+    #define tchar			wchar_t
 	#define tstring			std::wstring
 	#define tcin			std::wcin
 	#define tcout			std::wcout
@@ -48,7 +48,7 @@
 
 
 #include <filesystem>
-static inline std::wstring to_wstring(const tstring& str) 
+static inline std::wstring to_wstring(const tstring& str)
 {
 	std::filesystem::path p{ str };
 	return p.wstring();
@@ -57,15 +57,15 @@ static inline std::wstring to_wstring(const tstring& str)
 //next ifdef is code from Kevin Hoefman, teacher at Howest, DAE in Kortrijk
 //64 bit defines
 #ifdef _WIN64
-#define GWLA_WNDPROC	GWLP_WNDPROC
-#define GWLA_HINSTANCE	GWLP_HINSTANCE
-#define GWLA_HWNDPARENT GWLP_HWNDPARENT
-#define GWLA_USERDATA	GWLP_USERDATA
+    #define GWLA_WNDPROC	GWLP_WNDPROC
+    #define GWLA_HINSTANCE	GWLP_HINSTANCE
+    #define GWLA_HWNDPARENT GWLP_HWNDPARENT
+    #define GWLA_USERDATA	GWLP_USERDATA
 #else
-#define GWLA_WNDPROC	GWL_WNDPROC
-#define GWLA_HINSTANCE	GWL_HINSTANCE
-#define GWLA_HWNDPARENT GWL_HWNDPARENT
-#define GWLA_USERDATA	GWL_USERDATA
+    #define GWLA_WNDPROC	GWL_WNDPROC
+    #define GWLA_HINSTANCE	GWL_HINSTANCE
+    #define GWLA_HWNDPARENT GWL_HWNDPARENT
+    #define GWLA_USERDATA	GWL_USERDATA
 #endif
 
 

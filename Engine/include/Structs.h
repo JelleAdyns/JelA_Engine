@@ -72,20 +72,20 @@ namespace jela
 		float rad;
 	};
 
-	
-	struct Vector2f
-	{
-		Vector2f() = default;
-		Vector2f(float x, float y);
-		Vector2f(const Point2f& endPoint);
-		Vector2f(const Point2f& startPoint, const Point2f& endPoint);
 
-		Vector2f operator-() const;
+    struct Vector2f
+    {
+        Vector2f() = default;
+        Vector2f(float x, float y);
+        Vector2f(const Point2f& endPoint);
+        Vector2f(const Point2f& startPoint, const Point2f& endPoint);
+
+        Vector2f operator-() const;
 		Vector2f operator+() const;
 		Vector2f operator-(const Vector2f& rhs) const;
 		Vector2f operator+(const Vector2f& rhs) const;
-		
-		Vector2f& operator+=(const Vector2f& rhs);
+
+        Vector2f& operator+=(const Vector2f& rhs);
 		Vector2f& operator-=(const Vector2f& rhs);
 
 		Vector2f operator*(cArithmetic auto rhs) const

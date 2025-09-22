@@ -1,7 +1,6 @@
 #include "Controller.h"
 //#include "GlobalEnumClasses.h"
 #include <map>
-#include <iostream>
 #include "Windows.h"
 #include <XInput.h>
 
@@ -158,22 +157,20 @@ namespace jela
 		auto buttonChanges = currentState.Gamepad.wButtons ^ previousState.Gamepad.wButtons;
 
 		//Joysticks
-		float xL, yL, xR, yR;
-		xL = currentState.Gamepad.sThumbLX / m_MaxJoystickValue;
-		yL = currentState.Gamepad.sThumbLY / m_MaxJoystickValue;
+        float xL = currentState.Gamepad.sThumbLX / m_MaxJoystickValue;
+        float yL = currentState.Gamepad.sThumbLY / m_MaxJoystickValue;
 
-		xR = currentState.Gamepad.sThumbRX / m_MaxJoystickValue;
-		yR = currentState.Gamepad.sThumbRY / m_MaxJoystickValue;
+        float xR = currentState.Gamepad.sThumbRX / m_MaxJoystickValue;
+        float yR = currentState.Gamepad.sThumbRY / m_MaxJoystickValue;
 
-		if (std::abs(xL) < m_LJoystickDeadZonePercentage / 100.f) xL = 0;
-		if (std::abs(yL) < m_LJoystickDeadZonePercentage / 100.f) yL = 0;
-		if (std::abs(xR) < m_RJoystickDeadZonePercentage / 100.f) xR = 0;
-		if (std::abs(yR) < m_RJoystickDeadZonePercentage / 100.f) yR = 0;
+        if (std::abs(xL) < m_LJoystickDeadZonePercentage / 100.f) xL = 0;
+        if (std::abs(yL) < m_LJoystickDeadZonePercentage / 100.f) yL = 0;
+        if (std::abs(xR) < m_RJoystickDeadZonePercentage / 100.f) xR = 0;
+        if (std::abs(yR) < m_RJoystickDeadZonePercentage / 100.f) yR = 0;
 
-		//Triggers
-		float valueL, valueR;
-		valueL = currentState.Gamepad.bLeftTrigger / m_MaxTriggerValue;
-		valueR = currentState.Gamepad.bRightTrigger / m_MaxTriggerValue;
+        //Triggers
+        float valueL = currentState.Gamepad.bLeftTrigger / m_MaxTriggerValue;
+        float valueR = currentState.Gamepad.bRightTrigger / m_MaxTriggerValue;
 
 		if (valueL < m_LTriggerDeadZonePercentage / 100.f) valueL = 0;
 		if (valueR < m_RTriggerDeadZonePercentage / 100.f) valueR = 0;
@@ -285,7 +282,7 @@ namespace jela
 		if (leftJoystick)
 		{
 			x = m_CurrentState.Gamepad.sThumbLX / m_MaxJoystickValue;
-			y = m_CurrentState.Gamepad.sThumbLY / m_MaxJoystickValue;	
+            y = m_CurrentState.Gamepad.sThumbLY / m_MaxJoystickValue;
 			if (std::abs(x) < m_LJoystickDeadZonePercentage / 100.f) x = 0;
 			if (std::abs(y) < m_LJoystickDeadZonePercentage / 100.f) y = 0;
 		}
@@ -320,13 +317,12 @@ namespace jela
 	int Controller::ControllerImpl::AmountOfConnectedControllersImpl()
 	{
 		int connectedControllers = 0;
-		XINPUT_STATE state{};
-		DWORD dwResult;
+        XINPUT_STATE state{};
 
-		for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i)
-		{
-			dwResult = XInputGetState(i, &state);
-			if (dwResult == ERROR_SUCCESS) ++connectedControllers;
+        for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i)
+        {
+            if (const DWORD dwResult = XInputGetState(i, &state); dwResult == ERROR_SUCCESS)
+                ++connectedControllers;
 		}
 		return connectedControllers;
 	}

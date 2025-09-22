@@ -12,14 +12,14 @@ namespace jela
 	using SoundID = unsigned int;
 	struct SoundInstanceID final : public Observer<uint8_t, std::vector<SoundInstanceID*>&>
 	{
-		std::optional<uint8_t> GetID() const { return id; }
+        std::optional<uint8_t> GetID() const { return m_Id; }
 
-		SoundInstanceID() = default;
+        SoundInstanceID() = default;
 
-		//--------------------------------------------------------------
-		// IMPLEMENTED
+        //--------------------------------------------------------------
+        // IMPLEMENTED
 
-		virtual ~SoundInstanceID();
+        virtual ~SoundInstanceID();
 		SoundInstanceID(const SoundInstanceID& other);
 		SoundInstanceID(SoundInstanceID&& other) noexcept;
 		SoundInstanceID& operator= (const SoundInstanceID& other);
@@ -33,7 +33,7 @@ namespace jela
 		virtual void Notify(uint8_t index, std::vector<SoundInstanceID*>& vecThisObservers) override;
 		virtual void OnSubjectDestroy(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject) override;
 
-		std::optional<uint8_t> id{};
+        std::optional<uint8_t> m_Id{};
 
 		Subject<uint8_t, std::vector<SoundInstanceID*>&>* m_pSubject{};
 	};

@@ -45,7 +45,7 @@ namespace jela
             }
         }
         bool HasObserver(Observer<Args... >* pObserver)
-        {       
+        {
             return std::ranges::find(m_pVecObservers, pObserver) != m_pVecObservers.cend();
         }
         void NotifyObservers(Args...  args)

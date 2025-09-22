@@ -88,6 +88,7 @@ namespace jela
     {
         SafeRelease(&m_pDBitmap);
     }
+
     void Texture::InitFactory()
     {
         if (!m_pWICFactory)
@@ -101,13 +102,13 @@ namespace jela
             if (!SUCCEEDED(creationResult)) throw std::runtime_error("WIC Factory not created correctly.");
         }
     }
+
     void Texture::DestroyFactory()
     {
         SafeRelease(&m_pWICFactory);
     }
 
     //---------------------------------------------------------------------------------------------------------------------------------
-
 
 
     //---------------------------------------------------------------------------------------------------------------------------------
@@ -131,57 +132,41 @@ namespace jela
             m_FontName = to_wstring(fontName);
         }
     }
+
     Font::~Font()
     {
         SafeRelease(&m_pFontCollection);
     }
+
     HRESULT Font::Initialize(const std::wstring& fontName)
     {
         HRESULT hr = S_OK;
 
-        IDWriteFontSetBuilder1* pFontSetBuilder{ nullptr };
-        IDWriteFontSet* pFontSet{ nullptr };
-        IDWriteFontFile* pFontFile{ nullptr };
+        IDWriteFontSetBuilder1* pFontSetBuilder{nullptr};
+        IDWriteFontSet* pFontSet{nullptr};
+        IDWriteFontFile* pFontFile{nullptr};
         m_pFontCollection = nullptr;
 
-
-
         hr = m_pDWriteFactory->CreateFontSetBuilder(&pFontSetBuilder);
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pDWriteFactory->CreateFontFileReference(fontName.c_str(), NULL, &pFontFile);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pFontSetBuilder->AddFontFile(pFontFile);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pFontSetBuilder->CreateFontSet(&pFontSet);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pDWriteFactory->CreateFontCollectionFromFontSet(pFontSet, &m_pFontCollection);
-        }
+        if (SUCCEEDED(hr)) hr = m_pDWriteFactory->CreateFontFileReference(fontName.c_str(), NULL, &pFontFile);
 
-        IDWriteFontFamily* pFontFamily{ nullptr };
-        IDWriteLocalizedStrings* pStrings{ nullptr };
+        if (SUCCEEDED(hr)) hr = pFontSetBuilder->AddFontFile(pFontFile);
+
+        if (SUCCEEDED(hr)) hr = pFontSetBuilder->CreateFontSet(&pFontSet);
+
+        if (SUCCEEDED(hr)) hr = m_pDWriteFactory->CreateFontCollectionFromFontSet(pFontSet, &m_pFontCollection);
+
+        IDWriteFontFamily* pFontFamily{nullptr};
+        IDWriteLocalizedStrings* pStrings{nullptr};
 
         UINT32 length{};
         std::wstring name{};
 
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pFontFamily->GetFamilyNames(&pStrings);
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = pStrings->GetStringLength(0, &length);
-        }
+        if (SUCCEEDED(hr)) hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
+
+        if (SUCCEEDED(hr)) hr = pFontFamily->GetFamilyNames(&pStrings);
+
+        if (SUCCEEDED(hr)) hr = pStrings->GetStringLength(0, &length);
 
         if (SUCCEEDED(hr))
         {
@@ -189,16 +174,7 @@ namespace jela
             hr = pStrings->GetString(0, &name[0], length + 1);
         }
 
-
-        if (!SUCCEEDED(hr))
-        {
-            OutputDebugStringW(
-                std::format(L"Something went wrong in the Font constructor using {}.\n", fontName).c_str());
-        }
-        else
-        {
-            m_FontName = name;
-        }
+        if (SUCCEEDED(hr)) m_FontName = name;
 
         SafeRelease(&pFontSetBuilder);
         SafeRelease(&pFontSet);
@@ -228,7 +204,6 @@ namespace jela
 
     TextFormat::TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign)
     {
-
         Font::m_pDWriteFactory->CreateTextFormat(
             ENGINE.GetCurrentFont()->m_FontName.c_str(),
             ENGINE.GetCurrentFont()->m_pFontCollection,
@@ -249,39 +224,42 @@ namespace jela
     {
         SafeRelease(&m_pTextFormat);
     }
+
     void TextFormat::SetHorizontalAllignment(HorAllignment allignment)
     {
         switch (allignment)
         {
-        case HorAllignment::Left:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-            break;
-        case HorAllignment::Center:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-            break;
-        case HorAllignment::Right:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-            break;
-        case HorAllignment::Justified:
-            if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-            break;
+            case HorAllignment::Left:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+                break;
+            case HorAllignment::Center:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+                break;
+            case HorAllignment::Right:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+                break;
+            case HorAllignment::Justified:
+                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+                break;
         }
     }
+
     void TextFormat::SetVerticalAllignment(VertAllignment allignment)
     {
         switch (allignment)
         {
-        case VertAllignment::Top:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-            break;
-        case VertAllignment::Center:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-            break;
-        case VertAllignment::Bottom:
-            if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-            break;
+            case VertAllignment::Top:
+                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+                break;
+            case VertAllignment::Center:
+                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+                break;
+            case VertAllignment::Bottom:
+                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+                break;
         }
     }
+
     void TextFormat::SetFont(const Font* const pFont)
     {
         const auto vertAllign = m_pTextFormat->GetParagraphAlignment();
@@ -319,7 +297,8 @@ namespace jela
         GetFont(_T("Verdana"), m_pDefaultFont);
         SetCurrentFont(m_pDefaultFont.pObject);
 
-        m_pDefaultTextFormat = std::make_unique<TextFormat>(12.f, false, false, TextFormat::HorAllignment::Left, TextFormat::VertAllignment::Top);
+        m_pDefaultTextFormat = std::make_unique<TextFormat>(12.f, false, false, TextFormat::HorAllignment::Left,
+                                                            TextFormat::VertAllignment::Top);
         SetCurrentTextFormat(m_pDefaultTextFormat.get());
     }
 
@@ -334,8 +313,8 @@ namespace jela
         if (m_MapTextures.contains(file))
         {
             m_MapTextures.erase(file);
-        } else
-            OutputDebugString(std::format(_T("\nTexture to remove is not present. File: {}\n\n"), file).c_str());
+        }
+        else OutputDebugString(std::format(_T("\nTexture to remove is not present. File: {}\n\n"), file).c_str());
     }
 
     void ResourceManager::RemoveAllTextures()
@@ -354,8 +333,8 @@ namespace jela
         if (m_MapFonts.contains(fontName))
         {
             m_MapFonts.erase(fontName);
-        } else
-            OutputDebugString(std::format(_T("Font to remove is not present. File: {}\n"), fontName).c_str());
+        }
+        else OutputDebugString(std::format(_T("Font to remove is not present. Fontname: {}\n"), fontName).c_str());
     }
 
     void ResourceManager::RemoveAllFonts()
@@ -393,7 +372,6 @@ namespace jela
 
             m_OnFontChange.AddObserver(m_pCurrentTextFormat);
 
-
             m_OnFontChange.NotifyObservers(m_pCurrentFont);
         }
     }
@@ -402,5 +380,4 @@ namespace jela
     {
         return ENGINE.ResourceMngr();
     }
-
 }

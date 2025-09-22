@@ -9,7 +9,7 @@
 #define CPLAYER_H
 
 #include <windows.h>
-#include <shobjidl.h> 
+#include <shobjidl.h>
 #include <shlwapi.h>
 #include <assert.h>
 #include <strsafe.h>
@@ -27,26 +27,25 @@ namespace jela
         enum class PlayerState
         {
             Closed = 0,     // No session.
-            ReadyToOpen,    // Session was created, ready to open a file. 
+            ReadyToOpen, // Session was created, ready to open a file.
             OpenPending,    // Session is opening a file.
             ReadyToStart,   // Opened file
             Started,        // Session is playing a file.
             Paused,         // Session is paused.
-            Stopped,        // Session is stopped (ready to play). 
+            Stopped, // Session is stopped (ready to play).
             Closing         // Application has closed the session, but is waiting for MESessionClosed.
         };
 
         static HRESULT CreateInstance(HWND hVideo, CPlayer** ppPlayer);
 
         // IUnknown methods
-        STDMETHODIMP QueryInterface(REFIID iid, void** ppv);
-        STDMETHODIMP_(ULONG) AddRef();
-        STDMETHODIMP_(ULONG) Release();
+        STDMETHODIMP QueryInterface(REFIID iid, void** ppv) override;
+        STDMETHODIMP_(ULONG) AddRef() override;
+        STDMETHODIMP_(ULONG) Release() override;
 
         // IMFAsyncCallback methods
-        STDMETHODIMP  GetParameters(DWORD*, DWORD*) { return E_NOTIMPL; };
-
-        STDMETHODIMP  Invoke(IMFAsyncResult* pAsyncResult);
+        STDMETHODIMP GetParameters(DWORD*, DWORD*) override { return E_NOTIMPL; };
+        STDMETHODIMP Invoke(IMFAsyncResult* pAsyncResult) override;
 
         // Playback
         HRESULT                         OpenURL(const tstring& fileName);
@@ -64,7 +63,8 @@ namespace jela
         static HRESULT                  SetVolume(uint8_t volumePercentage);
         static void                     ReleaseVolume();
 
-        static const UINT WM_APP_PLAYER_EVENT = WM_APP + 1;
+        static constexpr UINT WM_APP_PLAYER_EVENT = WM_APP + 1;
+
     protected:
 
         // Constructor is private. Use static CreateInstance method to instantiate.
@@ -104,4 +104,4 @@ namespace jela
     };
 }
 
-#endif CPLAYER_H
+#endif //!CPLAYER_H
