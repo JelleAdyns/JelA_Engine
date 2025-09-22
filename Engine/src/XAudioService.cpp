@@ -499,9 +499,10 @@ namespace jela
 				m_pAudioFile = &s;
 				m_XAudioBuffer.LoopCount = repeat ? XAUDIO2_LOOP_INFINITE : 0;
 				m_XAudioBuffer.pAudioData = s.m_pData.data();
-				m_XAudioBuffer.AudioBytes = static_cast<UINT32>(s.m_pData.size());
-				m_pAudioVoice->SubmitSourceBuffer(&m_XAudioBuffer, nullptr);
-				m_pAudioVoice->SetFrequencyRatio(frequency);
+                m_XAudioBuffer.AudioBytes = static_cast<UINT32>(s.m_pData.size());
+                m_pAudioVoice->SubmitSourceBuffer(&m_XAudioBuffer, nullptr);
+                const float freq = std::max(XAUDIO2_MIN_FREQ_RATIO, std::min(XAUDIO2_MAX_FREQ_RATIO, frequency));
+                m_pAudioVoice->SetFrequencyRatio(freq);
 				m_pAudioVoice->SetVolume(vol);
 				m_pAudioVoice->Start();
 			}
