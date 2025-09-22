@@ -1,5 +1,6 @@
 #include "Audio.h"
 #include "Engine.h"
+#include "FileExceptions.h"
 #include <xaudio2.h>
 #include <ranges>
 #include <filesystem>
@@ -69,9 +70,27 @@ namespace jela
 		AudioImpl& operator= (AudioImpl&&) noexcept = delete;
 
 		void AddSoundImpl(const tstring& filename, SoundID id)
-		{
-			if (m_MapAudioFiles.contains(id)) OutputDebugString(std::format(_T("\nSoundID {} bound to file {} was already added.\n\n"), id, filename).c_str());
-			else m_MapAudioFiles.try_emplace(id, filename, this);
+        {
+            if (m_MapAudioFiles.contains(id))
+                OutputDebugString(std::format(_T("\nSoundID {} bound to file {} was already added.\n\n"), id, filename).c_str());
+            else
+            {
+                try
+                {
+                    m_MapAudioFiles.try_emplace(id, filename, this);
+                }
+                catch (const FileException& e)
+                {
+                    ENGINE.NotifyException(e.what());
+                    OutputDebugStringA(e.what());
+                    m_MapAudioFiles.erase(id);
+                }
+                catch (const std::exception& e)
+                {
+                    OutputDebugStringA(e.what());
+                    m_MapAudioFiles.erase(id);
+                }
+			}
 		}
 		void RemoveSoundImpl(SoundID id)
 		{
@@ -203,28 +222,41 @@ namespace jela
 		void StopAllSoundsImpl()
 		{
 			std::ranges::for_each(m_MapAudioFiles, [](auto& pair)
-				{
-					auto& [soundId, audioFile] = pair;
-					audioFile.StopChannels();
-				});
-		}
+            {
+                auto& [soundId, audioFile] = pair;
+                audioFile.StopChannels();
+            });
+        }
 
-		class Channel;
-		class AudioFile;
+        class Channel;
+        class AudioFile;
 
-		//----------------------------------------------------------------------------------------------------------------------------
-		// AudioFile class
-		class AudioFile final
-		{
-			friend XAudio::AudioImpl::Channel;
-		public:
+        //----------------------------------------------------------------------------------------------------------------------------
+        // AudioFile class
+        class AudioFile final
+        {
+            friend XAudio::AudioImpl::Channel;
 
-			AudioFile(const tstring& filename, AudioImpl* const pAudioSystem) :
-				m_FileName{ filename },
-				m_pAudioSystem{pAudioSystem}
-			{
-				OutputDebugString(OpenFile(m_FileName).c_str());
-				m_ActiveChannelPtrs.assign(FormatChannelPool::amountOfChannels, nullptr);
+        public:
+            AudioFile(const tstring& filename, AudioImpl* const pAudioSystem) :
+                m_FileName{ filename },
+                m_pAudioSystem{ pAudioSystem }
+            {
+                try
+                {
+                    OpenFile(m_FileName);
+                    m_ActiveChannelPtrs.assign(FormatChannelPool::amountOfChannels, nullptr);
+                }
+                catch (...)
+                {
+                    m_FileName.clear();
+                    m_pData.clear();
+                    m_ActiveChannelPtrs.clear();
+                    m_pFormat = nullptr;
+                    m_pOnChannelRelease.reset();
+                    m_Exists = false;
+			        throw;
+			    }
 			}
 
 			~AudioFile()
@@ -290,8 +322,8 @@ namespace jela
                         int fourccResult{};
 
                         filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
-						if (fourccResult != static_cast<int>(WaveCode::RIFF))
-							return std::format(_T("ERROR! Expected {} (WAVE_CODE_RIFF) when reading Sound file. Got {} instead.\n"), static_cast<int>(WaveCode::RIFF), fourccResult);
+                        if (fourccResult != static_cast<int>(WaveCode::RIFF))
+                            throw FileLoadException{ std::format("Expected {} (WAVE_CODE_RIFF) when reading Sound file. Got {} instead.\n",static_cast<int>(WaveCode::RIFF), fourccResult)};
 
                         unsigned int fileSize{0};
                         filePosition = file.read(reinterpret_cast<char*>(&fileSize), nrOfFourccChars).tellg();
@@ -301,64 +333,74 @@ namespace jela
                                 "Expected a filesize larger than 44 bytes when reading Sound file.\n"
                             };
 
-						filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
-						if (fourccResult != static_cast<int>(WaveCode::WAVE))
-							return std::format(_T("ERROR! Expected {} (WAVE_CODE_WAVE) when reading Sound file. Got {} instead.\n"), static_cast<int>(WaveCode::WAVE), fourccResult);
+                        filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
+                        if (fourccResult != static_cast<int>(WaveCode::WAVE))
+                            throw FileLoadException{ std::format("Expected {} (WAVE_CODE_WAVE) when reading Sound file. Got {} instead.\n", static_cast<int>(WaveCode::WAVE), fourccResult) };
 
                         unsigned int chunkSize{};
 
-						auto findChunk = [&](WaveCode waveCode) -> bool
-							{
-								filePosition = file.seekg(nrOfFourccChars * 3, file.beg).tellg();
-								bool bFilledData{ false };
+                        auto findChunk = [&](WaveCode waveCode) -> bool
+                        {
+                            filePosition = file.seekg(nrOfFourccChars * 3, std::ifstream::beg).tellg();
+                            bool bFilledData{ false };
 
-								while (!bFilledData && !file.eof())
-								{
-									filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).tellg();
+                            while (!bFilledData && !file.eof())
+                            {
+                                filePosition = file.read(reinterpret_cast<char*>(&fourccResult), nrOfFourccChars).
+                                        tellg();
 
-									if (fourccResult != static_cast<int>(waveCode)) // did not find chuck
-									{
-										filePosition = file.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize)).tellg();
-										filePosition = file.seekg(chunkSize, file.cur).tellg();
-									}
-									else // found chunk
-									{
-										filePosition = file.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize)).tellg();
+                                if (fourccResult != static_cast<int>(waveCode)) // did not find chuck
+                                {
+                                    filePosition = file.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize)).
+                                            tellg();
+                                    filePosition = file.seekg(chunkSize, std::ifstream::cur).tellg();
+                                }
+                                else // found chunk
+                                {
+                                    filePosition = file.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize)).
+                                            tellg();
 
-										if (waveCode == WaveCode::FMT) filePosition = file.read(reinterpret_cast<char*>(&extractedFormat), sizeof(extractedFormat)).tellg();
-										else if (waveCode == WaveCode::DATA)
-										{
-											m_pData.assign(chunkSize, 0);
-											filePosition = file.read(reinterpret_cast<char*>(m_pData.data()), m_pData.size()).tellg();
-										}
+                                    if (waveCode == WaveCode::FMT)
+                                        filePosition = file.read(
+                                            reinterpret_cast<char*>(&extractedFormat),
+                                            sizeof(extractedFormat)).tellg();
+                                    else if (waveCode == WaveCode::DATA)
+                                    {
+                                        m_pData.assign(chunkSize, 0);
+                                        filePosition = file.read(reinterpret_cast<char*>(m_pData.data()),
+                                                                 m_pData.size()).tellg();
+                                    }
 
-										bFilledData = true;
-									}
-								}
+                                    bFilledData = true;
+                                }
+                            }
 
-								return bFilledData;
-							};
+                            return bFilledData;
+                        };
 
-						if (!findChunk(WaveCode::FMT))
-							return std::format(_T("ERROR! Expected {} (WAVE_CODE_FMT) format not found when reading Sound file.\n"), static_cast<int>(WaveCode::FMT));
+                        if (!findChunk(WaveCode::FMT))
+                            throw FileLoadException{ std::format("Expected {} (WAVE_CODE_FMT) format not found when reading Sound file.\n", static_cast<int>(WaveCode::FMT)) };
 
-						if (!findChunk(WaveCode::DATA))
-							return std::format(_T("ERROR! Expected {} (WAVE_CODE_DATA) data not found when reading Sound file.\n"), static_cast<int>(WaveCode::DATA));;
-					}
-					else return std::format(_T("ERROR! File path ({}) was found but file ({}) could not be opened."), pathString, fileName);
-				}
-				else return std::format(_T("ERROR! File path ({}) could not be found."), pathString);
+                        if (!findChunk(WaveCode::DATA))
+                            throw FileLoadException{ std::format("Expected {} (WAVE_CODE_DATA) data not found when reading Sound file.\n", static_cast<int>(WaveCode::DATA)) };
+                    }
+                    else throw FileLoadException{ std::format("File path {} was found but file could not be opened. Error occurred when trying to add a sound file.", filePath.string()) };
+                }
+                else throw FileNotFoundException{ std::format("File path {} could not be found. Error occurred when trying to add a sound file.", filePath.string()) };
 
-				m_Exists = true;
-				m_pFormat = m_pAudioSystem->AddFormat(extractedFormat);
+                m_Exists = true;
+
+                if (extractedFormat.wFormatTag == WAVE_FORMAT_PCM || extractedFormat.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+                    extractedFormat.cbSize = 0;
+
+                m_pFormat = m_pAudioSystem->AddFormat(extractedFormat);
 
                 tstring formatStringSummary = std::format(
                     _T(
                         "wFormatTag: {}\nnChannels: {}\nnSamplesPerSec: {}\nnAvgBytesPerSec: {}\nnBlockAlign: {}\nwBitsPerSample: {}\ncbSize: {}\n"),
                     m_pFormat->wFormatTag, m_pFormat->nChannels, m_pFormat->nSamplesPerSec, m_pFormat->nAvgBytesPerSec, m_pFormat->nBlockAlign, m_pFormat->wBitsPerSample, m_pFormat->cbSize);
 
-
-				return std::format(_T("Audio File {} was succesfully loaded! Format:\n{}\n"), fileName, formatStringSummary);
+                OutputDebugString(std::format(_T("Audio File {} was successfully loaded! Format:\n{}\n"), fileName, formatStringSummary).c_str());
 			}
 
 			void RemoveChannel(const AudioImpl::Channel *pChannel)
@@ -412,7 +454,7 @@ namespace jela
         //----------------------------------------------------------------------------------------------------------------------------
 
         //----------------------------------------------------------------------------------------------------------------------------
-		// Channel class
+        // Channel class
         class Channel final
         {
         public:

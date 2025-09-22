@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
 #include "Engine.h"
+#include "FileExceptions.h"
 
 namespace jela
 {
@@ -22,68 +23,88 @@ namespace jela
         IWICBitmapFrameDecode* pSource = NULL;
         IWICFormatConverter* pConverter = NULL;
 
-        std::wstring filePath = to_wstring(ENGINE.ResourceMngr()->GetDataPath() + filename);
-
-        if (SUCCEEDED(creationResult))
+        if (const std::filesystem::path filePath{ ENGINE.ResourceMngr()->GetDataPath() + filename };
+            std::filesystem::exists(filePath))
         {
-            creationResult = m_pWICFactory->CreateDecoderFromFilename(
-                filePath.c_str(),
-                NULL,
-                GENERIC_READ,
-                WICDecodeMetadataCacheOnLoad,
-                &pDecoder);
-        }
+            if (filename.find(_T(".png")) == std::string::npos &&
+                filename.find(_T(".jpg")) == std::string::npos &&
+                filename.find(_T(".jpeg")) == std::string::npos)
+                throw FileTypeNotSupportedException{
+                    std::format("File type of {} is not supported.", std::filesystem::path{ filename }.string()),
+                    { ".png", ".jpg", ".jpeg" }
+                };
 
-
-        if (SUCCEEDED(creationResult))
-        {
-            // Create the initial frame.
-            creationResult = pDecoder->GetFrame(0, &pSource);
-        }
-
-
-        // Convert the image format to 32bppPBGRA
-        // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
-        if (SUCCEEDED(creationResult)) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
-        if (SUCCEEDED(creationResult))
-        {
-            creationResult = pConverter->Initialize(
-                pSource,
-                GUID_WICPixelFormat32bppPBGRA,
-                WICBitmapDitherTypeNone,
-                NULL,
-                0.f,
-                WICBitmapPaletteTypeMedianCut
-            );
-        }
-
-
-        if (SUCCEEDED(creationResult))
-        {
-            creationResult = ENGINE.GetRenderTarget()->CreateBitmapFromWicBitmap(
-                pConverter,
-                NULL,
-                &m_pDBitmap
-            );
+            if (SUCCEEDED(creationResult))
+            {
+                creationResult = m_pWICFactory->CreateDecoderFromFilename(
+                    filePath.c_str(),
+                    NULL,
+                    GENERIC_READ,
+                    WICDecodeMetadataCacheOnLoad,
+                    &pDecoder);
+            }
 
 
             if (SUCCEEDED(creationResult))
             {
-                m_TextureWidth = m_pDBitmap->GetSize().width;
-                m_TextureHeight = m_pDBitmap->GetSize().height;
+                // Create the initial frame.
+                creationResult = pDecoder->GetFrame(0, &pSource);
+            }
+
+
+            // Convert the image format to 32bppPBGRA
+            // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
+            if (SUCCEEDED(creationResult)) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
+            if (SUCCEEDED(creationResult))
+            {
+                creationResult = pConverter->Initialize(
+                    pSource,
+                    GUID_WICPixelFormat32bppPBGRA,
+                    WICBitmapDitherTypeNone,
+                    NULL,
+                    0.f,
+                    WICBitmapPaletteTypeMedianCut
+                );
+            }
+
+
+            if (SUCCEEDED(creationResult))
+            {
+                creationResult = ENGINE.GetRenderTarget()->CreateBitmapFromWicBitmap(
+                    pConverter,
+                    NULL,
+                    &m_pDBitmap
+                );
+
+
+                if (SUCCEEDED(creationResult))
+                {
+                    m_TextureWidth = m_pDBitmap->GetSize().width;
+                    m_TextureHeight = m_pDBitmap->GetSize().height;
+                }
+            }
+
+            m_FileName = filename;
+            SafeRelease(&pDecoder);
+            SafeRelease(&pSource);
+            SafeRelease(&pConverter);
+
+            if (!SUCCEEDED(creationResult))
+            {
+                SafeRelease(&m_pDBitmap);
+                throw FileLoadException{
+                    std::format("ERROR! File \"{}\" couldn't load correctly. HRESULT Error code: {}\n",
+                                filePath.string(), creationResult)
+                };
             }
         }
-
-        if (!SUCCEEDED(creationResult))
-        {
-            OutputDebugStringW(std::format(L"ERROR! File \"{}\" couldn't load correctly", filePath).c_str());
-        }
-        m_FileName = filename;
-        SafeRelease(&pDecoder);
-        SafeRelease(&pSource);
-        SafeRelease(&pConverter);
-
+        else
+            throw FileNotFoundException{
+                std::format("Path \"{}\" does not exist. Error occurred when trying to create a Texture.\n",
+                            filePath.string())
+            };
     }
+
     Texture::~Texture()
     {
         SafeRelease(&m_pDBitmap);
@@ -123,9 +144,34 @@ namespace jela
     {
         if (fromFile)
         {
-            std::wstring filePath = to_wstring(ENGINE.ResourceMngr()->GetDataPath() + fontName);
-            HRESULT hr = Initialize(filePath);
-            if (hr != S_OK) Engine::NotifyError(NULL, _T("Font wasn't initialized properly"), hr);
+            try
+            {
+                const tstring fullPath = ENGINE.ResourceMngr()->GetDataPath() + fontName;
+                if (const std::filesystem::path filePath{ fullPath }; !std::filesystem::exists(filePath))
+                    throw FileNotFoundException{
+                        std::format(
+                            "Path \"{}\" does not exist. Error occurred when trying to create a Font from a file.\n",
+                            filePath.string())
+                    };
+
+                if (fontName.find(_T(".ttf")) == std::string::npos &&
+                    fontName.find(_T(".otf")) == std::string::npos)
+                    throw FileTypeNotSupportedException{
+                        std::format("File type of {} is not supported.", std::filesystem::path{ fontName }.string()),
+                        { ".ttf", ".otf" }
+                    };
+
+                if (const HRESULT hr = Initialize(fullPath); !SUCCEEDED(hr))
+                    throw FileLoadException{
+                        std::format("Font {} wasn't initialized properly. HRESULT Error value: {}.",
+                                    std::filesystem::path{ fontName }.string(), hr)
+                    };
+            }
+            catch (...)
+            {
+                SafeRelease(&m_pFontCollection);
+                throw;
+            }
         }
         else
         {
@@ -304,8 +350,24 @@ namespace jela
 
     void ResourceManager::GetTexture(const tstring& file, ResourcePtr<Texture>& resourcePtr)
     {
-        m_MapTextures.try_emplace(file, file);
-        m_MapTextures.at(file).HandleObserver(resourcePtr);
+        try
+        {
+            m_MapTextures.try_emplace(file, file);
+            m_MapTextures.at(file).HandleObserver(resourcePtr);
+        }
+        catch (const FileException& e)
+        {
+            MessageBoxA(ENGINE.GetWindow(), e.what(), "ERROR", MB_OK | MB_ICONERROR);
+            OutputDebugStringA(e.what());
+            m_MapTextures.erase(file);
+            resourcePtr = ResourcePtr<Texture>{};
+        }
+        catch (const std::exception& e)
+        {
+            OutputDebugStringA(e.what());
+            m_MapTextures.erase(file);
+            resourcePtr = ResourcePtr<Texture>{};
+        }
     }
 
     void ResourceManager::RemoveTexture(const tstring& file)
@@ -324,8 +386,24 @@ namespace jela
 
     void ResourceManager::GetFont(const tstring& fontName, ResourcePtr<Font>& resourcePtr, bool fromFile)
     {
-        m_MapFonts.try_emplace(fontName, fontName, fromFile);
-        m_MapFonts.at(fontName).HandleObserver(resourcePtr);
+        try
+        {
+            m_MapFonts.try_emplace(fontName, fontName, fromFile);
+            m_MapFonts.at(fontName).HandleObserver(resourcePtr);
+        }
+        catch (const FileException& e)
+        {
+            MessageBoxA(ENGINE.GetWindow(), e.what(), "ERROR", MB_OK | MB_ICONERROR);
+            OutputDebugStringA(e.what());
+            m_MapFonts.erase(fontName);
+            resourcePtr = ResourcePtr<Font>{};
+        }
+        catch (const std::exception& e)
+        {
+            OutputDebugStringA(e.what());
+            m_MapFonts.erase(fontName);
+            resourcePtr = ResourcePtr<Font>{};
+        }
     }
 
     void ResourceManager::RemoveFont(const tstring& fontName)

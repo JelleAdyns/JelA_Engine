@@ -208,7 +208,11 @@ namespace jela
             }
         }
 
-      
+        void NotifyException(const std::string& exceptionMessage, const std::string& title = "ERROR")
+        {
+            MessageBoxA(m_hWindow, exceptionMessage.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
+        }
+
     private:
 
         void DrawGeometry(const Geometry* const pGeometryObject, float lineThickness = 1.f);

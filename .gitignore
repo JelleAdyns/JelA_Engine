@@ -370,5 +370,6 @@ FodyWeavers.xsd
 *.mp3
 *.png
 *.jpg
+*.jpeg
 *.otf
 *.ttf
