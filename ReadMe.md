@@ -9,6 +9,7 @@ Used technologies are:
 - DirectWrite
 - Windows Media Foundation
 - XInput
+- XAudio2
 - CMake
 ## Who/Why?
 Hi, my name is Jelle Adyns and I'm a Game Development student at [Howest - Digital Arts & Entertainment](https://www.digitalartsandentertainment.be/).
