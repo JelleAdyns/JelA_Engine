@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(JelA_Engine_Project)
+project(Project_Name)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
