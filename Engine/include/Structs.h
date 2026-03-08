@@ -29,7 +29,15 @@ namespace jela
 	{
 		Rectf() = default;
 		explicit Rectf(float left, float bottom, float width, float height);
-		explicit Rectf(const Point2f& leftBottom, float width, float height);
+		explicit Rectf(const Point2f& bottomLeft, float width, float height);
+		explicit Rectf(const Point2f& bottomLeft, const Point2f& topRight);
+
+		float Right() { return left + width; }
+		float Top() { return bottom + height; }
+		Point2f BottomLeft() { return Point2f{left, bottom}; }
+		Point2f BottomRight() { return Point2f{Right(), bottom}; }
+		Point2f TopLeft() { return Point2f{left, Top()}; }
+		Point2f TopRight() { return Point2f{Right(), Top()}; }
 
 		float left{};
 		float bottom{};
@@ -42,7 +50,15 @@ namespace jela
 	public:
 		Rectf() = default;
 		explicit Rectf(float left, float top, float width, float height);
-		explicit Rectf(const Point2f& leftTop, float width, float height);
+		explicit Rectf(const Point2f& topLeft, float width, float height);
+		explicit Rectf(const Point2f& topLeft, const Point2f& bottomRight);
+
+		float Right() { return left + width; }
+		float Bottom() { return top + height; }
+		Point2f BottomLeft() { return Point2f{left, Bottom()}; }
+		Point2f BottomRight() { return Point2f{Right(), Bottom()}; }
+		Point2f TopLeft() { return Point2f{left, top}; }
+		Point2f TopRight() { return Point2f{Right(), top}; }
 
 		float left{};
 		float top{};

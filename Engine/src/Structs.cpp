@@ -25,12 +25,22 @@ namespace jela
 		width{ width },
 		height{ height }
 	{}
-	Rectf::Rectf(const Point2f& leftBottom, float width, float height) :
-		left{ leftBottom.x },
-		bottom{ leftBottom.y },
+
+	Rectf::Rectf(const Point2f& bottomLeft, float width, float height) :
+		left{bottomLeft.x},
+		bottom{bottomLeft.y},
 		width{ width },
 		height{ height }
 	{}
+
+	Rectf::Rectf(const Point2f& bottomLeft, const Point2f& topRight) :
+		left{bottomLeft.x},
+		bottom{bottomLeft.y},
+		width{topRight.x - bottomLeft.x},
+		height{topRight.y - bottomLeft.y}
+	{
+		assert((topRight.x >= bottomLeft.x && topRight.y >= bottomLeft.y));
+	}
 #else
 	Rectf::Rectf(float left, float top, float width, float height) :
 		left{ left },
@@ -38,12 +48,20 @@ namespace jela
 		width{ width },
 		height{ height }
 	{}
-	Rectf::Rectf(const Point2f& leftTop, float width, float height) :
-		left{ leftTop.x },
-		top{ leftTop.y },
-		width{ width },
+	Rectf::Rectf(const Point2f& topLeft, float width, float height) :
+		left{topLeft.x},
+		top{topLeft.y},
+		width{width },
 		height{ height }
 	{}
+	Rectf::Rectf(const Point2f& topLeft, const Point2f& bottomRight) :
+		left{topLeft.x},
+		top{topLeft.y},
+		width{bottomRight.x - topLeft.x},
+		height{bottomRight.y - topLeft.y}
+	{
+		assert((bottomRight.x >= topLeft.x && bottomRight.y >= topLeft.y));
+	}
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
 
