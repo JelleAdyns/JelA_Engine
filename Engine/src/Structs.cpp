@@ -100,7 +100,8 @@ namespace jela
 	}
 	Vector2f Vector2f::Reflect(const Vector2f& vector, const Vector2f& surfaceNormal)
 	{
-		return vector - (2.f * Dot(vector, surfaceNormal.Normalized()) * surfaceNormal.Normalized());
+		const auto n = surfaceNormal.Normalized();
+		return vector - (2.f * Dot(vector, n) * n);
 	}
 
 	tstring Vector2f::ToString(uint8_t decimalPrecision) const
