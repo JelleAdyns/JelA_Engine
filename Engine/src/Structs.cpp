@@ -124,8 +124,7 @@ namespace jela
 
 	tstring Vector2f::ToString(uint8_t decimalPrecision) const
 	{
-		return _T("( ") + std::format(_T("{:.{}f}"), x, decimalPrecision) +
-			_T(", ") + std::format(_T("{:.{}f}"), y, decimalPrecision) + _T(" )");
+		return std::format(_T("( {1:.{0}f}, {2:.{0}f} )"), decimalPrecision, x, y);
 	}
 	float Vector2f::Length() const
 	{
