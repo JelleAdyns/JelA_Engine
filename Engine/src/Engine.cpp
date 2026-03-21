@@ -487,10 +487,10 @@ namespace jela
             // Whenever we render to this bitmap, it is directly rendered to the
             // swap chain associated with the window.
             D2D1_BITMAP_PROPERTIES1 bitmapProperties =
-                    D2D1::BitmapProperties1(
-                    D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW ,
+                D2D1::BitmapProperties1(
+                    D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
                     D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
-                    );
+                );
 
             // Direct2D needs the dxgi version of the backbuffer surface pointer.
             IDXGISurface* dxgiBackBuffer;
@@ -498,10 +498,10 @@ namespace jela
 
             // Get a D2D surface from the DXGI back buffer to use as the D2D render target.
             hr = m_pD2DDeviceContext->CreateBitmapFromDxgiSurface(
-                    dxgiBackBuffer,
-                    &bitmapProperties,
-                    &m_pDTargetBitmap
-                    );
+                dxgiBackBuffer,
+                &bitmapProperties,
+                &m_pDTargetBitmap
+            );
             SafeRelease(&dxgiAdapter);
             // Now we can set the Direct2D render target.
             m_pD2DDeviceContext->SetTarget(m_pDTargetBitmap);
@@ -632,7 +632,7 @@ namespace jela
     }
 
     #ifdef MATHEMATICAL_COORDINATESYSTEM
-    void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness)const
+    void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
     {
         SetTransform();
         m_pD2DDeviceContext->DrawLine(
@@ -655,7 +655,7 @@ namespace jela
         DrawRectangle( rect.left, rect.bottom ,rect.width, rect.height, lineThickness);
     }
 
-    void Engine::DrawRectangle(float left, float bottom, float width, float height, float lineThickness)const
+    void Engine::DrawRectangle(float left, float bottom, float width, float height, float lineThickness) const
     {
         SetTransform();
         m_pD2DDeviceContext->DrawRectangle(
@@ -1082,7 +1082,7 @@ namespace jela
     }
     void Engine::FillRectangle(const Rectf& rect)const
     {
-        FillRectangle( rect.left,rect.top,rect.width,rect.height);
+        FillRectangle(rect.left, rect.top, rect.width, rect.height);
     }
     void Engine::FillRectangle(float left, float top, float width, float height)const
     {

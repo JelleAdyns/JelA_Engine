@@ -238,7 +238,6 @@ namespace jela
         ID2D1Factory1*                  m_pDFactory{};
         ID2D1SolidColorBrush*           m_pDColorBrush{};
         D2D1_COLOR_F                    m_DColorBackGround{};
-        //ID2D1BitmapRenderTarget*             m_pDBitmapRenderTarget{};
         ID2D1DeviceContext*             m_pD2DDeviceContext{};
         ID2D1Device*                    m_pD2DDevice{};
         ID3D11Device2*                  m_pD3DDevice{};
