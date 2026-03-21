@@ -16,12 +16,12 @@ namespace jela
     }
 
     Engine::Engine() :
-        m_hWindow{ NULL },
-        m_hInstance{ NULL },
+        m_hWindow{nullptr},
+        m_hInstance{nullptr},
         m_OriginalStyle{ WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX },
-        m_pDFactory{ NULL },
-        m_pDRenderTarget{NULL},
-        m_pDColorBrush{NULL},
+        m_pDFactory{nullptr},
+        m_pD2DDeviceContext{nullptr},
+        m_pDColorBrush{nullptr},
         m_DColorBackGround{ D2D1::ColorF::Black},
         m_pGame{ nullptr },
         m_Title{ _T("Standard Game")},
@@ -42,10 +42,8 @@ namespace jela
 
         m_pResourceManager = nullptr;
 
-        SafeRelease(&m_pDBitmap);
-        SafeRelease(&m_pDBitmapRenderTarget);
+        SafeRelease(&m_pD2DDeviceContext);
         SafeRelease(&m_pDColorBrush);
-        SafeRelease(&m_pDRenderTarget);
         SafeRelease(&m_pDFactory);
 
         CoUninitialize();
@@ -90,12 +88,13 @@ namespace jela
             break;
             case WM_SIZE:
             {
-                UINT width = LOWORD(lParam);
-                UINT height = HIWORD(lParam);
-                if (m_pDRenderTarget)
+                const UINT width = LOWORD(lParam);
+                const UINT height = HIWORD(lParam);
+                if (m_pD2DDeviceContext)
                 {
                     //If error occurs, it will be returned by EndDraw()
-                    m_pDRenderTarget->Resize(D2D1::SizeU(width, height));
+                    const DXGI_MODE_DESC modeDesc{.Width = width, .Height = height};
+                    m_pDSwapChain->ResizeTarget(&modeDesc);
 
                     m_WindowWidth = static_cast<int>(std::round(GetRenderTargetSize().width));
                     m_WindowHeight = static_cast<int>(std::round(GetRenderTargetSize().height));
@@ -222,14 +221,14 @@ namespace jela
             {
                 float screenPosX = (GET_X_LPARAM(lParam) - m_WindowPosX - m_ViewPortTranslationX);
                 if (!m_IsFullscreen) screenPosX -= GetSystemMetrics(SM_CXFIXEDFRAME) + m_WindowPosOffset;
-                float screenWindowWidth = (m_WindowWidth - m_ViewPortTranslationX * 2);
+                const float screenWindowWidth = (m_WindowWidth - m_ViewPortTranslationX * 2);
 
                 float xWheelCoordinate = screenPosX / screenWindowWidth * m_GameWidth;
                 xWheelCoordinate = std::round(xWheelCoordinate);
 
                 float screenPosY = (GET_Y_LPARAM(lParam) - m_WindowPosY - m_ViewPortTranslationY);
                 if (!m_IsFullscreen) screenPosY -= GetSystemMetrics(SM_CXFIXEDFRAME) + m_WindowPosOffset + GetSystemMetrics(SM_CYCAPTION);
-                float screenWindowHeight = (m_WindowHeight - m_ViewPortTranslationY * 2);
+                const float screenWindowHeight = (m_WindowHeight - m_ViewPortTranslationY * 2);
 
                 float yWheelCoordinate = screenPosY / screenWindowHeight * m_GameHeight;
 
@@ -323,9 +322,9 @@ namespace jela
     {
         // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
        // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
-        HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+        HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
 
-        if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED))/* && SUCCEEDED(MFStartup(MF_VERSION))*/)
+        if (SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))/* && SUCCEEDED(MFStartup(MF_VERSION))*/)
         {
             SetInstance(hInstance);
 
@@ -365,8 +364,8 @@ namespace jela
     {
         HRESULT hr = S_OK;
 
-        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &m_pDFactory);
-
+        //hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &m_pDFactory);
+        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), reinterpret_cast<void**>(&m_pDFactory));
         if (SUCCEEDED(hr))
         {
             WNDCLASSEX wcex;
@@ -378,9 +377,9 @@ namespace jela
             wcex.cbClsExtra = 0;
             wcex.cbWndExtra = 0;
             wcex.hInstance = m_hInstance;
-            wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+            wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
             wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-            wcex.lpszMenuName = NULL;
+            wcex.lpszMenuName = nullptr;
             wcex.lpszClassName = m_Title.c_str();
 
             //https://stackoverflow.com/questions/77638632/how-to-add-an-icon-to-a-win32api-window-in-a-cmake-project
@@ -411,31 +410,110 @@ namespace jela
     {
         HRESULT hr = S_OK;
 
-        if (!m_pDRenderTarget)
+        if (!m_pD2DDeviceContext)
         {
-            RECT rc;
-            GetClientRect(m_hWindow, &rc);
+            if (m_pD3DDeviceContext)
+            {
+                m_pD3DDeviceContext->ClearState();
+                m_pD3DDeviceContext->Flush();
+            }
 
-            D2D1_SIZE_U size = D2D1::SizeU(
-                rc.right - rc.left,
-                rc.bottom - rc.top
-            );
+            //1. Create Device and DeviceContext
+            constexpr D3D_FEATURE_LEVEL featureLevels[] =
+            {
+                D3D_FEATURE_LEVEL_11_1,
+                D3D_FEATURE_LEVEL_11_0,
+                D3D_FEATURE_LEVEL_10_1,
+                D3D_FEATURE_LEVEL_10_0,
+                D3D_FEATURE_LEVEL_9_3,
+                D3D_FEATURE_LEVEL_9_2,
+                D3D_FEATURE_LEVEL_9_1
+            };
+            uint32_t createDeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#ifdef _DEBUG
+            createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+            ID3D11Device* pDevice = nullptr;
+            hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &pDevice, nullptr, &m_pD3DDeviceContext);
 
-            // Create a Direct2D render target.
-            hr = m_pDFactory->CreateHwndRenderTarget(
-                D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE),
-                D2D1::HwndRenderTargetProperties(m_hWindow, size, m_IsVSyncEnabled ? D2D1_PRESENT_OPTIONS_NONE : D2D1_PRESENT_OPTIONS_IMMEDIATELY),
-                &m_pDRenderTarget
-            );
+            hr = pDevice->QueryInterface(&m_pD3DDevice);
+            SafeRelease(&pDevice);
 
-            hr = m_pDRenderTarget->CreateCompatibleRenderTarget(
+            hr = m_pD3DDevice->QueryInterface(&m_pDXGIDevice);
+
+            hr = m_pDFactory->CreateDevice(m_pDXGIDevice, &m_pD2DDevice);
+            hr = m_pD2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, &m_pD2DDeviceContext);
+
+            // Allocate a descriptor.
+            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
+            swapChainDesc.Width = 0;                           // use automatic sizing
+            swapChainDesc.Height = 0;
+            swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // this is the most common swapchain format
+            swapChainDesc.Stereo = false;
+            swapChainDesc.SampleDesc.Count = 1;                // don't use multi-sampling
+            swapChainDesc.SampleDesc.Quality = 0;
+            swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            swapChainDesc.BufferCount = 2;                     // use double buffering to enable flip
+            swapChainDesc.Scaling = DXGI_SCALING_NONE;
+            swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL; // all apps must use this SwapEffect
+            swapChainDesc.Flags = 0;
+
+            // Identify the physical adapter (GPU or card) this device is runs on.
+            IDXGIAdapter* dxgiAdapter;
+            hr = m_pDXGIDevice->GetAdapter(&dxgiAdapter);
+
+            // Get the factory object that created the DXGI device.
+            IDXGIFactory2* dxgiFactory;
+            hr = dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory));
+
+            // Get the final swap chain for this window from the DXGI factory.
+            hr = dxgiFactory->CreateSwapChainForHwnd(
+                m_pD3DDevice,
+                m_hWindow,
+                &swapChainDesc,
+                nullptr,
+                nullptr,    // allow on all displays
+                &m_pDSwapChain);
+
+
+            // Ensure that DXGI doesn't queue more than one frame at a time.
+            hr = m_pDXGIDevice->SetMaximumFrameLatency(1);
+
+            // Get the backbuffer for this window which is be the final 3D render target.
+            // ID3D11Texture2D* backBuffer;
+            // hr = m_pDSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+
+            // Now we set up the Direct2D render target bitmap linked to the swapchain.
+            // Whenever we render to this bitmap, it is directly rendered to the
+            // swap chain associated with the window.
+            D2D1_BITMAP_PROPERTIES1 bitmapProperties =
+                    D2D1::BitmapProperties1(
+                    D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW ,
+                    D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+                    );
+
+            // Direct2D needs the dxgi version of the backbuffer surface pointer.
+            IDXGISurface* dxgiBackBuffer;
+            hr = m_pDSwapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
+
+            // Get a D2D surface from the DXGI back buffer to use as the D2D render target.
+            hr = m_pD2DDeviceContext->CreateBitmapFromDxgiSurface(
+                    dxgiBackBuffer,
+                    &bitmapProperties,
+                    &m_pDTargetBitmap
+                    );
+            SafeRelease(&dxgiAdapter);
+            // Now we can set the Direct2D render target.
+            m_pD2DDeviceContext->SetTarget(m_pDTargetBitmap);
+
+            /*hr = m_pD2DDeviceContext)->CreateCompatibleRenderTarget(
                 D2D1::SizeF(static_cast<FLOAT>(m_GameWidth), static_cast<FLOAT>(m_GameHeight)),
                 D2D1::SizeU(m_GameWidth, m_GameHeight),
-                &m_pDBitmapRenderTarget);
+                &m_pD2DDeviceContext);*/
 
             if (!m_pDColorBrush)
             {
-                m_pDBitmapRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.f, 1.f, 1.f), &m_pDColorBrush);
+                hr = m_pD2DDeviceContext->CreateSolidColorBrush(D2D1::ColorF(1.f, 1.f, 1.f), &m_pDColorBrush);
             }
         }
 
@@ -443,9 +521,7 @@ namespace jela
     }
     void Engine::ResetRenderTargets()
     {
-        SafeRelease(&m_pDBitmap);
-        SafeRelease(&m_pDBitmapRenderTarget);
-        SafeRelease(&m_pDRenderTarget);
+        SafeRelease(&m_pD2DDeviceContext);
         SafeRelease(&m_pDColorBrush);
     }
     HRESULT Engine::OnRender()
@@ -456,48 +532,49 @@ namespace jela
 
         //-------------------------------------------------------
         // DRAW TO BITMAP
-        m_pDBitmapRenderTarget->BeginDraw();
+        m_pD2DDeviceContext->BeginDraw();
 
         // Clear background
-        m_pDBitmapRenderTarget->Clear(m_DColorBackGround);
-        SafeRelease(&m_pDBitmap);
+        m_pD2DDeviceContext->Clear(m_DColorBackGround);
+        //SafeRelease(&m_pDBitmap);
 
         m_pGame->Draw();
 
-        hr = m_pDBitmapRenderTarget->EndDraw();
+        hr = m_pD2DDeviceContext->EndDraw();
+        hr = m_pDSwapChain->Present(1, 0);
         //-------------------------------------------------------
 
 
-        //-------------------------------------------------------
-        //DRAW BITMAP TO SCREEN
-        m_pDRenderTarget->BeginDraw();
-
-        // Clear background
-        m_pDRenderTarget->Clear(D2D1::ColorF(0.F, 0.F, 0.F, 1.F));
-
-        m_pDBitmapRenderTarget->GetBitmap(&m_pDBitmap);
-
-        // When the window changes in size,
-        // the user draw calls should always appear in the middle of the screen,
-        // not the left corner
-        if (m_pDBitmap)
-        {
-            m_pDRenderTarget->DrawBitmap(
-                m_pDBitmap,
-                D2D1::RectF
-                (
-                    m_ViewPortTranslationX,
-                    m_ViewPortTranslationY,
-                    m_WindowWidth - m_ViewPortTranslationX,
-                    m_WindowHeight - m_ViewPortTranslationY
-                ),
-                1.f,
-                D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
-            );
-        }
-
-        hr = m_pDRenderTarget->EndDraw();
-        //-------------------------------------------------------
+        // //-------------------------------------------------------
+        // //DRAW BITMAP TO SCREEN
+        // m_pD2DDeviceContext)->BeginDraw();
+        //
+        // // Clear background
+        // m_pD2DDeviceContext)->Clear(D2D1::ColorF(0.F, 0.F, 0.F, 1.F));
+        //
+        // /*m_pD2DDeviceContext->GetBitmap(&m_pDBitmap);*/
+        //
+        // // When the window changes in size,
+        // // the user draw calls should always appear in the middle of the screen,
+        // // not the left corner
+        // if (m_pDBitmap)
+        // {
+        //     m_pD2DDeviceContext)->DrawBitmap(
+        //         m_pDBitmap,
+        //         D2D1::RectF
+        //         (
+        //             m_ViewPortTranslationX,
+        //             m_ViewPortTranslationY,
+        //             m_WindowWidth - m_ViewPortTranslationX,
+        //             m_WindowHeight - m_ViewPortTranslationY
+        //         ),
+        //         1.f,
+        //         D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+        //     );
+        // }
+        //
+        // hr = m_pD2DDeviceContext)->EndDraw();
+        // //-------------------------------------------------------
 
         return hr;
     }
@@ -558,7 +635,7 @@ namespace jela
     void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawLine(
+        m_pD2DDeviceContext->DrawLine(
             D2D1::Point2F(firstX, m_GameHeight - firstY),
             D2D1::Point2F(secondX, m_GameHeight - secondY),
             m_pDColorBrush,
@@ -581,7 +658,7 @@ namespace jela
     void Engine::DrawRectangle(float left, float bottom, float width, float height, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawRectangle(
+        m_pD2DDeviceContext->DrawRectangle(
             D2D1::RectF
             (
                 left,
@@ -607,7 +684,7 @@ namespace jela
     void Engine::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawRoundedRectangle(
+        m_pD2DDeviceContext->DrawRoundedRectangle(
             D2D1::RoundedRect
             (
                 D2D1::RectF
@@ -646,10 +723,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pDBitmapRenderTarget->DrawText(
+        m_pD2DDeviceContext->DrawText(
             to_wstring(textToDisplay).c_str(),
             static_cast<UINT32>(textToDisplay.length()),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -674,10 +751,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pDBitmapRenderTarget->DrawText(
+        m_pD2DDeviceContext->DrawText(
             to_wstring(textToDisplay).c_str(),
             static_cast<UINT32>(textToDisplay.length()),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -724,7 +801,7 @@ namespace jela
         SetTransform();
         if (texture)
         {
-            m_pDBitmapRenderTarget->DrawBitmap(
+            m_pD2DDeviceContext->DrawBitmap(
                 texture->GetBitmap(),
                 destination,
                 opacity,
@@ -743,7 +820,7 @@ namespace jela
     void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawEllipse(
+        m_pD2DDeviceContext->DrawEllipse(
             D2D1::Ellipse(
                 D2D1::Point2F(centerX, m_GameHeight - centerY),
                 radiusX, radiusY
@@ -770,7 +847,7 @@ namespace jela
     void Engine::FillRectangle(float left, float bottom, float width, float height)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->FillRectangle(
+        m_pD2DDeviceContext->FillRectangle(
             D2D1::RectF(
                 left,
                 m_GameHeight - (bottom + height),
@@ -785,7 +862,7 @@ namespace jela
     void Engine::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->FillRoundedRectangle(
+        m_pD2DDeviceContext->FillRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(
                     left,
@@ -812,7 +889,7 @@ namespace jela
     void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->FillEllipse(
+        m_pD2DDeviceContext->FillEllipse(
             D2D1::Ellipse(
                 D2D1::Point2F(centerX, m_GameHeight - centerY),
                 radiusX, radiusY
@@ -826,7 +903,7 @@ namespace jela
     void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawLine(
+        m_pD2DDeviceContext->DrawLine(
             D2D1::Point2F(firstX, firstY), D2D1::Point2F(secondX, secondY),
             m_pDColorBrush,
             lineThickness
@@ -847,7 +924,7 @@ namespace jela
     void Engine::DrawRectangle(float left, float top, float width, float height, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawRectangle(
+        m_pD2DDeviceContext->DrawRectangle(
             D2D1::RectF(left, top, left + width, top + height),
             m_pDColorBrush,
             lineThickness
@@ -866,7 +943,7 @@ namespace jela
     void Engine::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawRoundedRectangle(
+        m_pD2DDeviceContext->DrawRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(left, top, left + width, top + height),
                 radiusX,radiusY
@@ -892,10 +969,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pDBitmapRenderTarget->DrawText(
+        m_pD2DDeviceContext->DrawText(
             textToDisplay.c_str(),
             (UINT32)textToDisplay.length(),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -919,10 +996,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
+            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pDBitmapRenderTarget->DrawText(
+        m_pD2DDeviceContext->DrawText(
             textToDisplay.c_str(),
             (UINT32)textToDisplay.length(),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -965,7 +1042,7 @@ namespace jela
         SetTransform();
         if (texture)
         {
-            m_pDBitmapRenderTarget->DrawBitmap(
+            m_pD2DDeviceContext->DrawBitmap(
                 texture->GetBitmap(),
                 destination,
                 opacity,
@@ -984,7 +1061,7 @@ namespace jela
     void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->DrawEllipse(
+        m_pD2DDeviceContext->DrawEllipse(
             D2D1::Ellipse(
                 D2D1::Point2F(centerX, centerY),
                 radiusX, radiusY
@@ -1010,7 +1087,7 @@ namespace jela
     void Engine::FillRectangle(float left, float top, float width, float height)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->FillRectangle(
+        m_pD2DDeviceContext->FillRectangle(
             D2D1::RectF(left, top, left + width, top + height),
             m_pDColorBrush);
     }
@@ -1027,7 +1104,7 @@ namespace jela
     void Engine::FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->FillRoundedRectangle(
+        m_pD2DDeviceContext->FillRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(left, top, left + width, top + height),
                 radiusX, radiusY
@@ -1040,7 +1117,7 @@ namespace jela
     void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const
     {
         SetTransform();
-        m_pDBitmapRenderTarget->FillEllipse(
+        m_pD2DDeviceContext->FillEllipse(
             D2D1::Ellipse(D2D1::Point2F(centerX, centerY), radiusX, radiusY),
             m_pDColorBrush);
     }
@@ -1099,7 +1176,7 @@ namespace jela
         PushTransform();
         Translate(pGeometryObject->GetTranslation());
         SetTransform();
-        m_pDBitmapRenderTarget->DrawGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush, lineThickness);
+        m_pD2DDeviceContext->DrawGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush, lineThickness);
         PopTransform();
     }
     void Engine::FillGeometry(const Geometry* const pGeometryObject)
@@ -1107,7 +1184,7 @@ namespace jela
         PushTransform();
         Translate(pGeometryObject->GetTranslation());
         SetTransform();
-        m_pDBitmapRenderTarget->FillGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush);
+        m_pD2DDeviceContext->FillGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush);
         PopTransform();
     }
 
@@ -1143,7 +1220,7 @@ namespace jela
         {
             ::SetWindowLongPtr(m_hWindow, GWL_STYLE, m_OriginalStyle);
 
-            UINT dpi = GetDpiForWindow(m_hWindow);
+            const UINT dpi = GetDpiForWindow(m_hWindow);
 
             m_WindowWidth = static_cast<int>(m_GameWidth * m_WindowScale);
             m_WindowHeight = static_cast<int>(m_GameHeight * m_WindowScale);
@@ -1223,7 +1300,7 @@ namespace jela
                 combinedMatrix = matrix * combinedMatrix;
             }
 
-            m_pDBitmapRenderTarget->SetTransform(combinedMatrix);
+            m_pD2DDeviceContext->SetTransform(combinedMatrix);
 
             m_TransformChanged = false;
         }
@@ -1364,11 +1441,10 @@ namespace jela
 
     bool Engine::IsAnyControllerButtonPressed() const
     {
-        for (const auto& pController : m_pVecControllers)
+        return std::ranges::any_of(m_pVecControllers, [](const auto& pController)
         {
-            if(pController->IsAnyButtonPressed()) return true;
-        }
-        return false;
+            return pController->IsAnyButtonPressed();
+        });
     }
 
     bool Engine::ButtonDownThisFrame(Controller::Button button, uint8_t controllerIndex) const
@@ -1455,8 +1531,8 @@ namespace jela
 
     Rectf Engine::GetRenderTargetSize() const
     {
-        D2D1_SIZE_F size = m_pDRenderTarget->GetSize();
-        return Rectf{ 0,0,size.width, size.height};
+        auto [width, height] = m_pD2DDeviceContext->GetSize();
+        return Rectf{ 0,0,width, height};
     }
     void Engine::Paint()
     {
@@ -1508,17 +1584,13 @@ namespace jela
     {
         return m_IsKeyboardActive;
     }
-    ID2D1Factory* Engine::GetFactory() const
+    ID2D1Factory1* Engine::GetFactory() const
     {
         return m_pDFactory;
     }
-    ID2D1HwndRenderTarget* Engine::GetRenderTarget() const
+    ID2D1DeviceContext* Engine::Get2DDeviceContext() const
     {
-        return m_pDRenderTarget;
-    }
-    ID2D1BitmapRenderTarget* Engine::GetBitmapRenderTarget() const
-    {
-        return m_pDBitmapRenderTarget;
+        return m_pD2DDeviceContext;
     }
 
 

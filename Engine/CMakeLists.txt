@@ -18,6 +18,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     "shlwapi"
     "Dwrite"
     "d2d1"
+        "d3d11"
     "mf"
     "mfplat"
     "mfuuid"

@@ -191,9 +191,8 @@ namespace jela
         float GetTotalTime() const;
         bool IsKeyBoardActive() const;
 
-        ID2D1Factory* GetFactory() const;
-        ID2D1HwndRenderTarget* GetRenderTarget() const;
-        ID2D1BitmapRenderTarget* GetBitmapRenderTarget() const;
+        ID2D1Factory1* GetFactory() const;
+        ID2D1DeviceContext* Get2DDeviceContext() const;
 
 
         static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
@@ -236,12 +235,17 @@ namespace jela
         LARGE_INTEGER                   m_TriggerCount{};
 
         //Direct2D
-        ID2D1Factory*                   m_pDFactory{};
-        ID2D1HwndRenderTarget*          m_pDRenderTarget{};
+        ID2D1Factory1*                  m_pDFactory{};
         ID2D1SolidColorBrush*           m_pDColorBrush{};
         D2D1_COLOR_F                    m_DColorBackGround{};
-        ID2D1BitmapRenderTarget*        m_pDBitmapRenderTarget{};
-        ID2D1Bitmap*                    m_pDBitmap{};
+        //ID2D1BitmapRenderTarget*             m_pDBitmapRenderTarget{};
+        ID2D1DeviceContext*             m_pD2DDeviceContext{};
+        ID2D1Device*                    m_pD2DDevice{};
+        ID3D11Device2*                  m_pD3DDevice{};
+        ID3D11DeviceContext*            m_pD3DDeviceContext{};
+        IDXGIDevice1 *                  m_pDXGIDevice{};
+        IDXGISwapChain1 *               m_pDSwapChain{};
+        ID2D1Bitmap1 *                  m_pDTargetBitmap{};
 
         //BaseGame
         std::unique_ptr<BaseGame>       m_pGame{};
