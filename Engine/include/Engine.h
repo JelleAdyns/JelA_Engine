@@ -181,8 +181,8 @@ namespace jela
 
         // Getters
 
-        ResourceManager* const ResourceMngr() const;
-        const Font* const GetCurrentFont() const;
+        ResourceManager* ResourceMngr() const;
+        const Font* GetCurrentFont() const;
         Rectf GetWindowRect() const;
         float GetWindowScale() const;
         HWND GetWindow() const;
@@ -227,6 +227,8 @@ namespace jela
         HRESULT CreateRenderTargets();
         void ResetRenderTargets();
         void CalculateWindowPos();
+        HRESULT ResizeWindow();
+        HRESULT SetTargetBitmap();
 
         //Win32
         HWND                            m_hWindow;
@@ -234,7 +236,7 @@ namespace jela
         DWORD                           m_OriginalStyle;
         LARGE_INTEGER                   m_TriggerCount{};
 
-        //Direct2D
+        //DirectX
         ID2D1Factory1*                  m_pDFactory{};
         ID2D1SolidColorBrush*           m_pDColorBrush{};
         D2D1_COLOR_F                    m_DColorBackGround{};
@@ -250,11 +252,7 @@ namespace jela
         std::unique_ptr<BaseGame>       m_pGame{};
 
         //Transform
-        FLOAT                           m_ViewPortTranslationX{};
-        FLOAT                           m_ViewPortTranslationY{};
-
         std::vector<D2D1::Matrix3x2F>   m_VecTransformMatrices{};
-
         mutable bool                    m_TransformChanged{};
 
         //General datamembers
@@ -265,6 +263,11 @@ namespace jela
         int                             m_GameHeight{};
         int                             m_WindowWidth{};
         int                             m_WindowHeight{};
+        float                           m_ViewPortWidth{};
+        float                           m_ViewPortHeight{};
+        float                           m_ViewPortTranslationX{};
+        float                           m_ViewPortTranslationY{};
+        float                           m_MinScale{};
         int                             m_WindowPosX{};
         int                             m_WindowPosY{};
         int                             m_WindowPosOffset{5};

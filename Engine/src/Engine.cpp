@@ -56,9 +56,9 @@ namespace jela
         bool wasHandled = false;
         if (m_pGame)
         {
-            float xCoordinate = (GET_X_LPARAM(lParam) - m_ViewPortTranslationX) / (m_WindowWidth - m_ViewPortTranslationX * 2) * m_GameWidth;
+            float xCoordinate = (GET_X_LPARAM(lParam) - m_ViewPortTranslationX) / m_ViewPortWidth * m_GameWidth;
             xCoordinate = std::round(xCoordinate);
-            float yCoordinate = (GET_Y_LPARAM(lParam) - m_ViewPortTranslationY) / (m_WindowHeight - m_ViewPortTranslationY * 2) * m_GameHeight;
+            float yCoordinate = (GET_Y_LPARAM(lParam) - m_ViewPortTranslationY) / m_ViewPortHeight * m_GameHeight;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
             yCoordinate = m_GameHeight - yCoordinate;
@@ -90,24 +90,29 @@ namespace jela
             {
                 const UINT width = LOWORD(lParam);
                 const UINT height = HIWORD(lParam);
-                if (m_pD2DDeviceContext)
+                if (m_pDSwapChain)
                 {
-                    //If error occurs, it will be returned by EndDraw()
-                    const DXGI_MODE_DESC modeDesc{.Width = width, .Height = height};
-                    m_pDSwapChain->ResizeTarget(&modeDesc);
+                    m_WindowWidth = static_cast<int>(width);
+                    m_WindowHeight = static_cast<int>(height);
 
-                    m_WindowWidth = static_cast<int>(std::round(GetRenderTargetSize().width));
-                    m_WindowHeight = static_cast<int>(std::round(GetRenderTargetSize().height));
+                    m_ViewPortWidth = m_GameWidth * m_WindowScale;
+                    m_ViewPortHeight = m_GameHeight * m_WindowScale;
 
-                    const float scaleX{m_WindowWidth / (m_GameWidth * m_WindowScale)};
-                    const float scaleY{m_WindowHeight / (m_GameHeight * m_WindowScale)};
-                    const float minScale{std::min<float>(scaleX, scaleY)};
+                    const float minScale{
+                        std::min<float>(
+                            m_WindowWidth / m_ViewPortWidth,
+                            m_WindowHeight / m_ViewPortHeight
+                        )};
+                    m_ViewPortWidth *= minScale;
+                    m_ViewPortHeight *= minScale;
+                    m_MinScale = minScale;
 
-                    m_ViewPortTranslationX = (m_WindowWidth - (m_GameWidth * m_WindowScale) * minScale) / 2.f;
-                    m_ViewPortTranslationY = (m_WindowHeight - (m_GameHeight * m_WindowScale) * minScale) / 2.f;
+                    m_ViewPortTranslationX = (m_WindowWidth - m_ViewPortWidth) / 2.f;
+                    m_ViewPortTranslationY = (m_WindowHeight - m_ViewPortHeight) / 2.f;
+
+                    ResizeWindow();
 
                     CalculateWindowPos();
-
                     Paint();
                 }
             }
@@ -221,16 +226,14 @@ namespace jela
             {
                 float screenPosX = (GET_X_LPARAM(lParam) - m_WindowPosX - m_ViewPortTranslationX);
                 if (!m_IsFullscreen) screenPosX -= GetSystemMetrics(SM_CXFIXEDFRAME) + m_WindowPosOffset;
-                const float screenWindowWidth = (m_WindowWidth - m_ViewPortTranslationX * 2);
 
-                float xWheelCoordinate = screenPosX / screenWindowWidth * m_GameWidth;
+                float xWheelCoordinate = screenPosX / m_ViewPortWidth * m_GameWidth;
                 xWheelCoordinate = std::round(xWheelCoordinate);
 
                 float screenPosY = (GET_Y_LPARAM(lParam) - m_WindowPosY - m_ViewPortTranslationY);
                 if (!m_IsFullscreen) screenPosY -= GetSystemMetrics(SM_CXFIXEDFRAME) + m_WindowPosOffset + GetSystemMetrics(SM_CYCAPTION);
-                const float screenWindowHeight = (m_WindowHeight - m_ViewPortTranslationY * 2);
 
-                float yWheelCoordinate = screenPosY / screenWindowHeight * m_GameHeight;
+                float yWheelCoordinate = screenPosY / m_ViewPortHeight * m_GameHeight;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
                 yWheelCoordinate = m_GameHeight - yWheelCoordinate;
@@ -299,14 +302,10 @@ namespace jela
                 if (IsAnyControllerButtonPressed()) m_IsKeyboardActive = false;
 
                 for (auto& controller : m_pVecControllers)
-                {
                     controller->ProcessControllerInput();
-                }
 
-                if (not m_IsKeyboardActive)
-                {
+                if (!m_IsKeyboardActive)
                     m_pGame->HandleControllerInput();
-                }
 
                 m_pGame->Tick();
                 Paint();
@@ -410,13 +409,10 @@ namespace jela
     {
         HRESULT hr = S_OK;
 
-        if (!m_pD2DDeviceContext)
+        if (!m_pD3DDeviceContext || !m_pD3DDevice)
         {
-            if (m_pD3DDeviceContext)
-            {
-                m_pD3DDeviceContext->ClearState();
-                m_pD3DDeviceContext->Flush();
-            }
+            SafeRelease(&m_pD3DDevice);
+            SafeRelease(&m_pD3DDeviceContext);
 
             //1. Create Device and DeviceContext
             constexpr D3D_FEATURE_LEVEL featureLevels[] =
@@ -436,28 +432,25 @@ namespace jela
             ID3D11Device* pDevice = nullptr;
             hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &pDevice, nullptr, &m_pD3DDeviceContext);
 
+
             hr = pDevice->QueryInterface(&m_pD3DDevice);
             SafeRelease(&pDevice);
-
+        }
+        if (!m_pDXGIDevice)
+        {
+            SafeRelease(&m_pDXGIDevice);
             hr = m_pD3DDevice->QueryInterface(&m_pDXGIDevice);
-
+        }
+        if (!m_pD2DDeviceContext || !m_pD2DDevice)
+        {
+            SafeRelease(&m_pD2DDevice);
+            SafeRelease(&m_pD2DDeviceContext);
             hr = m_pDFactory->CreateDevice(m_pDXGIDevice, &m_pD2DDevice);
             hr = m_pD2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, &m_pD2DDeviceContext);
-
-            // Allocate a descriptor.
-            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
-            swapChainDesc.Width = 0;                           // use automatic sizing
-            swapChainDesc.Height = 0;
-            swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // this is the most common swapchain format
-            swapChainDesc.Stereo = false;
-            swapChainDesc.SampleDesc.Count = 1;                // don't use multi-sampling
-            swapChainDesc.SampleDesc.Quality = 0;
-            swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-            swapChainDesc.BufferCount = 2;                     // use double buffering to enable flip
-            swapChainDesc.Scaling = DXGI_SCALING_NONE;
-            swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL; // all apps must use this SwapEffect
-            swapChainDesc.Flags = 0;
-
+        }
+        if (!m_pDSwapChain)
+        {
+            SafeRelease(&m_pDSwapChain);
             // Identify the physical adapter (GPU or card) this device is runs on.
             IDXGIAdapter* dxgiAdapter;
             hr = m_pDXGIDevice->GetAdapter(&dxgiAdapter);
@@ -466,7 +459,25 @@ namespace jela
             IDXGIFactory2* dxgiFactory;
             hr = dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory));
 
+            // Allocate a descriptor.
+            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
+            swapChainDesc.Width = m_WindowWidth;                           // use automatic sizing
+            swapChainDesc.Height = m_WindowHeight;
+            swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // this is the most common swapchain format
+            swapChainDesc.Stereo = false;
+            swapChainDesc.SampleDesc.Count = 1;                // don't use multi-sampling
+            swapChainDesc.SampleDesc.Quality = 0;
+            swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            swapChainDesc.BufferCount = 2;                     // use double buffering to enable flip
+            swapChainDesc.Scaling = DXGI_SCALING_NONE;
+            swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL; // all apps must use this SwapEffect
+            swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
             // Get the final swap chain for this window from the DXGI factory.
+
+            // DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreenDesc = {};
+            // fullscreenDesc.Scaling = DXGI_MODE_SCALING_CENTERED;
+            // fullscreenDesc.Windowed = true;
             hr = dxgiFactory->CreateSwapChainForHwnd(
                 m_pD3DDevice,
                 m_hWindow,
@@ -474,55 +485,33 @@ namespace jela
                 nullptr,
                 nullptr,    // allow on all displays
                 &m_pDSwapChain);
+            DXGI_RGBA color = { 0.0f, 1.0f, 0.0f, 1.0f };
+            hr = m_pDSwapChain->SetBackgroundColor(&color);
 
+            SafeRelease(&dxgiFactory);
+            SafeRelease(&dxgiAdapter);
 
             // Ensure that DXGI doesn't queue more than one frame at a time.
             hr = m_pDXGIDevice->SetMaximumFrameLatency(1);
-
-            // Get the backbuffer for this window which is be the final 3D render target.
-            // ID3D11Texture2D* backBuffer;
-            // hr = m_pDSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-
-            // Now we set up the Direct2D render target bitmap linked to the swapchain.
-            // Whenever we render to this bitmap, it is directly rendered to the
-            // swap chain associated with the window.
-            D2D1_BITMAP_PROPERTIES1 bitmapProperties =
-                D2D1::BitmapProperties1(
-                    D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-                    D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
-                );
-
-            // Direct2D needs the dxgi version of the backbuffer surface pointer.
-            IDXGISurface* dxgiBackBuffer;
-            hr = m_pDSwapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
-
-            // Get a D2D surface from the DXGI back buffer to use as the D2D render target.
-            hr = m_pD2DDeviceContext->CreateBitmapFromDxgiSurface(
-                dxgiBackBuffer,
-                &bitmapProperties,
-                &m_pDTargetBitmap
-            );
-            SafeRelease(&dxgiAdapter);
-            // Now we can set the Direct2D render target.
-            m_pD2DDeviceContext->SetTarget(m_pDTargetBitmap);
-
-            /*hr = m_pD2DDeviceContext)->CreateCompatibleRenderTarget(
-                D2D1::SizeF(static_cast<FLOAT>(m_GameWidth), static_cast<FLOAT>(m_GameHeight)),
-                D2D1::SizeU(m_GameWidth, m_GameHeight),
-                &m_pD2DDeviceContext);*/
-
-            if (!m_pDColorBrush)
-            {
-                hr = m_pD2DDeviceContext->CreateSolidColorBrush(D2D1::ColorF(1.f, 1.f, 1.f), &m_pDColorBrush);
-            }
+            hr = ResizeWindow();
         }
 
+        if (!m_pDColorBrush)
+        {
+            hr = m_pD2DDeviceContext->CreateSolidColorBrush(D2D1::ColorF(1.f, 1.f, 1.f), &m_pDColorBrush);
+        }
         return hr;
     }
     void Engine::ResetRenderTargets()
     {
-        SafeRelease(&m_pD2DDeviceContext);
-        SafeRelease(&m_pDColorBrush);
+        SafeRelease(&m_pDTargetBitmap);
+        //SafeRelease(&m_pD2DDeviceContext);
+        //m_pD2DDeviceContext->SetTarget(nullptr);
+        // SafeRelease(&m_pD2DDevice);
+        // SafeRelease(&m_pD3DDeviceContext);
+        // SafeRelease(&m_pD3DDevice);
+        // SafeRelease(&m_pDXGIDevice);
+        // SafeRelease(&m_pDColorBrush);
     }
     HRESULT Engine::OnRender()
     {
@@ -533,17 +522,28 @@ namespace jela
         //-------------------------------------------------------
         // DRAW TO BITMAP
         m_pD2DDeviceContext->BeginDraw();
-
         // Clear background
-        m_pD2DDeviceContext->Clear(m_DColorBackGround);
-        //SafeRelease(&m_pDBitmap);
+        m_pD2DDeviceContext->Clear({ 0.0f, 0.0f, 0.0f, 1.0f });
 
-        m_pGame->Draw();
+        const D2D1_RECT_F clipRect = D2D1::RectF(0, 0, static_cast<FLOAT>(m_GameWidth), static_cast<FLOAT>(m_GameHeight));
+        m_pD2DDeviceContext->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+        m_pD2DDeviceContext->Clear(m_DColorBackGround);
+
+        ENGINE.PushTransform();
+        {
+            const float scale = m_MinScale * m_WindowScale;
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY) * lastMatrix;
+            lastMatrix = D2D1::Matrix3x2F::Scale(scale, scale) * lastMatrix;
+
+            m_pGame->Draw();
+        }
+        ENGINE.PopTransform();
+        m_pD2DDeviceContext->PopAxisAlignedClip();
 
         hr = m_pD2DDeviceContext->EndDraw();
         hr = m_pDSwapChain->Present(1, 0);
         //-------------------------------------------------------
-
 
         // //-------------------------------------------------------
         // //DRAW BITMAP TO SCREEN
@@ -1280,6 +1280,71 @@ namespace jela
 
         delete lpRect;
     }
+    HRESULT Engine::ResizeWindow()
+    {
+        if (!m_pDSwapChain) return E_FAIL;
+
+        if (m_pD2DDeviceContext) m_pD2DDeviceContext->SetTarget(nullptr);
+        SafeRelease(&m_pDTargetBitmap);
+
+        HRESULT hr{S_OK};
+        hr = m_pDSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+        if (!SUCCEEDED(hr)) return hr;
+
+        hr = SetTargetBitmap();
+        if (!SUCCEEDED(hr)) return hr;
+
+        if (m_pD3DDeviceContext)
+        {
+            D3D11_VIEWPORT vp{};
+            vp.Width = m_ViewPortWidth;
+            vp.Height = m_ViewPortHeight;
+            vp.MaxDepth = 1.f;
+            vp.TopLeftX = m_ViewPortTranslationX;
+            vp.TopLeftY = m_ViewPortTranslationY;
+
+            m_pD3DDeviceContext->RSSetViewports( 1, &vp );
+        }
+        return hr;
+    }
+    HRESULT Engine::SetTargetBitmap()
+    {
+        HRESULT hr{S_OK};
+
+        // Direct2D needs the dxgi version of the backbuffer surface pointer.
+        IDXGISurface* dxgiBackBuffer;
+        hr = m_pDSwapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
+        if (!SUCCEEDED(hr))
+        {
+            SafeRelease(&dxgiBackBuffer);
+            return hr;
+        }
+
+        // Now we set up the Direct2D render target bitmap linked to the swapchain.
+        // Whenever we render to this bitmap, it is directly rendered to the
+        // swap chain associated with the window.
+        D2D1_BITMAP_PROPERTIES1 bitmapProperties =
+                       D2D1::BitmapProperties1(
+                           D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                           D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+                       );
+
+        // Get a D2D surface from the DXGI back buffer to use as the D2D render target.
+        hr = m_pD2DDeviceContext->CreateBitmapFromDxgiSurface(
+            dxgiBackBuffer,
+            &bitmapProperties,
+            &m_pDTargetBitmap
+        );
+
+        SafeRelease(&dxgiBackBuffer);
+
+        if (!SUCCEEDED(hr)) return hr;
+
+        // Now we can set the Direct2D render target.
+        m_pD2DDeviceContext->SetTarget(m_pDTargetBitmap);
+
+        return hr;
+    }
     void Engine::SetDeltaTime(float elapsedSec)
     {
         m_DeltaTime = elapsedSec;
@@ -1532,7 +1597,7 @@ namespace jela
     Rectf Engine::GetRenderTargetSize() const
     {
         auto [width, height] = m_pD2DDeviceContext->GetSize();
-        return Rectf{ 0,0,width, height};
+        return Rectf{ 0, 0, width, height};
     }
     void Engine::Paint()
     {
@@ -1546,12 +1611,12 @@ namespace jela
         ValidateRect(m_hWindow, NULL);
     }
 
-    ResourceManager* const Engine::ResourceMngr() const
+    ResourceManager* Engine::ResourceMngr() const
     {
         return m_pResourceManager.get();
     }
 
-    const Font* const Engine::GetCurrentFont() const
+    const Font* Engine::GetCurrentFont() const
     {
         return m_pResourceManager->GetCurrentFont();
     }
