@@ -42,9 +42,7 @@ namespace jela
 
         m_pResourceManager = nullptr;
 
-        SafeRelease(&m_pD2DDeviceContext);
-        SafeRelease(&m_pDColorBrush);
-        SafeRelease(&m_pDFactory);
+        ReleaseDXObjects();
 
         CoUninitialize();
     }
@@ -269,11 +267,12 @@ namespace jela
 
         SetWindowPosition();
 
-        LARGE_INTEGER countsPersSecond, currentCount, lastCount;
+        LARGE_INTEGER countsPersSecond;
+        LARGE_INTEGER currentCount;
         QueryPerformanceFrequency(&countsPersSecond);
         QueryPerformanceCounter(&currentCount);
         m_TriggerCount = currentCount;
-        lastCount= currentCount;
+        LARGE_INTEGER lastCount = currentCount;
 
         MSG msg{};
         bool playing = true;
@@ -296,7 +295,7 @@ namespace jela
 
             if (m_IsVSyncEnabled || currentCount.QuadPart >= m_TriggerCount.QuadPart)
             {
-                SetDeltaTime(float(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
+                SetDeltaTime(static_cast<float>(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
                 lastCount = currentCount;
 
                 if (IsAnyControllerButtonPressed()) m_IsKeyboardActive = false;
@@ -485,8 +484,6 @@ namespace jela
                 nullptr,
                 nullptr,    // allow on all displays
                 &m_pDSwapChain);
-            DXGI_RGBA color = { 0.0f, 1.0f, 0.0f, 1.0f };
-            hr = m_pDSwapChain->SetBackgroundColor(&color);
 
             SafeRelease(&dxgiFactory);
             SafeRelease(&dxgiAdapter);
@@ -502,16 +499,17 @@ namespace jela
         }
         return hr;
     }
-    void Engine::ResetRenderTargets()
+    void Engine::ReleaseDXObjects()
     {
         SafeRelease(&m_pDTargetBitmap);
-        //SafeRelease(&m_pD2DDeviceContext);
-        //m_pD2DDeviceContext->SetTarget(nullptr);
-        // SafeRelease(&m_pD2DDevice);
-        // SafeRelease(&m_pD3DDeviceContext);
-        // SafeRelease(&m_pD3DDevice);
-        // SafeRelease(&m_pDXGIDevice);
-        // SafeRelease(&m_pDColorBrush);
+        SafeRelease(&m_pD2DDeviceContext);
+        SafeRelease(&m_pD2DDevice);
+        SafeRelease(&m_pD3DDeviceContext);
+        SafeRelease(&m_pD3DDevice);
+        SafeRelease(&m_pDXGIDevice);
+        SafeRelease(&m_pDColorBrush);
+        SafeRelease(&m_pDSwapChain);
+        SafeRelease(&m_pDFactory);
     }
     HRESULT Engine::OnRender()
     {
@@ -1562,8 +1560,6 @@ namespace jela
     void Engine::UseSystemFramerate(bool enable)
     {
         m_IsVSyncEnabled = enable;
-        ResetRenderTargets();
-        CreateRenderTargets();
     }
 
     void Engine::SetFont(const Font* const pFont)
@@ -1601,14 +1597,8 @@ namespace jela
     }
     void Engine::Paint()
     {
-        HRESULT hr = OnRender();
-
-        if (hr == D2DERR_RECREATE_TARGET)
-        {
-            hr = S_OK;
-            ResetRenderTargets();
-        }
-        ValidateRect(m_hWindow, NULL);
+        OnRender();
+        ValidateRect(m_hWindow, nullptr);
     }
 
     ResourceManager* Engine::ResourceMngr() const

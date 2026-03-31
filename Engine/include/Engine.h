@@ -225,7 +225,7 @@ namespace jela
         HRESULT OnRender();
         HRESULT MakeWindow();
         HRESULT CreateRenderTargets();
-        void ResetRenderTargets();
+        void ReleaseDXObjects();
         void CalculateWindowPos();
         HRESULT ResizeWindow();
         HRESULT SetTargetBitmap();
