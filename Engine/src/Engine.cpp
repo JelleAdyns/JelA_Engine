@@ -519,61 +519,48 @@ namespace jela
 
         //-------------------------------------------------------
         // DRAW TO BITMAP
-        m_pD2DDeviceContext->BeginDraw();
+        m_pDBitmapRenderTarget->BeginDraw();
         // Clear background
-        m_pD2DDeviceContext->Clear({ 0.0f, 0.0f, 0.0f, 1.0f });
+        m_pDBitmapRenderTarget->Clear(m_DColorBackGround);
+        SafeRelease(&m_pD2DBitmap);
 
-        const D2D1_RECT_F clipRect = D2D1::RectF(0, 0, static_cast<FLOAT>(m_GameWidth), static_cast<FLOAT>(m_GameHeight));
-        m_pD2DDeviceContext->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-        m_pD2DDeviceContext->Clear(m_DColorBackGround);
+        m_pGame->Draw();
 
-        ENGINE.PushTransform();
-        {
-            const float scale = m_MinScale * m_WindowScale;
-            auto& lastMatrix = m_VecTransformMatrices.back();
-            lastMatrix = D2D1::Matrix3x2F::Translation(m_ViewPortTranslationX, m_ViewPortTranslationY) * lastMatrix;
-            lastMatrix = D2D1::Matrix3x2F::Scale(scale, scale) * lastMatrix;
+        hr = m_pDBitmapRenderTarget->EndDraw();
 
-            m_pGame->Draw();
-        }
-        ENGINE.PopTransform();
-        m_pD2DDeviceContext->PopAxisAlignedClip();
-
-        hr = m_pD2DDeviceContext->EndDraw();
-        hr = m_pDSwapChain->Present(1, 0);
         //-------------------------------------------------------
 
         // //-------------------------------------------------------
         // //DRAW BITMAP TO SCREEN
-        // m_pD2DDeviceContext)->BeginDraw();
-        //
-        // // Clear background
-        // m_pD2DDeviceContext)->Clear(D2D1::ColorF(0.F, 0.F, 0.F, 1.F));
-        //
-        // /*m_pD2DDeviceContext->GetBitmap(&m_pDBitmap);*/
-        //
-        // // When the window changes in size,
-        // // the user draw calls should always appear in the middle of the screen,
-        // // not the left corner
-        // if (m_pDBitmap)
-        // {
-        //     m_pD2DDeviceContext)->DrawBitmap(
-        //         m_pDBitmap,
-        //         D2D1::RectF
-        //         (
-        //             m_ViewPortTranslationX,
-        //             m_ViewPortTranslationY,
-        //             m_WindowWidth - m_ViewPortTranslationX,
-        //             m_WindowHeight - m_ViewPortTranslationY
-        //         ),
-        //         1.f,
-        //         D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
-        //     );
-        // }
-        //
-        // hr = m_pD2DDeviceContext)->EndDraw();
-        // //-------------------------------------------------------
+        m_pD2DDeviceContext->BeginDraw();
 
+        // Clear background
+        m_pD2DDeviceContext->Clear(D2D1::ColorF(0.F, 0.F, 0.F, 1.F));
+
+        hr = m_pDBitmapRenderTarget->GetBitmap(&m_pD2DBitmap);
+
+        // When the window changes in size,
+        // the user draw calls should always appear in the middle of the screen,
+        // not the left corner
+        if (m_pD2DBitmap)
+        {
+            m_pD2DDeviceContext->DrawBitmap(
+                m_pD2DBitmap,
+                D2D1::RectF
+                (
+                    m_ViewPortTranslationX,
+                    m_ViewPortTranslationY,
+                    m_WindowWidth - m_ViewPortTranslationX,
+                    m_WindowHeight - m_ViewPortTranslationY
+                ),
+                1.f,
+                D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+            );
+        }
+
+        hr = m_pD2DDeviceContext->EndDraw();
+        // //-------------------------------------------------------
+        hr = m_pDSwapChain->Present(1, 0);
         return hr;
     }
 
@@ -633,7 +620,7 @@ namespace jela
     void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawLine(
+        m_pDBitmapRenderTarget->DrawLine(
             D2D1::Point2F(firstX, m_GameHeight - firstY),
             D2D1::Point2F(secondX, m_GameHeight - secondY),
             m_pDColorBrush,
@@ -656,7 +643,7 @@ namespace jela
     void Engine::DrawRectangle(float left, float bottom, float width, float height, float lineThickness) const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawRectangle(
+        m_pDBitmapRenderTarget->DrawRectangle(
             D2D1::RectF
             (
                 left,
@@ -682,7 +669,7 @@ namespace jela
     void Engine::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawRoundedRectangle(
+        m_pDBitmapRenderTarget->DrawRoundedRectangle(
             D2D1::RoundedRect
             (
                 D2D1::RectF
@@ -721,10 +708,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
+            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pD2DDeviceContext->DrawText(
+        m_pDBitmapRenderTarget->DrawText(
             to_wstring(textToDisplay).c_str(),
             static_cast<UINT32>(textToDisplay.length()),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -749,10 +736,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
+            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pD2DDeviceContext->DrawText(
+        m_pDBitmapRenderTarget->DrawText(
             to_wstring(textToDisplay).c_str(),
             static_cast<UINT32>(textToDisplay.length()),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -799,7 +786,7 @@ namespace jela
         SetTransform();
         if (texture)
         {
-            m_pD2DDeviceContext->DrawBitmap(
+            m_pDBitmapRenderTarget->DrawBitmap(
                 texture->GetBitmap(),
                 destination,
                 opacity,
@@ -818,7 +805,7 @@ namespace jela
     void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawEllipse(
+        m_pDBitmapRenderTarget->DrawEllipse(
             D2D1::Ellipse(
                 D2D1::Point2F(centerX, m_GameHeight - centerY),
                 radiusX, radiusY
@@ -845,7 +832,7 @@ namespace jela
     void Engine::FillRectangle(float left, float bottom, float width, float height)const
     {
         SetTransform();
-        m_pD2DDeviceContext->FillRectangle(
+        m_pDBitmapRenderTarget->FillRectangle(
             D2D1::RectF(
                 left,
                 m_GameHeight - (bottom + height),
@@ -860,7 +847,7 @@ namespace jela
     void Engine::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY)const
     {
         SetTransform();
-        m_pD2DDeviceContext->FillRoundedRectangle(
+        m_pDBitmapRenderTarget->FillRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(
                     left,
@@ -887,7 +874,7 @@ namespace jela
     void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const
     {
         SetTransform();
-        m_pD2DDeviceContext->FillEllipse(
+        m_pDBitmapRenderTarget->FillEllipse(
             D2D1::Ellipse(
                 D2D1::Point2F(centerX, m_GameHeight - centerY),
                 radiusX, radiusY
@@ -901,7 +888,7 @@ namespace jela
     void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness)const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawLine(
+        m_pDBitmapRenderTarget->DrawLine(
             D2D1::Point2F(firstX, firstY), D2D1::Point2F(secondX, secondY),
             m_pDColorBrush,
             lineThickness
@@ -922,7 +909,7 @@ namespace jela
     void Engine::DrawRectangle(float left, float top, float width, float height, float lineThickness)const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawRectangle(
+        m_pDBitmapRenderTarget->DrawRectangle(
             D2D1::RectF(left, top, left + width, top + height),
             m_pDColorBrush,
             lineThickness
@@ -941,7 +928,7 @@ namespace jela
     void Engine::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawRoundedRectangle(
+        m_pDBitmapRenderTarget->DrawRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(left, top, left + width, top + height),
                 radiusX,radiusY
@@ -967,10 +954,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
+            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pD2DDeviceContext->DrawText(
+        m_pDBitmapRenderTarget->DrawText(
             textToDisplay.c_str(),
             (UINT32)textToDisplay.length(),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -994,10 +981,10 @@ namespace jela
 
         if (showRect)
         {
-            m_pD2DDeviceContext->DrawRectangle(rect, m_pDColorBrush);
+            m_pDBitmapRenderTarget->DrawRectangle(rect, m_pDColorBrush);
         }
 
-        m_pD2DDeviceContext->DrawText(
+        m_pDBitmapRenderTarget->DrawText(
             textToDisplay.c_str(),
             (UINT32)textToDisplay.length(),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
@@ -1040,7 +1027,7 @@ namespace jela
         SetTransform();
         if (texture)
         {
-            m_pD2DDeviceContext->DrawBitmap(
+            m_pDBitmapRenderTarget->DrawBitmap(
                 texture->GetBitmap(),
                 destination,
                 opacity,
@@ -1059,7 +1046,7 @@ namespace jela
     void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
     {
         SetTransform();
-        m_pD2DDeviceContext->DrawEllipse(
+        m_pDBitmapRenderTarget->DrawEllipse(
             D2D1::Ellipse(
                 D2D1::Point2F(centerX, centerY),
                 radiusX, radiusY
@@ -1085,7 +1072,7 @@ namespace jela
     void Engine::FillRectangle(float left, float top, float width, float height)const
     {
         SetTransform();
-        m_pD2DDeviceContext->FillRectangle(
+        m_pDBitmapRenderTarget->FillRectangle(
             D2D1::RectF(left, top, left + width, top + height),
             m_pDColorBrush);
     }
@@ -1102,7 +1089,7 @@ namespace jela
     void Engine::FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY)const
     {
         SetTransform();
-        m_pD2DDeviceContext->FillRoundedRectangle(
+        m_pDBitmapRenderTarget->FillRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(left, top, left + width, top + height),
                 radiusX, radiusY
@@ -1115,7 +1102,7 @@ namespace jela
     void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const
     {
         SetTransform();
-        m_pD2DDeviceContext->FillEllipse(
+        m_pDBitmapRenderTarget->FillEllipse(
             D2D1::Ellipse(D2D1::Point2F(centerX, centerY), radiusX, radiusY),
             m_pDColorBrush);
     }
@@ -1174,7 +1161,7 @@ namespace jela
         PushTransform();
         Translate(pGeometryObject->GetTranslation());
         SetTransform();
-        m_pD2DDeviceContext->DrawGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush, lineThickness);
+        m_pDBitmapRenderTarget->DrawGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush, lineThickness);
         PopTransform();
     }
     void Engine::FillGeometry(const Geometry* const pGeometryObject)
@@ -1182,7 +1169,7 @@ namespace jela
         PushTransform();
         Translate(pGeometryObject->GetTranslation());
         SetTransform();
-        m_pD2DDeviceContext->FillGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush);
+        m_pDBitmapRenderTarget->FillGeometry(pGeometryObject->GetGeometry(), m_pDColorBrush);
         PopTransform();
     }
 
@@ -1341,6 +1328,13 @@ namespace jela
         // Now we can set the Direct2D render target.
         m_pD2DDeviceContext->SetTarget(m_pDTargetBitmap);
 
+        hr = m_pD2DDeviceContext->CreateCompatibleRenderTarget(
+            D2D1::SizeF(static_cast<FLOAT>(m_GameWidth), static_cast<FLOAT>(m_GameHeight)),
+            D2D1::SizeU(m_GameWidth, m_GameHeight),
+            &m_pDBitmapRenderTarget
+            );
+
+
         return hr;
     }
     void Engine::SetDeltaTime(float elapsedSec)
@@ -1363,7 +1357,7 @@ namespace jela
                 combinedMatrix = matrix * combinedMatrix;
             }
 
-            m_pD2DDeviceContext->SetTransform(combinedMatrix);
+            m_pDBitmapRenderTarget->SetTransform(combinedMatrix);
 
             m_TransformChanged = false;
         }
@@ -1579,15 +1573,15 @@ namespace jela
             GetGValue(newColor) / 255.f,
             GetBValue(newColor) / 255.f));
 
-        m_pDColorBrush->SetOpacity(opacity);
+        m_pDColorBrush->SetOpacity(std::clamp(opacity, 0.0f, 1.0f));
     }
-    void Engine::SetBackGroundColor(COLORREF newColor)
+    void Engine::SetBackGroundColor(COLORREF newColor, float opacity)
     {
         m_DColorBackGround = D2D1::ColorF(
             GetRValue(newColor) / 255.f,
             GetGValue(newColor) / 255.f,
             GetBValue(newColor) / 255.f,
-            1.f);
+            std::clamp(opacity, 0.0f, 1.0f));
     }
 
     Rectf Engine::GetRenderTargetSize() const

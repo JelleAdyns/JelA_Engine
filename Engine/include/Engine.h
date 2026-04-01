@@ -172,7 +172,7 @@ namespace jela
         void SetFont(const Font* const pFont);
         void SetTextFormat(TextFormat* const pTextFormat);
         void SetColor(COLORREF newColor, float opacity = 1.F);
-        void SetBackGroundColor(COLORREF newColor);
+        void SetBackGroundColor(COLORREF newColor, float opacity = 1.F);
         void SetInstance(HINSTANCE hInst);
         void SetTitle(const tstring& newTitle);
         void SetWindowDimensions(int width, int height, bool refreshWindowPos = true);
@@ -247,6 +247,8 @@ namespace jela
         IDXGIDevice1 *                  m_pDXGIDevice{};
         IDXGISwapChain1 *               m_pDSwapChain{};
         ID2D1Bitmap1 *                  m_pDTargetBitmap{};
+        ID2D1Bitmap *                   m_pD2DBitmap{};
+        ID2D1BitmapRenderTarget*        m_pDBitmapRenderTarget{};
 
         //BaseGame
         std::unique_ptr<BaseGame>       m_pGame{};
