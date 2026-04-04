@@ -23,8 +23,7 @@ namespace jela
         Control = MK_CONTROL,
         Middle = MK_MBUTTON
     };
-    bool operator==(jela::MouseButtons lhs, jela::MouseButtons rhs);
-
+    bool ContainsMouseButtons(jela::MouseButtons collectionOfButtons, jela::MouseButtons buttonsToCheckFor);
 
     class Engine final
     {

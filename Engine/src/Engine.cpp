@@ -5,11 +5,11 @@
 
 namespace jela
 {
-    bool operator==(jela::MouseButtons lhs, jela::MouseButtons rhs)
+    bool ContainsMouseButtons(jela::MouseButtons collectionOfButtons, jela::MouseButtons buttonsToCheckFor)
     {
-        return (static_cast<int>(lhs) & static_cast<int>(rhs)) == static_cast<int>(rhs);
+        const auto buttonsToCheckValue = static_cast<int>(buttonsToCheckFor);
+        return (static_cast<int>(collectionOfButtons) & buttonsToCheckValue) == buttonsToCheckValue;
     }
-
     LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         return ENGINE.HandleMessages(hWnd, message, wParam, lParam);
