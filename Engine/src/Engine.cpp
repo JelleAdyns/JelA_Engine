@@ -1812,26 +1812,30 @@ namespace jela
         {
             if (IsPointInRect(c.center, r)) return true;
 
-            float right = r.left + r.width;
+            const auto isOverlapping = [c] (const Point2f& p1, const Point2f& p2)
+            {
+                return (c.center - ClosestPointOnLine(c.center, p1, p2)).SquaredLength() <= c.rad * c.rad;
+            };
+            const float right = r.left + r.width;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-            float top = r.bottom + r.height;
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ r.left, r.bottom }, Point2f{ r.left, top })).SquaredLength() <= c.rad * c.rad) return true;
+            const float top = r.bottom + r.height;
+            if (isOverlapping( Point2f{ r.left, r.bottom }, Point2f{ r.left, top })) return true;
 
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ r.left, r.bottom }, Point2f{ right, r.bottom })).SquaredLength() <= c.rad * c.rad) return true;
+            if (isOverlapping( Point2f{ r.left, r.bottom }, Point2f{ right, r.bottom })) return true;
 
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ r.left, top }, Point2f{ right, top })).SquaredLength() <= c.rad * c.rad) return true;
+            if (isOverlapping( Point2f{ r.left, top }, Point2f{ right, top })) return true;
 
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ right, top }, Point2f{ right, r.bottom })).SquaredLength() <= c.rad * c.rad) return true;
+            if (isOverlapping( Point2f{ right, top }, Point2f{ right, r.bottom })) return true;
 #else
-            float bottom = r.top + r.height;
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ r.left, r.top }, Point2f{ r.left, bottom })).SquaredLength() <= c.rad * c.rad) return true;
+            const float bottom = r.top + r.height;
+            if (isOverlapping( Point2f{ r.left, r.top }, Point2f{ r.left, bottom })) return true;
 
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ r.left, r.top }, Point2f{ right, r.top })).SquaredLength() <= c.rad * c.rad) return true;
+            if (isOverlapping( Point2f{ r.left, r.top }, Point2f{ right, r.top })) return true;
 
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ r.left, bottom }, Point2f{ right, bottom })).SquaredLength() <= c.rad * c.rad) return true;
+            if (isOverlapping( Point2f{ r.left, bottom }, Point2f{ right, bottom })) return true;
 
-            if ((c.center - ClosestPointOnLine(c.center, Point2f{ right, bottom }, Point2f{ right, r.top })).SquaredLength() <= c.rad * c.rad) return true;
+            if (isOverlapping( Point2f{ right, bottom }, Point2f{ right, r.top })) return true;
 
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
@@ -1846,20 +1850,22 @@ namespace jela
 
         Point2f ClosestPointOnLine(const Point2f & point, const Point2f & linePointA, const Point2f & linePointB)
         {
-            Vector2f aToB{ linePointA, linePointB };
-            Vector2f aToPoint{ linePointA, point };
-            Vector2f abNorm{ aToB.Normalized() };
-            float pointProjectionOnLine{ Vector2f::Dot(abNorm, aToPoint) };
+            const Vector2f aToB{ linePointA, linePointB };
+            const Vector2f aToPoint{ linePointA, point };
+            float pointProjectionOnLine{ Vector2f::Dot(aToB, aToPoint) };
 
             // If pointProjectionOnLine is negative, then the closest point is A
             if (pointProjectionOnLine < 0) return linePointA;
 
+            const Vector2f abNorm{ aToB.Normalized() };
+            pointProjectionOnLine = Vector2f::Dot(abNorm, aToPoint);
+
             // If pointProjectionOnLine is > than dist(linePointA,linePointB) then the closest point is B
-            float squaredDistAB{ aToB.SquaredLength() };
-            if (pointProjectionOnLine * pointProjectionOnLine > squaredDistAB) return linePointB;
+            if (const float squaredDistAB{ aToB.SquaredLength() };
+                pointProjectionOnLine * pointProjectionOnLine > squaredDistAB) return linePointB;
 
             // Closest point is between A and B, calc intersection point
-            Point2f intersection{ linePointA + pointProjectionOnLine * abNorm };
+            const Point2f intersection{ linePointA + pointProjectionOnLine * abNorm };
             return intersection;
         }
 
@@ -1870,8 +1876,8 @@ namespace jela
 
         bool IsPointOnLineSegment(const Point2f & point, const Point2f & linePointA, const Point2f & linePointB, float epsilon)
         {
-            Vector2f aToPoint{ linePointA, point };
-            Vector2f bToPoint{ linePointB, point };
+            const Vector2f aToPoint{ linePointA, point };
+            const Vector2f bToPoint{ linePointB, point };
 
             // If not on same line, return false
             if (std::abs(Vector2f::Cross(aToPoint, bToPoint)) > epsilon) return false;
@@ -1894,7 +1900,7 @@ namespace jela
                 }
                 if (origin.x > e.center.x - e.radiusX && origin.x < e.center.x + e.radiusX)
                 {
-                    float sqrtRoot = sqrtf(1 - ((origin.x - e.center.x) * (origin.x - e.center.x)) / (e.radiusX * e.radiusX));
+                    const float sqrtRoot = sqrtf(1 - ((origin.x - e.center.x) * (origin.x - e.center.x)) / (e.radiusX * e.radiusX));
                     intersections.first = jela::Point2f{ origin.x, e.center.y - e.radiusY * sqrtRoot };
                     intersections.second = jela::Point2f{ origin.x, e.center.y + e.radiusY * sqrtRoot };
                     return Intersections::Double;
@@ -1923,8 +1929,8 @@ namespace jela
         }
         Intersections IntersectEllipseLineSegment(const Ellipsef& e, const Point2f& point1, const Point2f& point2, std::pair<Point2f, Point2f>& intersections)
         {
-            const Intersections intersects = IntersectEllipse(e, { point1, point2 }, point1, intersections);
-            if (intersects == Intersections::None) return Intersections::None;
+            if (IntersectEllipse(e, { point1, point2 }, point1, intersections) == Intersections::None)
+                return Intersections::None;
 
             return IntersectionPointsLieOnLine(point1, point2, intersections);
         }
@@ -1940,7 +1946,7 @@ namespace jela
                 }
                 if (origin.x >= circle.center.x - circle.rad && origin.x <= circle.center.x + circle.rad)
                 {
-                    float sqrtRoot = sqrtf(circle.rad * circle.rad - (origin.x - circle.center.x) * (origin.x - circle.center.x));
+                    const float sqrtRoot = sqrtf(circle.rad * circle.rad - (origin.x - circle.center.x) * (origin.x - circle.center.x));
                     intersections.first = jela::Point2f{ origin.x, circle.center.y - sqrtRoot };
                     intersections.second = jela::Point2f{ origin.x, circle.center.y + sqrtRoot };
 
@@ -1978,17 +1984,16 @@ namespace jela
         }
         Intersections IntersectCircleLineSegment(const Circlef& circle, const Point2f& point1, const Point2f& point2, std::pair<Point2f, Point2f>& intersections)
         {
-            const Intersections intersects = IntersectCircle(circle, { point1, point2 }, point1, intersections);
-            if (intersects == Intersections::None) return Intersections::None;
+            if (IntersectCircle(circle, { point1, point2 }, point1, intersections) == Intersections::None)
+                return Intersections::None;
 
             return IntersectionPointsLieOnLine(point1, point2, intersections);
         }
         bool IntersectLines(const Vector2f & l1, const Point2f & origin1, const Vector2f & l2, const Point2f & origin2)
         {
-            float crossArea = Vector2f::Cross(l1, l2);
-            if (std::abs(crossArea) <= FLT_EPSILON) // if parallel
+            if (std::abs(Vector2f::Cross(l1, l2)) <= FLT_EPSILON) // if parallel
             {
-                Vector2f OriginToOrigin{ origin1, origin2 };
+                const Vector2f OriginToOrigin{ origin1, origin2 };
                 // if there's an offset, return false
                 if (std::abs(Vector2f::Cross(OriginToOrigin, l2)) > FLT_EPSILON) return false;
             }
@@ -1999,12 +2004,11 @@ namespace jela
             if (!IntersectLines(p1, p2, q1, q2)) return false;
 
             bool intersecting{ false };
-            Vector2f firstLine{ p1, p2 };
-            Vector2f secondLine{ q1, q2 };
+            const Vector2f firstLine{ p1, p2 };
+            const Vector2f secondLine{ q1, q2 };
 
-            float crossArea = Vector2f::Cross(firstLine, secondLine);
-
-            if (std::abs(crossArea) <= FLT_EPSILON) // if parallel
+            if (const float crossArea = Vector2f::Cross(firstLine, secondLine);
+                std::abs(crossArea) <= FLT_EPSILON) // if parallel
             {
                 line1Interpolation = 0;
                 line2Interpolation = 0;
@@ -2016,9 +2020,9 @@ namespace jela
             }
             else
             {
-                Vector2f p1q1{ p1, q1 };
-                float num1 = Vector2f::Cross(p1q1, secondLine);
-                float num2 = Vector2f::Cross(p1q1, firstLine);
+                const Vector2f p1q1{ p1, q1 };
+                const float num1 = Vector2f::Cross(p1q1, secondLine);
+                const float num2 = Vector2f::Cross(p1q1, firstLine);
 
                 line1Interpolation = num1 / crossArea;
                 line2Interpolation = num2 / crossArea;
@@ -2033,26 +2037,25 @@ namespace jela
 
         Intersections IntersectRectLine(const Rectf & r, const Point2f & p1, const Point2f & p2, std::pair<Point2f, Point2f>&intersections)
         {
-            float xDenom{ p2.x - p1.x };
-            float x1{ (r.left - p1.x) / xDenom };
-            float x2{ (r.left + r.width - p1.x) / xDenom };
+            const float xDenom{ p2.x - p1.x };
+            const float x1{ (r.left - p1.x) / xDenom };
+            const float x2{ (r.left + r.width - p1.x) / xDenom };
 
             float yDenom{ p2.y - p1.y };
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-            float y1{ (r.bottom - p1.y) / yDenom };
-            float y2{ (r.bottom + r.height - p1.y) / yDenom };
+            const float y1{ (r.bottom - p1.y) / yDenom };
+            const float y2{ (r.bottom + r.height - p1.y) / yDenom };
 #else
-            float y1{ (r.top - p1.y) / yDenom };
-            float y2{ (r.top + r.height - p1.y) / yDenom };
+            const float y1{ (r.top - p1.y) / yDenom };
+            const float y2{ (r.top + r.height - p1.y) / yDenom };
 #endif // !MATHEMATICAL_COORDINATESYSTEM
 
-
-            float tMin{ std::max(std::min(x1,x2), std::min(y1,y2)) };
-            float tMax{ std::min(std::max(x1,x2), std::max(y1,y2)) };
+            const float tMin{ std::max(std::min(x1,x2), std::min(y1,y2)) };
+            const float tMax{ std::min(std::max(x1,x2), std::max(y1,y2)) };
 
             if (tMin > tMax) return Intersections::None;
 
-            Vector2f lineDirection{ p1, p2 };
+            const Vector2f lineDirection{ p1, p2 };
             intersections.first = p1 + lineDirection * tMin;
             intersections.second = p1 + lineDirection * tMax;
 
