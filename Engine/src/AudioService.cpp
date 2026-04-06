@@ -23,7 +23,7 @@ namespace jela
 
 	SoundInstanceID::SoundInstanceID(SoundInstanceID&& other) noexcept
         : m_Id{std::move(other.m_Id)}
-          , m_pSubject{std::move(other.m_pSubject) }
+		, m_pSubject{std::move(other.m_pSubject) }
 	{
 		if (m_pSubject)
 		{
@@ -37,6 +37,8 @@ namespace jela
 
 	SoundInstanceID& SoundInstanceID::operator= (const SoundInstanceID& other)
 	{
+		if (&other == this) return *this;
+
 		m_pSubject = other.m_pSubject;
 		m_Id = other.m_Id;
 		if (m_pSubject) m_pSubject->AddObserver(this);
@@ -46,6 +48,8 @@ namespace jela
 
 	SoundInstanceID& SoundInstanceID::operator= (SoundInstanceID&& other) noexcept
 	{
+		if (&other == this) return *this;
+
 		m_pSubject = std::move(other.m_pSubject);
         m_Id = std::move(other.m_Id);
 

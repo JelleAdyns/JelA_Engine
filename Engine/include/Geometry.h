@@ -9,23 +9,23 @@ namespace jela
 	class Geometry
 	{
 	public:
-		Geometry(const Geometry& other) = delete;
-		Geometry(Geometry&& other) noexcept = delete;
-		Geometry& operator=(const Geometry& other) = delete;
-		Geometry& operator=(Geometry&& other) noexcept = delete;
+		Geometry(const Geometry& other);
+		Geometry(Geometry&& other) noexcept;
+		Geometry& operator=(const Geometry& other);
+		Geometry& operator=(Geometry&& other) noexcept;
 
 		virtual void Move(float x, float y) { Move({ x,y }); }
 		virtual void Move(const Vector2f& translation) { m_Translation += translation; }
 
 		const Vector2f& GetTranslation() const { return m_Translation; };
-		ID2D1PathGeometry* const GetGeometry() const { return m_pGeo; };
+		ID2D1PathGeometry* GetGeometry() const { return m_pGeo; };
 
 	protected:
 		Geometry() = default;
 		virtual ~Geometry() { SafeRelease(&m_pGeo); };
 		virtual void ResetPosition() { m_Translation = {}; }
 
-		HRESULT Recreate();
+		HRESULT Recreate(bool releasePrevious = true);
 
 	private:
 		Vector2f m_Translation{};
@@ -37,10 +37,10 @@ namespace jela
 	public:
 		Polygon(const std::vector<Point2f>& points, bool closeSegment = true);
 
-		Polygon(const Polygon& other) = delete;
-		Polygon(Polygon&& other) noexcept = delete;
-		Polygon& operator=(const Polygon& other) = delete;
-		Polygon& operator=(Polygon&& other) noexcept = delete;
+		Polygon(const Polygon& other) = default;
+		Polygon(Polygon&& other) noexcept = default;
+		Polygon& operator=(const Polygon& other) = default;
+		Polygon& operator=(Polygon&& other) noexcept = default;
 		virtual ~Polygon() = default;
 
 		bool Recreate(const std::vector<Point2f>& points, bool closeSegment = true);
@@ -55,6 +55,7 @@ namespace jela
 	private:
 		void AdjustPoints(const std::function<void(Point2f&)>& func);
 
+		bool m_SegmentClosed{};
 		std::vector<Point2f> m_Points{};
 	};
 
@@ -65,10 +66,10 @@ namespace jela
 		Arc(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
 		Arc(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
 
-		Arc(const Arc& other) = delete;
-		Arc(Arc&& other) noexcept = delete;
-		Arc& operator=(const Arc& other) = delete;
-		Arc& operator=(Arc&& other) noexcept = delete;
+		Arc(const Arc& other) = default;
+		Arc(Arc&& other) noexcept = default;
+		Arc& operator=(const Arc& other) = default;
+		Arc& operator=(Arc&& other) noexcept = default;
 		virtual ~Arc() = default;
 
 		bool Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
@@ -86,9 +87,9 @@ namespace jela
         float GetStartAngle() const { return m_StartAngle; }
         float GetAngle() const { return m_Angle; }
 	private:
-		Vector2f m_Radius;
-		float m_StartAngle;
-		float m_Angle;
+		Vector2f m_Radius{};
+		float m_StartAngle{};
+		float m_Angle{};
 	};
 }
 

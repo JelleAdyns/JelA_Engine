@@ -241,6 +241,8 @@ namespace jela
 
             ResourcePtr& operator= (const ResourcePtr& other)
             {
+                if (&other == this) return *this;
+
                 if (m_pSubject) m_pSubject->RemoveObserver(this);
 
                 pObject = other.pObject;
@@ -252,6 +254,8 @@ namespace jela
 
             ResourcePtr& operator= (ResourcePtr&& other) noexcept
             {
+                if (&other == this) return *this;
+
                 if (m_pSubject) m_pSubject->RemoveObserver(this);
 
                 m_pSubject = std::move(other.m_pSubject);
