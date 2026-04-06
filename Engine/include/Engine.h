@@ -15,6 +15,14 @@
 
 namespace jela
 {
+    inline constexpr bool USE_MATHEMATICAL_COORDINATESYSTEM {
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+        true
+#else
+        false
+#endif
+    };
+
     enum class MouseButtons
     {
         Left = MK_LBUTTON,
@@ -55,63 +63,63 @@ namespace jela
         void DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f) const;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-        void DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness = 1.f)const;
-        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f)const;
-        void DrawRectangle(float left, float bottom, float width, float height, float lineThickness = 1.f)const;
+        void DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness = 1.f) const;
+        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f) const;
+        void DrawRectangle(float left, float bottom, float width, float height, float lineThickness = 1.f) const;
 
-        void DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
+        void DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
 
-        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect = false) const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect = false) const;
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect = false) const;
 
-        void DrawTexture(const Texture* const texture, float destLeft, float destBottom, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Point2f& destLeftBottom = {}, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* texture, float destLeft, float destBottom, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Point2f& destLeftBottom = {}, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f) const;
 
-        void FillRectangle(const Point2f& leftBottom, float width, float height)const;
-        void FillRectangle(const Rectf& rect)const;
-        void FillRectangle(float left, float bottom, float width, float height)const;
+        void FillRectangle(const Point2f& leftBottom, float width, float height) const;
+        void FillRectangle(const Rectf& rect) const;
+        void FillRectangle(float left, float bottom, float width, float height) const;
 
-        void FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY)const;
-        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const;
-        void FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY)const;
+        void FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY) const;
+        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const;
+        void FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const;
 #else
-        void DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness = 1.f)const;
-        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f)const;
-        void DrawRectangle(float left, float top, float width, float height, float lineThickness = 1.f)const;
+        void DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness = 1.f) const;
+        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f) const;
+        void DrawRectangle(float left, float top, float width, float height, float lineThickness = 1.f) const;
 
-        void DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
+        void DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
 
-        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect = false) const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect = false) const;
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect = false) const;
 
-        void DrawTexture(const Texture* const texture, float destLeft, float destTop, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Point2f& destLeftTop = {}, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* texture, float destLeft, float destTop, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Point2f& destLeftTop = {}, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f) const;
 
-        void FillRectangle(const Point2f& leftTop, float width, float height)const;
-        void FillRectangle(const Rectf& rect)const;
-        void FillRectangle(float left, float top, float width, float height)const;
+        void FillRectangle(const Point2f& leftTop, float width, float height) const;
+        void FillRectangle(const Rectf& rect) const;
+        void FillRectangle(float left, float top, float width, float height) const;
 
-        void FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY)const;
-        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const;
-        void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY)const;
+        void FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY) const;
+        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const;
+        void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
         void DrawPolygon(const Polygon& polygon, float lineThickness = 1.f);
@@ -120,15 +128,15 @@ namespace jela
         void DrawArc(const Arc& arc, float lineThickness = 1.f);
         void FillArc(const Arc& arc);
 
-        void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f)const;
-        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawCircle(const Circlef& circle, float lineThickness = 1.f)const;
+        void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f) const;
+        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawCircle(const Circlef& circle, float lineThickness = 1.f) const;
 
-        void FillEllipse(const Point2f& center, float radiusX, float radiusY)const;
-        void FillEllipse(const Ellipsef& ellipse)const;
-        void FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const;
-        void FillCircle(const Circlef& circle)const;
+        void FillEllipse(const Point2f& center, float radiusX, float radiusY) const;
+        void FillEllipse(const Ellipsef& ellipse) const;
+        void FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const;
+        void FillCircle(const Circlef& circle) const;
 
         //Use CAPITAL letters or the virtual keycodes
         bool IsKeyPressed(int virtualKeycode) const;
@@ -166,10 +174,10 @@ namespace jela
 
         // Setters
 
-        void ShowMouse(bool show);
+        void ShowMouse(bool show) const;
         void UseSystemFramerate(bool enable);
-        void SetFont(const Font* const pFont);
-        void SetTextFormat(TextFormat* const pTextFormat);
+        void SetFont(const Font* pFont);
+        void SetTextFormat(TextFormat* pTextFormat);
         void SetColor(COLORREF newColor, float opacity = 1.F);
         void SetBackGroundColor(COLORREF newColor, float opacity = 1.F);
         void SetInstance(HINSTANCE hInst);
@@ -206,15 +214,15 @@ namespace jela
             }
         }
 
-        void NotifyException(const std::string& exceptionMessage, const std::string& title = "ERROR")
+        void NotifyException(const std::string& exceptionMessage, const std::string& title = "ERROR") const
         {
             MessageBoxA(m_hWindow, exceptionMessage.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
         }
 
     private:
 
-        void DrawGeometry(const Geometry* const pGeometryObject, float lineThickness = 1.f);
-        void FillGeometry(const Geometry* const pGeometryObject);
+        void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f);
+        void FillGeometry(const Geometry* pGeometryObject);
         void SetWindowPosition();
         void SetFullscreen();
         void SetTransform() const;

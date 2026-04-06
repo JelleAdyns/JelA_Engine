@@ -111,15 +111,12 @@ namespace jela
 		{
 			std::vector<D2D1_POINT_2F> D2points(m_Points.size());
 
+			const auto windowHeight = ENGINE.GetWindowRect().height;
 			for (size_t i = 0; i < m_Points.size(); i++)
 			{
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-
-				D2points[i] = D2D1::Point2F(m_Points[i].x, ENGINE.GetWindowRect().height - m_Points[i].y);
-#else
-				D2points[i] = D2D1::Point2F(m_Points[i].x, m_Points[i].y);
-
-#endif // MATHEMATICAL_COORDINATESYSTEM
+				auto pointY = m_Points[i].y;
+				if (USE_MATHEMATICAL_COORDINATESYSTEM) pointY = windowHeight - pointY;
+				D2points[i] = D2D1::Point2F(m_Points[i].x, pointY);
 			}
 
 			pSink->BeginFigure(D2points.front(), D2D1_FIGURE_BEGIN_FILLED);
@@ -262,34 +259,28 @@ namespace jela
 			const auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
 			const auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
+			const auto windowHeight = ENGINE.GetWindowRect().height;
 
-			const auto beginPoint = D2D1::Point2F(radiusX * std::cosf(startRad), ENGINE.GetWindowRect().height - (radiusY * std::sinf(startRad)));
-			const auto endPoint = D2D1::Point2F(radiusX * std::cosf(endRad), ENGINE.GetWindowRect().height - (radiusY * std::sinf(endRad)));
-#else
-			const auto beginPoint = D2D1::Point2F(radiusX * std::cosf(startRad), - radiusY * std::sinf(startRad));
-			const auto endPoint = D2D1::Point2F(radiusX * std::cosf(endRad), - radiusY * std::sinf(endRad));
+			const auto startX = radiusX * std::cosf(startRad);
+			auto startY = radiusY * std::sinf(startRad);
+			if (USE_MATHEMATICAL_COORDINATESYSTEM) startY = windowHeight - startY;
 
-#endif // MATHEMATICAL_COORDINATESYSTEM
+			const auto endX = radiusX * std::cosf(endRad);
+			auto endY = radiusY * std::sinf(endRad);
+			if (USE_MATHEMATICAL_COORDINATESYSTEM) endY = windowHeight - endY;
 
 			const D2D1_ARC_SEGMENT arcSegment{
-				endPoint,
+				D2D1::Point2F(endX, endY),
 				D2D1::SizeF(radiusX, radiusY),
 				0,
 				D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
 				std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
 			};
 
-			pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
+			pSink->BeginFigure(D2D1::Point2F(startX, startY), D2D1_FIGURE_BEGIN_FILLED);
 			pSink->AddArc(arcSegment);
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-
-			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, ENGINE.GetWindowRect().height));
-#else
-			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, 0));
-
-#endif // MATHEMATICAL_COORDINATESYSTEM
+			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, USE_MATHEMATICAL_COORDINATESYSTEM ? windowHeight : 0));
 
 			pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
 			hr = pSink->Close();
@@ -323,11 +314,9 @@ namespace jela
 																					// P1		 CP2
 		SetPosition(point2.x, point1.y);
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-		if (point1.y >= point2.y)
-#else
-		if (point1.y <= point2.y)
-#endif
+		if (USE_MATHEMATICAL_COORDINATESYSTEM ?
+			(point1.y >= point2.y) :
+			(point1.y <= point2.y))
 		{
 			m_StartAngle = 0;
 			swapCenterPoint(point1.x <= point2.x);

@@ -58,9 +58,8 @@ namespace jela
             xCoordinate = std::round(xCoordinate);
             float yCoordinate = (GET_Y_LPARAM(lParam) - m_ViewPortTranslationY) / m_ViewPortHeight * m_GameHeight;
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-            yCoordinate = m_GameHeight - yCoordinate;
-#endif // MATHEMATICAL_COORDINATESYSTEM
+            if (USE_MATHEMATICAL_COORDINATESYSTEM)
+                yCoordinate = m_GameHeight - yCoordinate;
 
             yCoordinate = std::round(yCoordinate);
 
@@ -233,9 +232,8 @@ namespace jela
 
                 float yWheelCoordinate = screenPosY / m_ViewPortHeight * m_GameHeight;
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-                yWheelCoordinate = m_GameHeight - yWheelCoordinate;
-#endif // MATHEMATICAL_COORDINATESYSTEM
+                if (USE_MATHEMATICAL_COORDINATESYSTEM)
+                    yWheelCoordinate = m_GameHeight - yWheelCoordinate;
 
                 yWheelCoordinate = std::round(yWheelCoordinate);
 
@@ -569,17 +567,30 @@ namespace jela
     void Engine::DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness) const
     {
         DrawLine(firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y, lineThickness);
-
     }
-
     void Engine::DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness) const
     {
         DrawLine(firstX, firstY, secondPoint.x, secondPoint.y, lineThickness);
     }
-
     void Engine::DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness) const
     {
         DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness);
+    }
+    void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
+    {
+        if (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            firstY = m_GameHeight - firstY;
+            secondY = m_GameHeight - secondY;
+        }
+
+        SetTransform();
+        m_pDBitmapRenderTarget->DrawLine(
+            D2D1::Point2F(firstX, firstY),
+            D2D1::Point2F(secondX, secondY),
+            m_pDColorBrush,
+            lineThickness
+        );
     }
 
     void Engine::DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength, float lineThickness) const
@@ -616,26 +627,15 @@ namespace jela
         DrawLine(endX, endY, arrowP3.x, arrowP3.y, lineThickness);
     }
 
-    #ifdef MATHEMATICAL_COORDINATESYSTEM
-    void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
-    {
-        SetTransform();
-        m_pDBitmapRenderTarget->DrawLine(
-            D2D1::Point2F(firstX, m_GameHeight - firstY),
-            D2D1::Point2F(secondX, m_GameHeight - secondY),
-            m_pDColorBrush,
-            lineThickness
-        );
-    }
 
+#ifdef MATHEMATICAL_COORDINATESYSTEM
 
     //Rectangles
-
-    void Engine::DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness)const
+    void Engine::DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness) const
     {
         DrawRectangle( leftBottom.x, leftBottom.y, width, height, lineThickness);
     }
-    void Engine::DrawRectangle(const Rectf& rect, float lineThickness)const
+    void Engine::DrawRectangle(const Rectf& rect, float lineThickness) const
     {
         DrawRectangle( rect.left, rect.bottom ,rect.width, rect.height, lineThickness);
     }
@@ -657,16 +657,16 @@ namespace jela
     }
 
     //RoundedRects
-    void Engine::DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
         DrawRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness) const
     {
         DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY, lineThickness);
     }
 
-    void Engine::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawRoundedRectangle(
@@ -687,20 +687,19 @@ namespace jela
         );
     }
 
-
     // Strings
-    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect) const
     {
         DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect) const
     {
         DrawString(textToDisplay, destRect.left, destRect.bottom, destRect.width, destRect.height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect) const
     {
         SetTransform();
-        D2D1_RECT_F rect = D2D1::RectF(
+        const D2D1_RECT_F rect = D2D1::RectF(
             left,
             m_GameHeight - (bottom + height),
             left + width,
@@ -721,11 +720,11 @@ namespace jela
            DWRITE_MEASURING_MODE_NATURAL);
     }
 
-    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect) const
     {
        DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect) const
     {
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(
@@ -750,19 +749,19 @@ namespace jela
     }
 
     //Textures
-    void Engine::DrawTexture(const Texture* const texture, float destLeft, float destBottom, const Rectf& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* texture, float destLeft, float destBottom, const Rectf& srcRect, float opacity) const
     {
         DrawTexture(texture, Rectf{ destLeft, destBottom, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const Point2f& destLeftBottom, const Rectf& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* texture, const Point2f& destLeftBottom, const Rectf& srcRect, float opacity) const
     {
         DrawTexture(texture, Rectf{ destLeftBottom.x, destLeftBottom.y, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect, float opacity) const
     {
-        Rectf wndwSize = GetWindowRect();
+        const Rectf wndwSize = GetWindowRect();
 
-        D2D1_RECT_F destination = D2D1::RectF(
+        const D2D1_RECT_F destination = D2D1::RectF(
             destRect.left,
             wndwSize.height - (destRect.bottom + destRect.height),
             destRect.left + destRect.width,
@@ -775,7 +774,7 @@ namespace jela
         }
         else
         {
-            float sliceMargin{ 0.07f };
+            constexpr float sliceMargin{ 0.07f };
             source = D2D1::RectF(
                 srcRect.left + sliceMargin,
                 srcRect.bottom + sliceMargin,
@@ -801,35 +800,21 @@ namespace jela
         }
     }
 
-    //Ellipses
-    void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
-    {
-        SetTransform();
-        m_pDBitmapRenderTarget->DrawEllipse(
-            D2D1::Ellipse(
-                D2D1::Point2F(centerX, m_GameHeight - centerY),
-                radiusX, radiusY
-            ),
-            m_pDColorBrush,
-            lineThickness
-        );
-
-    }
 
     //-----------------
     //Fill
     //----------------
 
     //Rectangles
-    void Engine::FillRectangle(const Point2f& leftBottom, float width, float height)const
+    void Engine::FillRectangle(const Point2f& leftBottom, float width, float height) const
     {
         FillRectangle(leftBottom.x, leftBottom.y, width, height);
     }
-    void Engine::FillRectangle(const Rectf& rect)const
+    void Engine::FillRectangle(const Rectf& rect) const
     {
         FillRectangle(rect.left, rect.bottom, rect.width, rect.height);
     }
-    void Engine::FillRectangle(float left, float bottom, float width, float height)const
+    void Engine::FillRectangle(float left, float bottom, float width, float height) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRectangle(
@@ -844,7 +829,7 @@ namespace jela
     }
 
     //RoundedRects
-    void Engine::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRoundedRectangle(
@@ -860,53 +845,28 @@ namespace jela
             ),
             m_pDColorBrush);
     }
-    void Engine::FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY) const
     {
         FillRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY);
     }
-    void Engine::FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const
     {
         FillRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY);
     }
 
-    //Ellipses
-
-    void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const
-    {
-        SetTransform();
-        m_pDBitmapRenderTarget->FillEllipse(
-            D2D1::Ellipse(
-                D2D1::Point2F(centerX, m_GameHeight - centerY),
-                radiusX, radiusY
-            ),
-            m_pDColorBrush);
-    }
-
 #else
-
-    //Lines
-    void Engine::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness)const
-    {
-        SetTransform();
-        m_pDBitmapRenderTarget->DrawLine(
-            D2D1::Point2F(firstX, firstY), D2D1::Point2F(secondX, secondY),
-            m_pDColorBrush,
-            lineThickness
-        );
-    }
-
 
     //Rectangles
 
-    void Engine::DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness)const
+    void Engine::DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness) const
     {
         DrawRectangle(leftTop.x, leftTop.y, width, height, lineThickness);
     }
-    void Engine::DrawRectangle(const Rectf& rect, float lineThickness)const
+    void Engine::DrawRectangle(const Rectf& rect, float lineThickness) const
     {
         DrawRectangle(rect.left, rect.top, rect.width, rect.height, lineThickness);
     }
-    void Engine::DrawRectangle(float left, float top, float width, float height, float lineThickness)const
+    void Engine::DrawRectangle(float left, float top, float width, float height, float lineThickness) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawRectangle(
@@ -917,15 +877,15 @@ namespace jela
     }
 
     //RoundedRects
-    void Engine::DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
         DrawRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness) const
     {
         DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->DrawRoundedRectangle(
@@ -939,15 +899,15 @@ namespace jela
     }
 
     //String
-    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect) const
     {
         DrawString(textToDisplay, leftTop.x, leftTop.y, width, height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect) const
     {
         DrawString(textToDisplay, destRect.left, destRect.top, destRect.width, destRect.height, showRect);
     }
-    void Engine::DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect) const
     {
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(left, top, left + width, top + height);
@@ -969,12 +929,12 @@ namespace jela
     }
 
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect) const
     {
         DrawString(textToDisplay, leftTop.x, leftTop.y, width, showRect);
     }
     //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-    void Engine::DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect)const
+    void Engine::DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect) const
     {
         SetTransform();
         D2D1_RECT_F rect = D2D1::RectF(left, top, left + width, top + m_pResourceManager->GetCurrentTextFormat()->GetFontSize());
@@ -986,7 +946,7 @@ namespace jela
 
         m_pDBitmapRenderTarget->DrawText(
             textToDisplay.c_str(),
-            (UINT32)textToDisplay.length(),
+            static_cast<UINT32>(textToDisplay.length()),
             m_pResourceManager->GetCurrentTextFormat()->GetTextFormat(),
             rect,
             m_pDColorBrush,
@@ -996,15 +956,15 @@ namespace jela
 
 
     //Textures
-    void Engine::DrawTexture(const Texture* const texture, float destLeft, float destTop, const Rectf& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* texture, float destLeft, float destTop, const Rectf& srcRect, float opacity) const
     {
         DrawTexture(texture, Rectf{ destLeft, destTop, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const Point2f& destLeftTop, const Rectf& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* texture, const Point2f& destLeftTop, const Rectf& srcRect, float opacity) const
     {
         DrawTexture(texture, Rectf{ destLeftTop.x, destLeftTop.y, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
     }
-    void Engine::DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect, float opacity)const
+    void Engine::DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect, float opacity) const
     {
         D2D1_RECT_F destination = D2D1::RectF(destRect.left, destRect.top, destRect.left + destRect.width, destRect.top + destRect.height);
 
@@ -1041,35 +1001,21 @@ namespace jela
             OutputDebugString(_T("ERROR! Texture was nullptr in DrawTexture!\n"));
         }
     }
-    //Ellipse
-
-    void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness)const
-    {
-        SetTransform();
-        m_pDBitmapRenderTarget->DrawEllipse(
-            D2D1::Ellipse(
-                D2D1::Point2F(centerX, centerY),
-                radiusX, radiusY
-            ),
-            m_pDColorBrush,
-            lineThickness
-        );
-    }
 
     //-----------------
     //Fill
     //-----------------
 
     //Rectangles
-    void Engine::FillRectangle(const Point2f& leftTop, float width, float height)const
+    void Engine::FillRectangle(const Point2f& leftTop, float width, float height) const
     {
         FillRectangle(leftTop.x, leftTop.y, width, height);
     }
-    void Engine::FillRectangle(const Rectf& rect)const
+    void Engine::FillRectangle(const Rectf& rect) const
     {
         FillRectangle(rect.left, rect.top, rect.width, rect.height);
     }
-    void Engine::FillRectangle(float left, float top, float width, float height)const
+    void Engine::FillRectangle(float left, float top, float width, float height) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRectangle(
@@ -1078,15 +1024,15 @@ namespace jela
     }
 
     //RoundedRects
-    void Engine::FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY) const
     {
         FillRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY);
     }
-    void Engine::FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const
     {
         FillRoundedRect( rect.left, rect.top, rect.width, rect.height, radiusX, radiusY);
     }
-    void Engine::FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY)const
+    void Engine::FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const
     {
         SetTransform();
         m_pDBitmapRenderTarget->FillRoundedRectangle(
@@ -1098,22 +1044,14 @@ namespace jela
         );
     }
 
-    //Ellipse
-    void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const
-    {
-        SetTransform();
-        m_pDBitmapRenderTarget->FillEllipse(
-            D2D1::Ellipse(D2D1::Point2F(centerX, centerY), radiusX, radiusY),
-            m_pDColorBrush);
-    }
     #endif // MATHEMATICAL_COORDINATESYSTEM
 
     //Ellipse
-    void Engine::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness)const
+    void Engine::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness) const
     {
         DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness);
     }
-    void Engine::DrawEllipse(const Ellipsef& ellipse, float lineThickness)const
+    void Engine::DrawEllipse(const Ellipsef& ellipse, float lineThickness) const
     {
         DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness);
     }
@@ -1121,18 +1059,45 @@ namespace jela
     {
         DrawEllipse(circle.center, circle.rad, circle.rad, lineThickness);
     }
+    void Engine::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness) const
+    {
+        if (USE_MATHEMATICAL_COORDINATESYSTEM) centerY = m_GameHeight - centerY;
 
-    void Engine::FillEllipse(const Point2f& center, float radiusX, float radiusY)const
+        SetTransform();
+        m_pDBitmapRenderTarget->DrawEllipse(
+            D2D1::Ellipse(
+                D2D1::Point2F(centerX, centerY),
+                radiusX, radiusY
+            ),
+            m_pDColorBrush,
+            lineThickness
+        );
+
+    }
+
+    void Engine::FillEllipse(const Point2f& center, float radiusX, float radiusY) const
     {
         FillEllipse(center.x, center.y, radiusX, radiusY);
     }
-    void Engine::FillEllipse(const Ellipsef& ellipse)const
+    void Engine::FillEllipse(const Ellipsef& ellipse) const
     {
         FillEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY);
     }
     void Engine::FillCircle(const Circlef& circle) const
     {
         FillEllipse(circle.center, circle.rad, circle.rad);
+    }
+    void Engine::FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const
+    {
+        if (USE_MATHEMATICAL_COORDINATESYSTEM) centerY = m_GameHeight - centerY;
+
+        SetTransform();
+        m_pDBitmapRenderTarget->FillEllipse(
+            D2D1::Ellipse(
+                D2D1::Point2F(centerX, centerY),
+                radiusX, radiusY
+            ),
+            m_pDColorBrush);
     }
 
     //Geometry
@@ -1220,7 +1185,7 @@ namespace jela
             m_WindowPosX = mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - windowWidth / 2;
             m_WindowPosY = mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - windowHeight / 2;
 
-            ::SetWindowPos(m_hWindow, NULL, m_WindowPosX, m_WindowPosY, windowWidth, windowHeight, SWP_FRAMECHANGED);
+            ::SetWindowPos(m_hWindow, nullptr, m_WindowPosX, m_WindowPosY, windowWidth, windowHeight, SWP_FRAMECHANGED);
         }
 
         if (m_pGame)
@@ -1248,7 +1213,7 @@ namespace jela
             m_WindowPosX = mi.rcMonitor.left;
             m_WindowPosY = mi.rcMonitor.top;
 
-            ::SetWindowPos(m_hWindow, NULL, m_WindowPosX, m_WindowPosY, m_WindowWidth, m_WindowHeight, SWP_FRAMECHANGED);
+            ::SetWindowPos(m_hWindow, nullptr, m_WindowPosX, m_WindowPosY, m_WindowWidth, m_WindowHeight, SWP_FRAMECHANGED);
         }
         if (m_pGame)
         {
@@ -1363,60 +1328,25 @@ namespace jela
         }
     }
 
-    #ifdef MATHEMATICAL_COORDINATESYSTEM
     void Engine::Translate(float xTranslation, float yTranslation)
     {
         if (!m_VecTransformMatrices.empty())
         {
             auto& lastMatrix = m_VecTransformMatrices.back();
-            lastMatrix = D2D1::Matrix3x2F::Translation(xTranslation, -yTranslation) * lastMatrix;
-        }
-        else OutputDebugString(_T("Vector of matrices was empty while trying to add a Translation matrix."));
-
-        m_TransformChanged = true;
-    }
-
-    void Engine::Rotate(float angle, float xPivotPoint, float yPivotPoint)
-    {
-        if (!m_VecTransformMatrices.empty())
-        {
-            auto& lastMatrix = m_VecTransformMatrices.back();
-            lastMatrix = D2D1::Matrix3x2F::Rotation(-angle, D2D1::Point2F(xPivotPoint, m_GameHeight - yPivotPoint)) * lastMatrix;
-        }
-        else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
-
-        m_TransformChanged = true;
-    }
-    void Engine::Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom)
-    {
-        if (!m_VecTransformMatrices.empty())
-        {
-            auto& lastMatrix = m_VecTransformMatrices.back();
-            lastMatrix = D2D1::Matrix3x2F::Scale(xScale, yScale,
-                D2D1::Point2F(xPointToScaleFrom, m_GameHeight - yPointToScaleFrom))
-                * lastMatrix;
-        }
-        else OutputDebugString(_T("Vector of matrices was empty while trying to add a Scaling matrix."));
-
-        m_TransformChanged = true;
-    }
-    #else
-    void Engine::Translate(float xTranslation, float yTranslation)
-    {
-        if (!m_VecTransformMatrices.empty())
-        {
-            auto& lastMatrix = m_VecTransformMatrices.back();
+            if (USE_MATHEMATICAL_COORDINATESYSTEM) yTranslation *= -1;
             lastMatrix = D2D1::Matrix3x2F::Translation(xTranslation, yTranslation) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Translation matrix."));
 
         m_TransformChanged = true;
     }
+
     void Engine::Rotate(float angle, float xPivotPoint, float yPivotPoint)
     {
         if (!m_VecTransformMatrices.empty())
         {
             auto& lastMatrix = m_VecTransformMatrices.back();
+            if (USE_MATHEMATICAL_COORDINATESYSTEM) yPivotPoint = m_GameHeight - yPivotPoint;
             lastMatrix = D2D1::Matrix3x2F::Rotation(-angle, D2D1::Point2F(xPivotPoint, yPivotPoint)) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
@@ -1428,13 +1358,13 @@ namespace jela
         if (!m_VecTransformMatrices.empty())
         {
             auto& lastMatrix = m_VecTransformMatrices.back();
+            if (USE_MATHEMATICAL_COORDINATESYSTEM) yPointToScaleFrom = m_GameHeight - yPointToScaleFrom;
             lastMatrix = D2D1::Matrix3x2F::Scale(xScale, yScale, D2D1::Point2F(xPointToScaleFrom, yPointToScaleFrom)) * lastMatrix;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Scaling matrix."));
 
         m_TransformChanged = true;
     }
-    #endif // MATHEMATICAL_COORDINATESYSTEM
 
     void Engine::PushTransform()
     {
@@ -1545,11 +1475,11 @@ namespace jela
     }
 
 
-    void Engine::ShowMouse(bool show)
+    void Engine::ShowMouse(bool show) const
     {
         ShowCursor(show);
 
-        InvalidateRect(m_hWindow, NULL, true);
+        InvalidateRect(m_hWindow, nullptr, true);
     }
     void Engine::UseSystemFramerate(bool enable)
     {
