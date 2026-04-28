@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "Observer.h"
+#include "HResultHandler.h"
 #include <map>
 #include <unordered_map>
 
@@ -22,7 +23,7 @@ namespace jela
 
         ~Texture();
 
-        ID2D1Bitmap* const  GetBitmap() const { return m_pDBitmap; }
+        ID2D1Bitmap* GetBitmap() const { return m_pDBitmap; }
         float GetWidth() const { return m_TextureWidth; }
         float GetHeight() const { return m_TextureHeight; }
         const tstring& GetFileName() const { return m_FileName; }
@@ -64,7 +65,7 @@ namespace jela
     private:
         // using friend class for tight coupling
         friend class TextFormat;
-        HRESULT Initialize(const std::wstring& filename);
+        HResultHandler Initialize(const std::wstring& filename);
 
         static IDWriteFactory5* m_pDWriteFactory;
 
@@ -98,10 +99,10 @@ namespace jela
         TextFormat& operator=(const TextFormat& other) = delete;
         TextFormat& operator=(TextFormat&& other) noexcept = delete;
 
-        ~TextFormat();
+        virtual ~TextFormat();
 
         float GetFontSize() const { return m_Size; };
-        IDWriteTextFormat* const GetTextFormat() const { return m_pTextFormat; };
+        IDWriteTextFormat* GetTextFormat() const { return m_pTextFormat; };
     private:
 
         virtual void Notify(const Font* const pFont) override
@@ -112,9 +113,9 @@ namespace jela
         {
         }
 
-        void SetHorizontalAllignment(HorAllignment allignment);
-        void SetVerticalAllignment(VertAllignment allignment);
-        void SetFont(const Font* const pFont);
+        HResultHandler SetHorizontalAllignment(HorAllignment allignment);
+        HResultHandler SetVerticalAllignment(VertAllignment allignment);
+        HResultHandler SetFont(const Font* pFont);
 
         IDWriteTextFormat* m_pTextFormat{ nullptr };
         float m_Size;
@@ -310,7 +311,7 @@ namespace jela
         //------------------------------------------------------
 
 
-        static ResourceManager* const GetResourceManager();
+        static ResourceManager* GetResourceManager();
     };
 
     template <typename ResourceType>
