@@ -9,6 +9,7 @@
 #include "framework.h"
 #include "Controller.h"
 #include "ResourceManager.h"
+#include "HResultHandler.h"
 #include <vector>
 #include <chrono>
 
@@ -193,14 +194,12 @@ namespace jela
         Rectf GetWindowRect() const;
         float GetWindowScale() const;
         HWND GetWindow() const;
-        HINSTANCE GetHInstance() const;
         float GetDeltaTime() const;
         float GetTotalTime() const;
         bool IsKeyBoardActive() const;
 
         ID2D1Factory1* GetFactory() const;
         ID2D1DeviceContext* Get2DDeviceContext() const;
-
 
         static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
         {
@@ -212,6 +211,7 @@ namespace jela
             {
                 MessageBox(hWnd, message, _T("ERROR"), MB_OK | MB_ICONERROR);
             }
+            OutputDebugString(message);
         }
 
         void NotifyException(const std::string& exceptionMessage, const std::string& title = "ERROR") const
@@ -229,13 +229,13 @@ namespace jela
         void SetDeltaTime(float elapsedSec);
         Rectf GetRenderTargetSize() const;
         void Paint();
-        HRESULT OnRender();
-        HRESULT MakeWindow();
-        HRESULT CreateRenderTargets();
+        HResultHandler OnRender();
+        void MakeWindow();
+        HResultHandler CreateRenderTargets();
         void ReleaseDXObjects();
         void CalculateWindowPos();
-        HRESULT ResizeWindow();
-        HRESULT SetTargetBitmap();
+        HResultHandler ResizeWindow();
+        HResultHandler SetTargetBitmap();
 
         //Win32
         HWND                            m_hWindow;
@@ -244,18 +244,21 @@ namespace jela
         LARGE_INTEGER                   m_TriggerCount{};
 
         //DirectX
-        ID2D1Factory1*                  m_pDFactory{};
+        ID2D1Factory1*                  m_pD2DFactory{};
         ID2D1SolidColorBrush*           m_pDColorBrush{};
         D2D1_COLOR_F                    m_DColorBackGround{};
         ID2D1DeviceContext*             m_pD2DDeviceContext{};
         ID2D1Device*                    m_pD2DDevice{};
-        ID3D11Device2*                  m_pD3DDevice{};
+        ID3D11Device5*                  m_pD3DDevice{};
         ID3D11DeviceContext*            m_pD3DDeviceContext{};
         IDXGIDevice1 *                  m_pDXGIDevice{};
         IDXGISwapChain1 *               m_pDSwapChain{};
         ID2D1Bitmap1 *                  m_pDTargetBitmap{};
-        ID2D1Bitmap *                   m_pD2DBitmap{};
-        ID2D1BitmapRenderTarget*        m_pDBitmapRenderTarget{};
+        ID2D1Bitmap1 *                  m_pDGameBitmap{};
+
+#ifdef _DEBUG
+        IDXGIDebug1 *                   m_pDDebug{nullptr};
+#endif
 
         //BaseGame
         std::unique_ptr<BaseGame>       m_pGame{};

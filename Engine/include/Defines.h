@@ -70,11 +70,13 @@ static inline std::wstring to_wstring(const tstring& str)
 
 
 // DirectX
+// ReSharper disable CppUnusedIncludeDirective
 //#include <d2d1.h>
 #include <d2d1_1.h>
-#include <d3d11_2.h>
-#include <dxgi1_2.h>
+#include <d3d11_4.h>
+#include <dxgi1_3.h>
 #include <d2d1helper.h>
+#include <dxgidebug.h>
 #include <dwrite.h>
 #include <dwrite_3.h>
 #include <mfmediaengine.h>
@@ -84,6 +86,7 @@ static inline std::wstring to_wstring(const tstring& str)
 #include <mferror.h>
 #include <MMSystem.h>
 #include <wincodec.h>
+// ReSharper restore CppUnusedIncludeDirective
 
 
 template<typename Interface>
