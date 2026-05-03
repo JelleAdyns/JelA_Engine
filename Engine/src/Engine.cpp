@@ -338,6 +338,7 @@ namespace jela
                 break;
             case WM_DESTROY:
                 PostQuitMessage(0);
+                m_IsQuitting = true;
                 result = 1;
                 wasHandled = true;
                 break;

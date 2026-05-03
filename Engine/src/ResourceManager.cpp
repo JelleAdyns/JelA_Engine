@@ -180,6 +180,12 @@ namespace jela
 
     Font::~Font()
     {
+        if (!ENGINE.IsQuitting())
+        {
+            if (const auto mngr = ENGINE.ResourceMngr(); this == mngr->GetCurrentFont())
+                mngr->SetDefaultFont();
+        }
+
         SafeRelease(&m_pFontCollection);
     }
 
@@ -271,6 +277,12 @@ namespace jela
 
     TextFormat::~TextFormat()
     {
+        if (!ENGINE.IsQuitting())
+        {
+            if (const auto mngr = ENGINE.ResourceMngr(); this == mngr->GetCurrentTextFormat())
+                mngr->SetDefaultTextFormat();
+        }
+
         SafeRelease(&m_pTextFormat);
     }
 
@@ -353,12 +365,11 @@ namespace jela
 
     void ResourceManager::Start()
     {
-        GetFont(_T("Verdana"), m_pDefaultFont);
-        SetCurrentFont(m_pDefaultFont.pObject);
+        SetDefaultFont();
 
         m_pDefaultTextFormat = std::make_unique<TextFormat>(12.f, false, false, TextFormat::HorAllignment::Left,
                                                             TextFormat::VertAllignment::Top);
-        SetCurrentTextFormat(m_pDefaultTextFormat.get());
+        SetDefaultTextFormat();
     }
 
     void ResourceManager::GetTexture(const tstring& file, ResourcePtr<Texture>& resourcePtr)
@@ -433,7 +444,7 @@ namespace jela
         m_MapFonts.clear();
     }
 
-    void ResourceManager::SetCurrentFont(const Font* const pFont)
+    void ResourceManager::SetCurrentFont(const Font* pFont)
     {
         if (pFont != m_pCurrentFont)
         {
@@ -448,7 +459,7 @@ namespace jela
         }
     }
 
-    void ResourceManager::SetCurrentTextFormat(TextFormat* const pTextFormat)
+    void ResourceManager::SetCurrentTextFormat(TextFormat* pTextFormat)
     {
         if (pTextFormat != m_pCurrentTextFormat)
         {
@@ -467,6 +478,16 @@ namespace jela
         }
     }
 
+    void ResourceManager::SetDefaultFont()
+    {
+        m_pCurrentFont = nullptr;
+        GetFont(_T("Verdana"), m_pDefaultFont);
+        SetCurrentFont(m_pDefaultFont.pObject);
+    }
+    void ResourceManager::SetDefaultTextFormat()
+    {
+        SetCurrentTextFormat(m_pDefaultTextFormat.get());
+    }
     ResourceManager* ResourceManager::GetResourceManager()
     {
         return ENGINE.ResourceMngr();

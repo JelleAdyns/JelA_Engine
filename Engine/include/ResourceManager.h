@@ -164,12 +164,14 @@ namespace jela
         void RemoveAllFonts();
 
         const tstring& GetDataPath() const { return m_DataPath; }
-        const Font* const GetCurrentFont() const { return m_pCurrentFont; }
-        const TextFormat* const GetCurrentTextFormat() const { return m_pCurrentTextFormat; }
+        const Font* GetCurrentFont() const { return m_pCurrentFont; }
+        const TextFormat* GetCurrentTextFormat() const { return m_pCurrentTextFormat; }
 
         void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
-        void SetCurrentFont(const Font* const pFont);
-        void SetCurrentTextFormat(TextFormat* const pTextFormat);
+        void SetCurrentFont(const Font* pFont);
+        void SetCurrentTextFormat(TextFormat* pTextFormat);
+        void SetDefaultFont();
+        void SetDefaultTextFormat();
     private:
 
         //-----------------------------------------------------------------------------------------------------------------
@@ -217,7 +219,7 @@ namespace jela
 
             ResourcePtr() = default;
 
-            virtual ~ResourcePtr() { if (m_pSubject) m_pSubject->RemoveObserver(this); }
+            virtual ~ResourcePtr() override { if (m_pSubject) m_pSubject->RemoveObserver(this); }
 
             ResourcePtr(const ResourcePtr& other)
                 : pObject{other.pObject}
@@ -309,7 +311,6 @@ namespace jela
         // DATA PATH
         tstring m_DataPath;
         //------------------------------------------------------
-
 
         static ResourceManager* GetResourceManager();
     };
