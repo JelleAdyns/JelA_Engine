@@ -197,6 +197,7 @@ namespace jela
         float GetDeltaTime() const;
         float GetTotalTime() const;
         bool IsKeyBoardActive() const;
+        bool IsQuitting() const;
 
         ID2D1Factory1* GetFactory() const;
         ID2D1DeviceContext* Get2DDeviceContext() const;
@@ -293,6 +294,7 @@ namespace jela
         bool                            m_WindowIsActive{ true };
         bool                            m_IsKeyboardActive{true};
         bool                            m_IsVSyncEnabled{true};
+        bool                            m_IsQuitting{false};
 
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 

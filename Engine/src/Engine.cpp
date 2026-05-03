@@ -290,6 +290,8 @@ namespace jela
                 DispatchMessage(&msg);
             }
 
+            if (!playing) continue;
+
             QueryPerformanceCounter(&currentCount);
 
             if (m_IsVSyncEnabled || currentCount.QuadPart >= m_TriggerCount.QuadPart)
@@ -299,7 +301,7 @@ namespace jela
 
                 if (IsAnyControllerButtonPressed()) m_IsKeyboardActive = false;
 
-                for (auto& controller : m_pVecControllers)
+                for (const auto& controller : m_pVecControllers)
                     controller->ProcessControllerInput();
 
                 if (!m_IsKeyboardActive)
@@ -308,7 +310,7 @@ namespace jela
                 m_pGame->Tick();
                 Paint();
 
-                m_TriggerCount.QuadPart = currentCount.QuadPart + int(m_SecondsPerFrame * countsPersSecond.QuadPart);
+                m_TriggerCount.QuadPart = currentCount.QuadPart + static_cast<int>(m_SecondsPerFrame * countsPersSecond.QuadPart);
             }
         }
 
@@ -353,6 +355,7 @@ namespace jela
     void Engine::Quit()
     {
         PostMessage(GetWindow(), WM_DESTROY, NULL, NULL);
+        m_IsQuitting = true;
     }
     void Engine::MakeWindow()
     {
@@ -1583,6 +1586,10 @@ namespace jela
     bool Engine::IsKeyBoardActive() const
     {
         return m_IsKeyboardActive;
+    }
+    bool Engine::IsQuitting() const
+    {
+        return m_IsQuitting;
     }
     ID2D1Factory1* Engine::GetFactory() const
     {
