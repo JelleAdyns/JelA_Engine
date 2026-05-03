@@ -34,6 +34,99 @@ namespace jela
     {
     }
 
+    bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, COLORREF bgColor, const tstring& wndwName)
+    {
+        // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
+        // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
+        HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
+
+        if (SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))/* && SUCCEEDED(MFStartup(MF_VERSION))*/)
+        {
+            srand(static_cast<unsigned int>(time(nullptr)));
+            m_hInstance = hInstance;
+
+            m_GameWidth = width;
+            m_GameHeight = height;
+            m_WindowWidth = width;
+            m_WindowHeight = height;
+
+            m_Title = wndwName;
+            SetBackGroundColor(bgColor);
+            SetFrameRate(60);
+
+            m_pResourceManager = std::make_unique<ResourceManager>(resourcePath);
+            m_pResourceManager->Start();
+
+            MakeWindow();
+
+            HResultHandler hr{ S_OK, _T("ENGINE::Init") };
+            hr = CreateRenderTargets(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
+            // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET.
+
+
+            return hr.Succeeded();
+        }
+        return false;
+    }
+
+    int Engine::Run(std::unique_ptr<BaseGame>&& game)
+    {
+        m_pGame = std::move(game);
+        m_pGame->Initialize();
+
+        SetWindowPosition();
+
+        LARGE_INTEGER countsPersSecond;
+        LARGE_INTEGER currentCount;
+        QueryPerformanceFrequency(&countsPersSecond);
+        QueryPerformanceCounter(&currentCount);
+        m_TriggerCount = currentCount;
+        LARGE_INTEGER lastCount = currentCount;
+
+        MSG msg{};
+        bool playing = true;
+        // Main message loop:
+        while (playing)
+        {
+            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+            {
+                if (msg.message == WM_QUIT)
+                {
+                    DestroyWindow(m_hWindow);
+                    playing = false;
+                }
+
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+
+            if (!playing) continue;
+
+            QueryPerformanceCounter(&currentCount);
+
+            if (m_IsVSyncEnabled || currentCount.QuadPart >= m_TriggerCount.QuadPart)
+            {
+                SetDeltaTime(static_cast<float>(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
+                lastCount = currentCount;
+
+                if (IsAnyControllerButtonPressed()) m_IsKeyboardActive = false;
+
+                for (const auto& controller : m_pVecControllers)
+                    controller->ProcessControllerInput();
+
+                if (!m_IsKeyboardActive)
+                    m_pGame->HandleControllerInput();
+
+                m_pGame->Tick();
+                Paint();
+
+                m_TriggerCount.QuadPart = currentCount.QuadPart + static_cast<int>(m_SecondsPerFrame * countsPersSecond.QuadPart);
+            }
+        }
+
+        return static_cast<int>(msg.wParam);
+    }
+
     void Engine::Shutdown()
     {
         m_pGame->Cleanup();
@@ -48,7 +141,7 @@ namespace jela
         CoUninitialize();
     }
 
-    LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+        LRESULT Engine::HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         LRESULT result = 0;
 
@@ -257,99 +350,6 @@ namespace jela
         }
 
         return result;
-    }
-
-    int Engine::Run(std::unique_ptr<BaseGame>&& game)
-    {
-        m_pGame = std::move(game);
-        m_pGame->Initialize();
-
-        SetWindowPosition();
-
-        LARGE_INTEGER countsPersSecond;
-        LARGE_INTEGER currentCount;
-        QueryPerformanceFrequency(&countsPersSecond);
-        QueryPerformanceCounter(&currentCount);
-        m_TriggerCount = currentCount;
-        LARGE_INTEGER lastCount = currentCount;
-
-        MSG msg{};
-        bool playing = true;
-        // Main message loop:
-        while (playing)
-        {
-            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-            {
-                if (msg.message == WM_QUIT)
-                {
-                    DestroyWindow(m_hWindow);
-                    playing = false;
-                }
-
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-
-            if (!playing) continue;
-
-            QueryPerformanceCounter(&currentCount);
-
-            if (m_IsVSyncEnabled || currentCount.QuadPart >= m_TriggerCount.QuadPart)
-            {
-                SetDeltaTime(static_cast<float>(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
-                lastCount = currentCount;
-
-                if (IsAnyControllerButtonPressed()) m_IsKeyboardActive = false;
-
-                for (const auto& controller : m_pVecControllers)
-                    controller->ProcessControllerInput();
-
-                if (!m_IsKeyboardActive)
-                    m_pGame->HandleControllerInput();
-
-                m_pGame->Tick();
-                Paint();
-
-                m_TriggerCount.QuadPart = currentCount.QuadPart + static_cast<int>(m_SecondsPerFrame * countsPersSecond.QuadPart);
-            }
-        }
-
-        return static_cast<int>(msg.wParam);
-    }
-
-    bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, const COLORREF& bgColor, const tstring& wndwName)
-    {
-        // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
-       // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
-        HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
-
-        if (SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))/* && SUCCEEDED(MFStartup(MF_VERSION))*/)
-        {
-            srand(static_cast<unsigned int>(time(nullptr)));
-            m_hInstance = hInstance;
-
-            m_GameWidth = width;
-            m_GameHeight = height;
-            m_WindowWidth = width;
-            m_WindowHeight = height;
-
-            m_Title = wndwName;
-            SetBackGroundColor(bgColor);
-            SetFrameRate(60);
-
-            m_pResourceManager = std::make_unique<ResourceManager>(resourcePath);
-            m_pResourceManager->Start();
-
-            MakeWindow();
-
-            HResultHandler hr{ S_OK, _T("ENGINE::Init") };
-            hr = CreateRenderTargets(); // ALWAYS CREATE RENDERTARGET BEFORE CALLING CONSTRUCTOR OF pGAME.
-            // TEXTURES ARE CREATED IN THE CONSTRUCTOR AND THEY NEED THE RENDERTARGET.
-
-
-            return hr.Succeeded();
-        }
-        return false;
     }
 
     void Engine::Quit()

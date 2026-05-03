@@ -45,11 +45,10 @@ namespace jela
 
         ~Engine() = default;
 
-        void Shutdown();
-        bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, const COLORREF& bgColor, const tstring& wndwName);
-
-
+        bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, COLORREF bgColor = RGB(0,0,0), const tstring& wndwName = _T("Game"));
         int Run(std::unique_ptr<BaseGame>&& game);
+        void Shutdown();
+
         LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
         void Quit();
 

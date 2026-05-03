@@ -14,11 +14,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     _In_ LPTSTR    /*lpCmdLine*/,
     _In_ int       /*nCmdShow*/)
 {  
-    bool ok = ENGINE.Init(hInstance, _T("Resources/"), 1200, 720, RGB(0,0,0), _T("Game"));
-    int result{};
+    int result{-1};
 
-    if (ok) result = ENGINE.Run(std::make_unique<Game>());
-    else { result = -1; }
+    if (ENGINE.Init(hInstance, _T("Resources/"), 1200, 720))
+        result = ENGINE.Run(std::make_unique<Game>());
 
     ENGINE.Shutdown();
 
