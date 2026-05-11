@@ -43,7 +43,7 @@ namespace jela
             }
 
 
-            if (creationResult.Succeeded())
+            if (creationResult.Succeeded() && pDecoder)
             {
                 // Create the initial frame.
                 creationResult = pDecoder->GetFrame(0, &pSource);
@@ -53,7 +53,7 @@ namespace jela
             // Convert the image format to 32bppPBGRA
             // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
             if (creationResult.Succeeded()) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
-            if (creationResult.Succeeded())
+            if (creationResult.Succeeded() && pConverter)
             {
                 creationResult = pConverter->Initialize(
                     pSource,
@@ -213,7 +213,7 @@ namespace jela
         UINT32 length{};
         std::wstring name{};
 
-        if (hr.Succeeded()) hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
+        if (hr.Succeeded() && m_pFontCollection) hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
 
         if (hr.Succeeded()) hr = pFontFamily->GetFamilyNames(&pStrings);
 
@@ -286,6 +286,7 @@ namespace jela
         SafeRelease(&m_pTextFormat);
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     HResultHandler TextFormat::SetHorizontalAllignment(HorAllignment allignment)
     {
         HResultHandler hr{};
@@ -307,6 +308,7 @@ namespace jela
         return hr;
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     HResultHandler TextFormat::SetVerticalAllignment(VertAllignment allignment)
     {
         HResultHandler hr{};
@@ -446,36 +448,34 @@ namespace jela
 
     void ResourceManager::SetCurrentFont(const Font* pFont)
     {
-        if (pFont != m_pCurrentFont)
-        {
-            if (pFont == nullptr && pFont != m_pDefaultFont.pObject)
-            {
-                m_pCurrentFont = m_pDefaultFont.pObject;
-                OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
-            }
-            else m_pCurrentFont = pFont;
+        if (pFont == m_pCurrentFont) return;
 
-            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+        if (pFont == nullptr)
+        {
+            m_pCurrentFont = m_pDefaultFont.get();
+            OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
         }
+        else m_pCurrentFont = pFont;
+
+        m_OnFontChange.NotifyObservers(m_pCurrentFont);
     }
 
     void ResourceManager::SetCurrentTextFormat(TextFormat* pTextFormat)
     {
-        if (pTextFormat != m_pCurrentTextFormat)
+        if (pTextFormat == m_pCurrentTextFormat) return;
+
+        m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
+
+        if (pTextFormat == nullptr)
         {
-            m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
-
-            if (pTextFormat == nullptr && pTextFormat != m_pDefaultTextFormat.get())
-            {
-                m_pCurrentTextFormat = m_pDefaultTextFormat.get();
-                OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
-            }
-            else m_pCurrentTextFormat = pTextFormat;
-
-            m_OnFontChange.AddObserver(m_pCurrentTextFormat);
-
-            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+            m_pCurrentTextFormat = m_pDefaultTextFormat.get();
+            OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
         }
+        else m_pCurrentTextFormat = pTextFormat;
+
+        m_OnFontChange.AddObserver(m_pCurrentTextFormat);
+
+        m_OnFontChange.NotifyObservers(m_pCurrentFont);
     }
 
     void ResourceManager::SetDefaultFont()

@@ -74,7 +74,7 @@ namespace jela
         std::wstring m_FontName;
     };
 
-    class TextFormat final : public Observer<const Font* const>
+    class TextFormat final : public Observer<const Font*>
     {
     public:
 
@@ -99,17 +99,16 @@ namespace jela
         TextFormat& operator=(const TextFormat& other) = delete;
         TextFormat& operator=(TextFormat&& other) noexcept = delete;
 
-        virtual ~TextFormat();
+        ~TextFormat() override;
 
-        float GetFontSize() const { return m_Size; };
-        IDWriteTextFormat* GetTextFormat() const { return m_pTextFormat; };
+        float GetFontSize() const { return m_Size; }
+        IDWriteTextFormat* GetTextFormat() const { return m_pTextFormat; }
     private:
-
-        virtual void Notify(const Font* const pFont) override
+        void Notify(const Font* pFont) override
         {
             if(pFont) SetFont(pFont);
         }
-        virtual void OnSubjectDestroy(Subject<const Font* const>*) override
+        void OnSubjectDestroy(Subject<const Font*>*) override
         {
         }
 
@@ -300,8 +299,6 @@ namespace jela
             void Notify() override { pObject = nullptr; }
             void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
 
-            virtual void Notify() override { pObject = nullptr; }
-            virtual void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
             void SaveSubject(Subject<>* pSubject)
             {
                 if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr Observer."));
@@ -321,7 +318,7 @@ namespace jela
         ResourceMap<Font>               m_MapFonts{};
 
         // CURRENTLY USED FONT
-        Subject<const Font* const>      m_OnFontChange{};
+        Subject<const Font*>            m_OnFontChange{};
 
         const Font*                     m_pCurrentFont{ nullptr };
         TextFormat*                     m_pCurrentTextFormat{ nullptr };
