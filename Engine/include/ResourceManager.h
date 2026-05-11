@@ -215,11 +215,10 @@ namespace jela
         template <typename ResourceType>
         struct ResourcePtr final : public Observer<>
         {
-            const ResourceType* pObject = nullptr;
 
             ResourcePtr() = default;
 
-            virtual ~ResourcePtr() override { if (m_pSubject) m_pSubject->RemoveObserver(this); }
+            ~ResourcePtr() override { if (m_pSubject) m_pSubject->RemoveObserver(this); }
 
             ResourcePtr(const ResourcePtr& other)
                 : pObject{other.pObject}
@@ -230,7 +229,7 @@ namespace jela
 
             ResourcePtr(ResourcePtr&& other) noexcept
                 : pObject{std::move(other.pObject)}
-                  , m_pSubject{std::move(other.m_pSubject)}
+                  , m_pSubject{std::move(other.m_pSubject)} // NOLINT(*-move-const-arg)
             {
                 if (m_pSubject)
                 {
@@ -261,7 +260,7 @@ namespace jela
 
                 if (m_pSubject) m_pSubject->RemoveObserver(this);
 
-                m_pSubject = std::move(other.m_pSubject);
+                m_pSubject = std::move(other.m_pSubject); // NOLINT(*-move-const-arg)
                 pObject = std::move(other.pObject);
 
                 if (m_pSubject)
@@ -276,14 +275,36 @@ namespace jela
                 return *this;
             }
 
+            const ResourceType* get() const { return pObject; }
+
+            explicit operator bool() const
+            {
+                return pObject;
+            }
+            ResourceType* operator*() const
+            {
+                if (pObject == nullptr) throw std::runtime_error(
+                       "pObject was nullptr when trying to dereference it using the '->' operator!");
+                return *pObject;
+            }
+            ResourceType* operator->() const
+            {
+                if (pObject == nullptr) throw std::runtime_error(
+                    "pObject was nullptr when trying to acces it using the '->' operator!");
+                return pObject;
+            }
+
         private:
             friend struct ManagedResource<ResourceType>;
+            const ResourceType* pObject = nullptr;
+            void Notify() override { pObject = nullptr; }
+            void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
 
             virtual void Notify() override { pObject = nullptr; }
             virtual void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
             void SaveSubject(Subject<>* pSubject)
             {
-                if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr SingleSubjectsObserver."));
+                if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr Observer."));
                 else m_pSubject = pSubject;
             }
             Subject<>* m_pSubject{};

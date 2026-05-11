@@ -482,7 +482,7 @@ namespace jela
     {
         m_pCurrentFont = nullptr;
         GetFont(_T("Verdana"), m_pDefaultFont);
-        SetCurrentFont(m_pDefaultFont.pObject);
+        SetCurrentFont(m_pDefaultFont.get());
     }
     void ResourceManager::SetDefaultTextFormat()
     {
