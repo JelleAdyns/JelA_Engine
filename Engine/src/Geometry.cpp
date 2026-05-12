@@ -14,8 +14,8 @@ namespace jela
 	Geometry::Geometry(const Geometry& other):
 		m_Translation{other.m_Translation}
 	{
-		HRESULT hr = Recreate();
-		if (!SUCCEEDED(hr))
+		HResultHandler hr = Recreate();
+		if (hr.Failed())
 		{
 			SafeRelease(&m_pGeo);
 			return;
@@ -25,54 +25,35 @@ namespace jela
 		assert((other.m_pGeo));
 		ID2D1GeometrySink* pSink{};
 		hr = m_pGeo->Open(&pSink);
-		if (SUCCEEDED(hr)) hr = other.m_pGeo->Stream(pSink);
-		if (SUCCEEDED(hr)) hr = pSink->Close();
+		if (hr.Succeeded()) hr = other.m_pGeo->Stream(pSink);
+		if (hr.Succeeded()) hr = pSink->Close();
 
 		SafeRelease(&pSink);
 	}
 	Geometry::Geometry(Geometry&& other) noexcept:
-		m_Translation{other.m_Translation}
+		m_Translation{std::exchange(other.m_Translation, {})},
+		m_pGeo{std::exchange(other.m_pGeo, nullptr)}
 	{
-		m_pGeo = other.m_pGeo;
-		other.m_pGeo = nullptr;
-		other.m_Translation = {};
 	}
 	Geometry& Geometry::operator=(const Geometry& other)
 	{
-		if (&other == this) return *this;
-		m_Translation = other.m_Translation;
-
-		HRESULT hr = Recreate();
-		if (!SUCCEEDED(hr))
-		{
-			SafeRelease(&m_pGeo);
-			return *this;
-		}
-		assert((m_pGeo));
-		assert((other.m_pGeo));
-		ID2D1GeometrySink* pSink{};
-		hr = m_pGeo->Open(&pSink);
-		if (SUCCEEDED(hr)) hr = other.m_pGeo->Stream(pSink);
-		if (SUCCEEDED(hr)) hr = pSink->Close();
-
-		SafeRelease(&pSink);
+		Geometry{other}.swap(*this);
 		return *this;
 	}
 	Geometry& Geometry::operator=(Geometry&& other) noexcept
 	{
-		if (&other == this) return *this;
-
-		m_Translation = other.m_Translation;
-		m_pGeo = other.m_pGeo;
-		other.m_pGeo = nullptr;
-		other.m_Translation = {};
-
+		Geometry{std::move(other)}.swap(*this);
 		return *this;
 	}
 	HRESULT Geometry::Recreate(bool releasePrevious)
 	{
 		if (releasePrevious) SafeRelease(&m_pGeo);
 		return ENGINE.GetFactory()->CreatePathGeometry(&m_pGeo);
+	}
+	void Geometry::swap(Geometry& other) noexcept
+	{
+		std::swap(m_Translation, other.m_Translation);
+		std::swap(m_pGeo, other.m_pGeo);
 	}
 	//--------------------------------------------------------------------------------------------------------------------
 

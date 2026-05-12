@@ -20,48 +20,24 @@ namespace jela
     {
         if (m_pSubject) m_pSubject->AddObserver(this);
     }
-
 	SoundInstanceID::SoundInstanceID(SoundInstanceID&& other) noexcept
-        : m_Id{std::move(other.m_Id)}
-		, m_pSubject{std::move(other.m_pSubject) }
+        : m_Id{std::exchange(other.m_Id, std::nullopt)}
+		, m_pSubject{std::exchange(other.m_pSubject, nullptr) }
 	{
 		if (m_pSubject)
 		{
 			m_pSubject->RemoveObserver(&other);
 			m_pSubject->AddObserver(this);
 		}
-
-		other.m_pSubject = nullptr;
-        other.m_Id = std::nullopt;
 	}
-
 	SoundInstanceID& SoundInstanceID::operator= (const SoundInstanceID& other)
 	{
-		if (&other == this) return *this;
-
-		m_pSubject = other.m_pSubject;
-		m_Id = other.m_Id;
-		if (m_pSubject) m_pSubject->AddObserver(this);
-
+		SoundInstanceID{other}.swap(*this);
 		return *this;
 	}
-
 	SoundInstanceID& SoundInstanceID::operator= (SoundInstanceID&& other) noexcept
 	{
-		if (&other == this) return *this;
-
-		m_pSubject = std::move(other.m_pSubject);
-        m_Id = std::move(other.m_Id);
-
-		if (m_pSubject)
-		{
-			m_pSubject->RemoveObserver(&other);
-			m_pSubject->AddObserver(this);
-        }
-
-        other.m_pSubject = nullptr;
-		other.m_Id = std::nullopt;
-
+		SoundInstanceID{ std::move(other)}.swap(*this);
 		return *this;
     }
 
@@ -73,7 +49,7 @@ namespace jela
 	void SoundInstanceID::SaveSubject(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject)
 	{
 		if (pSubject) m_pSubject = pSubject;
-		else OutputDebugString(_T("Subject was nullptr when trying to save it to a SoundInstanceID SingleSubjectsObserver."));
+		else OutputDebugString(_T("Subject was nullptr when trying to save it to a SoundInstanceID Observer."));
 	}
 
 	void SoundInstanceID::Notify(uint8_t index, std::vector<SoundInstanceID*>& vecThisObservers)

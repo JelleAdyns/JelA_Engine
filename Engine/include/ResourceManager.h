@@ -217,7 +217,10 @@ namespace jela
 
             ResourcePtr() = default;
 
-            ~ResourcePtr() override { if (m_pSubject) m_pSubject->RemoveObserver(this); }
+            ~ResourcePtr() override
+            {
+                if (m_pSubject) m_pSubject->RemoveObserver(this);
+            }
 
             ResourcePtr(const ResourcePtr& other)
                 : pObject{other.pObject}
@@ -227,50 +230,25 @@ namespace jela
             }
 
             ResourcePtr(ResourcePtr&& other) noexcept
-                : pObject{std::move(other.pObject)}
-                  , m_pSubject{std::move(other.m_pSubject)} // NOLINT(*-move-const-arg)
+                : pObject{std::exchange(other.pObject, nullptr)}
+                  , m_pSubject{std::exchange(other.m_pSubject, nullptr)}
             {
                 if (m_pSubject)
                 {
                     m_pSubject->RemoveObserver(&other);
                     m_pSubject->AddObserver(this);
                 }
-
-                other.m_pSubject = nullptr;
-                other.pObject = nullptr;
             }
 
             ResourcePtr& operator= (const ResourcePtr& other)
             {
-                if (&other == this) return *this;
-
-                if (m_pSubject) m_pSubject->RemoveObserver(this);
-
-                pObject = other.pObject;
-                m_pSubject = other.m_pSubject;
-                if (m_pSubject) m_pSubject->AddObserver(this);
-
+                ResourcePtr{ other }.swap(*this);
                 return *this;
             }
 
             ResourcePtr& operator= (ResourcePtr&& other) noexcept
             {
-                if (&other == this) return *this;
-
-                if (m_pSubject) m_pSubject->RemoveObserver(this);
-
-                m_pSubject = std::move(other.m_pSubject); // NOLINT(*-move-const-arg)
-                pObject = std::move(other.pObject);
-
-                if (m_pSubject)
-                {
-                    m_pSubject->RemoveObserver(&other);
-                    m_pSubject->AddObserver(this);
-                }
-
-                other.m_pSubject = nullptr;
-                other.pObject = nullptr;
-
+                ResourcePtr{ std::move(other) }.swap(*this);
                 return *this;
             }
 
@@ -280,22 +258,20 @@ namespace jela
             {
                 return pObject;
             }
-            ResourceType* operator*() const
+            const ResourceType& operator*() const
             {
                 if (pObject == nullptr) throw std::runtime_error(
                        "pObject was nullptr when trying to dereference it using the '->' operator!");
                 return *pObject;
             }
-            ResourceType* operator->() const
+            const ResourceType* operator->() const
             {
                 if (pObject == nullptr) throw std::runtime_error(
                     "pObject was nullptr when trying to acces it using the '->' operator!");
                 return pObject;
             }
-
         private:
             friend struct ManagedResource<ResourceType>;
-            const ResourceType* pObject = nullptr;
             void Notify() override { pObject = nullptr; }
             void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
 
@@ -304,6 +280,18 @@ namespace jela
                 if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr Observer."));
                 else m_pSubject = pSubject;
             }
+            void swap(ResourcePtr& other) noexcept
+            {
+                std::swap(pObject, other.pObject);
+
+                other.m_pSubject->RemoveObserver(&other);
+                m_pSubject->RemoveObserver(this);
+                std::swap(m_pSubject, other.m_pSubject);
+                other.m_pSubject->AddObserver(&other);
+                m_pSubject->AddObserver(this);
+            }
+
+            const ResourceType* pObject = nullptr;
             Subject<>* m_pSubject{};
         };
         //-----------------------------------------------------------------------------------------------------------------

@@ -28,6 +28,7 @@ namespace jela
 		HRESULT Recreate(bool releasePrevious = true);
 
 	private:
+		void swap(Geometry& other) noexcept;
 		Vector2f m_Translation{};
 		ID2D1PathGeometry* m_pGeo{};
 	};
@@ -41,13 +42,13 @@ namespace jela
 		Polygon(Polygon&& other) noexcept = default;
 		Polygon& operator=(const Polygon& other) = default;
 		Polygon& operator=(Polygon&& other) noexcept = default;
-		virtual ~Polygon() = default;
+		~Polygon() override = default;
 
 		bool Recreate(const std::vector<Point2f>& points, bool closeSegment = true);
 
-		virtual void ResetPosition() override;
-		virtual void Move(float x, float y) override { Move({ x,y }); }
-		virtual void Move(const Vector2f& translation) override;
+		void ResetPosition() override;
+		void Move(float x, float y) override { Move({ x,y }); }
+		void Move(const Vector2f& translation) override;
 
 		std::vector<Point2f> GetOriginalPoints() const;
 		const std::vector<Point2f>& GetPoints() const{ return m_Points; };
@@ -70,7 +71,7 @@ namespace jela
 		Arc(Arc&& other) noexcept = default;
 		Arc& operator=(const Arc& other) = default;
 		Arc& operator=(Arc&& other) noexcept = default;
-		virtual ~Arc() = default;
+		~Arc() override = default;
 
 		bool Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
 		bool RecreateByRadius(float radiusX, float radiusY, bool closeSegment);
