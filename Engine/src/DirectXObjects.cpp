@@ -460,6 +460,9 @@ namespace jela::DX
         if (device3D.IsInFaultyState()) return;
         if (deviceGI.IsInFaultyState()) return;
 
+        if (device3D.HasFlag(D3D11_CREATE_DEVICE_BGRA_SUPPORT)) m_Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        else m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
         HResultHandler& hr {StartHResult(_T("jela::DX::SwapChain ctor"))};
         // Identify the physical adapter (GPU or card) this device is runs on.
         IDXGIAdapter* dxgiAdapter = nullptr;
