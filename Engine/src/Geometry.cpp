@@ -48,7 +48,7 @@ namespace jela
 	HRESULT Geometry::Recreate(bool releasePrevious)
 	{
 		if (releasePrevious) SafeRelease(&m_pGeo);
-		return ENGINE.GetFactory()->CreatePathGeometry(&m_pGeo);
+		return ENGINE.Get2DFactory().get()->CreatePathGeometry(&m_pGeo);
 	}
 	void Geometry::swap(Geometry& other) noexcept
 	{
@@ -92,7 +92,7 @@ namespace jela
 		{
 			std::vector<D2D1_POINT_2F> D2points(m_Points.size());
 
-			const auto windowHeight = ENGINE.GetWindowRect().height;
+			const auto windowHeight = ENGINE.GetGameSize().y;
 			for (size_t i = 0; i < m_Points.size(); i++)
 			{
 				auto pointY = m_Points[i].y;
@@ -240,7 +240,7 @@ namespace jela
 			const auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
 			const auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
 
-			const auto windowHeight = ENGINE.GetWindowRect().height;
+			const auto windowHeight = ENGINE.GetGameSize().y;
 
 			const auto startX = radiusX * std::cosf(startRad);
 			auto startY = radiusY * std::sinf(startRad);

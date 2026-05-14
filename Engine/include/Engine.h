@@ -13,6 +13,8 @@
 #include <vector>
 #include <chrono>
 
+#include "DirectXObjects.h"
+
 
 namespace jela
 {
@@ -122,11 +124,11 @@ namespace jela
         void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-        void DrawPolygon(const Polygon& polygon, float lineThickness = 1.f);
-        void FillPolygon(const Polygon& polygon);
+        void DrawPolygon(const Polygon& polygon, float lineThickness = 1.f) const;
+        void FillPolygon(const Polygon& polygon) const;
 
-        void DrawArc(const Arc& arc, float lineThickness = 1.f);
-        void FillArc(const Arc& arc);
+        void DrawArc(const Arc& arc, float lineThickness = 1.f) const;
+        void FillArc(const Arc& arc) const;
 
         void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f) const;
         void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f) const;
@@ -158,28 +160,27 @@ namespace jela
 
         // Transform stuff
 
-        void PushTransform();
-        void PopTransform();
-        void Translate(float xTranslation, float yTranslation);
-        void Translate(const Vector2f& translation);
-        void Rotate(float angle, float xPivotPoint, float yPivotPoint);
-        void Rotate(float angle, const Point2f& pivotPoint);
-        void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom);
-        void Scale(float scale, float xPointToScaleFrom, float yPointToScaleFrom);
-        void Scale(float xScale, float yScale, const Point2f& PointToScaleFrom);
-        void Scale(float scale, const Point2f& PointToScaleFrom);
-        void Scale(float xScale, float yScale);
-        void Scale(float scale);
-
+        void PushTransform() const;
+        void PopTransform() const;
+        void Translate(float xTranslation, float yTranslation) const;
+        void Translate(const Vector2f& translation) const;
+        void Rotate(float angle, float xPivotPoint, float yPivotPoint) const;
+        void Rotate(float angle, const Point2f& pivotPoint) const;
+        void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom) const;
+        void Scale(float scale, float xPointToScaleFrom, float yPointToScaleFrom) const;
+        void Scale(float xScale, float yScale, const Point2f& PointToScaleFrom) const;
+        void Scale(float scale, const Point2f& PointToScaleFrom) const;
+        void Scale(float xScale, float yScale) const;
+        void Scale(float scale) const;
 
         // Setters
 
         void ShowMouse(bool show) const;
         void UseSystemFramerate(bool enable);
-        void SetFont(const Font* pFont);
-        void SetTextFormat(TextFormat* pTextFormat);
-        void SetColor(COLORREF newColor, float opacity = 1.F);
-        void SetBackGroundColor(COLORREF newColor, float opacity = 1.F);
+        void SetFont(const Font* pFont) const;
+        void SetTextFormat(TextFormat* pTextFormat) const;
+        void SetColor(COLORREF newColor, float opacity = 1.F) const;
+        void SetBackGroundColor(COLORREF newColor, float opacity = 1.F) const;
         void SetInstance(HINSTANCE hInst);
         void SetTitle(const tstring& newTitle);
         void SetWindowDimensions(int width, int height, bool refreshWindowPos = true);
@@ -190,7 +191,11 @@ namespace jela
 
         ResourceManager* ResourceMngr() const;
         const Font* GetCurrentFont() const;
-        Rectf GetWindowRect() const;
+        Vector2f GetGameSize() const;
+        Point2f GetViewportPos() const;
+        Vector2f GetViewportSize() const;
+        Point2f GetWindowPos() const;
+        Vector2f GetWindowSize() const;
         float GetWindowScale() const;
         HWND GetWindow() const;
         float GetDeltaTime() const;
@@ -198,8 +203,8 @@ namespace jela
         bool IsKeyBoardActive() const;
         bool IsQuitting() const;
 
-        ID2D1Factory1* GetFactory() const;
-        ID2D1DeviceContext* Get2DDeviceContext() const;
+        const DX::Factory2D& Get2DFactory() const;
+        const DX::DeviceContext2D& Get2DDeviceContext() const;
 
         static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
         {
@@ -221,21 +226,16 @@ namespace jela
 
     private:
 
-        void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f);
-        void FillGeometry(const Geometry* pGeometryObject);
+        void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f) const;
+        void FillGeometry(const Geometry* pGeometryObject) const;
         void SetWindowPosition();
         void SetFullscreen();
-        void SetTransform() const;
         void SetDeltaTime(float elapsedSec);
-        Rectf GetRenderTargetSize() const;
         void Paint();
         HResultHandler OnRender();
         void MakeWindow();
-        HResultHandler CreateRenderTargets();
-        void ReleaseDXObjects();
         void CalculateWindowPos();
-        HResultHandler ResizeWindow();
-        HResultHandler SetTargetBitmap();
+        HResultHandler ResizeWindow() const;
 
         //Win32
         HWND                            m_hWindow;
@@ -244,21 +244,7 @@ namespace jela
         LARGE_INTEGER                   m_TriggerCount{};
 
         //DirectX
-        ID2D1Factory1*                  m_pD2DFactory{};
-        ID2D1SolidColorBrush*           m_pDColorBrush{};
-        D2D1_COLOR_F                    m_DColorBackGround{};
-        ID2D1DeviceContext*             m_pD2DDeviceContext{};
-        ID2D1Device*                    m_pD2DDevice{};
-        ID3D11Device5*                  m_pD3DDevice{};
-        ID3D11DeviceContext*            m_pD3DDeviceContext{};
-        IDXGIDevice1 *                  m_pDXGIDevice{};
-        IDXGISwapChain1 *               m_pDSwapChain{};
-        ID2D1Bitmap1 *                  m_pDTargetBitmap{};
-        ID2D1Bitmap1 *                  m_pDGameBitmap{};
-
-#ifdef _DEBUG
-        IDXGIDebug1 *                   m_pDDebug{nullptr};
-#endif
+        std::unique_ptr<DX::DXHandler>  m_pDXHandler{};
 
         //BaseGame
         std::unique_ptr<BaseGame>       m_pGame{};
@@ -282,7 +268,7 @@ namespace jela
         float                           m_MinScale{};
         int                             m_WindowPosX{};
         int                             m_WindowPosY{};
-        int                             m_WindowPosOffset{5};
+        static constexpr int            m_WindowPosOffset{5};
 
         float                           m_SecondsPerFrame{};
         float                           m_DeltaTime{};

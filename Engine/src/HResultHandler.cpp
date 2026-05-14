@@ -9,7 +9,7 @@ namespace jela
     HResultHandler& HResultHandler::operator=(HRESULT hr)
     {
         if (FAILED(hr))
-            Engine::NotifyError(ENGINE.GetWindow(), std::format(_T("ERROR: HRESULT failed\n{}"), m_Message), hr);
+            Engine::NotifyError(ENGINE.GetWindow(), std::format(_T("ERROR: HRESULT failed\n{}\n"), m_Message), hr);
         m_lastHR = hr;
         return *this;
     }
