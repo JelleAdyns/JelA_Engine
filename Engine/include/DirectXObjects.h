@@ -25,79 +25,73 @@ namespace jela::DX
         void Rotate(float angle, float xPivotPoint, float yPivotPoint);
         void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom);
 
-        D2D1::Matrix3x2F GetMatrix() const;
+        bool IsDirty() const { return m_TransformChanged; }
+        D2D1::Matrix3x2F ConsumeMatrix() const;
 
     private:
         std::vector<D2D1::Matrix3x2F> m_VecTransformMatrices{};
+        mutable bool m_TransformChanged {false};
     };
 
+
+    template <typename T>
+        requires std::is_base_of_v<IUnknown, T>
     class DXObject
     {
     public:
-        bool IsInValidState() const { return m_HrState.Succeeded(); }
-        bool IsInFaultyState() const { return m_HrState.Failed(); }
+        virtual ~DXObject() { SafeRelease(&m_pDObject); };
+
+        DXObject(const DXObject& other) = delete;
+        DXObject(DXObject&& other) noexcept = delete;
+        DXObject& operator=(const DXObject& other) = delete;
+        DXObject& operator=(DXObject&& other) noexcept = delete;
+
+        bool IsInValidState() const { return m_HrState.Succeeded() && m_pDObject; }
+        bool IsInFaultyState() const { return m_HrState.Failed() || !m_pDObject; }
+
+        T*  get() const { return m_pDObject; }
+
     protected:
+        DXObject() = default;
+        void Init(T* pointerToOwn) { m_pDObject = pointerToOwn;}
         HResultHandler& StartHResult(const tstring& message) const { return m_HrState = HResultHandler{S_OK, message}; }
+
     private:
+        T* m_pDObject;
         mutable HResultHandler m_HrState{E_FAIL}; // Faulty state by default. If StartHResult was never called, we know something went wrong
     };
 
-    class Debug final: public DXObject
+    class Debug final: public DXObject<IDXGIDebug1>
     {
 #ifdef _DEBUG
     public:
         Debug();
-        ~Debug();
+        ~Debug() override;
 
         Debug(const Debug&) = delete;
         Debug(Debug&&) noexcept = delete;
         Debug& operator=(const Debug&) = delete;
         Debug& operator=(Debug&&) noexcept = delete;
-
-    private:
-        IDXGIDebug1* m_pDDebug{nullptr};
 #endif
     };
 
-    class Factory2D final: public DXObject
+    class Factory2D final: public DXObject<ID2D1Factory1>
     {
     public:
         Factory2D();
-        ~Factory2D();
-
-        Factory2D(const Factory2D&) = delete;
-        Factory2D(Factory2D&&) noexcept = delete;
-        Factory2D& operator=(const Factory2D&) = delete;
-        Factory2D& operator=(Factory2D&&) noexcept = delete;
-
-        ID2D1Factory1* get() const;
-
-    private:
-        ID2D1Factory1* m_pD2DFactory{nullptr};
     };
 
-    class DeviceGI final: public DXObject
+    class DeviceGI final: public DXObject<IDXGIDevice1>
     {
     public:
         explicit DeviceGI(const Device3D& device3D);
-        ~DeviceGI();
-
-        DeviceGI(const DeviceGI&) = delete;
-        DeviceGI(DeviceGI&&) noexcept = delete;
-        DeviceGI& operator=(const DeviceGI&) = delete;
-        DeviceGI& operator=(DeviceGI&&) noexcept = delete;
-
-        IDXGIDevice1* get() const;
-
-    private:
-        IDXGIDevice1* m_pDXGIDevice{nullptr};
     };
 
-    class Device3D final: public DXObject
+    class Device3D final: public DXObject<ID3D11Device5>
     {
     public:
         Device3D();
-        ~Device3D();
+        ~Device3D() override;
 
         Device3D(const Device3D&) = delete;
         Device3D(Device3D&&) noexcept = delete;
@@ -107,35 +101,25 @@ namespace jela::DX
         void SetViewport() const;
         bool HasFlag(D3D11_CREATE_DEVICE_FLAG flagToCheck) const;
 
-        ID3D11Device5* get() const;
+        HResultHandler QueryGIDevice(IDXGIDevice1*& pGIDevice) const;
+        HResultHandler CreateSwapChain(IDXGIFactory2* pGIFactory, const DXGI_SWAP_CHAIN_DESC1& swapChainDesc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC& fullscreenDesc, IDXGISwapChain1*& pSwapChain) const;
+
     private:
-        ID3D11Device5* m_pD3DDevice{nullptr};
         ID3D11DeviceContext* m_pD3DDeviceContext{nullptr};
         uint32_t m_CreateDeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     };
 
-    class Device2D final: public DXObject
+    class Device2D final: public DXObject<ID2D1Device>
     {
     public:
         explicit Device2D(const Factory2D&, const DeviceGI&);
-        ~Device2D();
-
-        Device2D(const Device2D&) = delete;
-        Device2D(Device2D&&) noexcept = delete;
-        Device2D& operator=(const Device2D&) = delete;
-        Device2D& operator=(Device2D&&) noexcept = delete;
-
-        ID2D1Device* get() const;
-
-    private:
-        ID2D1Device* m_pD2DDevice{nullptr};
     };
 
-    class DeviceContext2D final: public DXObject
+    class DeviceContext2D final: public DXObject<ID2D1DeviceContext>
     {
     public:
         explicit DeviceContext2D(const Device2D& device2D);
-        ~DeviceContext2D();
+        ~DeviceContext2D() override;
 
         DeviceContext2D(const DeviceContext2D&) = delete;
         DeviceContext2D(DeviceContext2D&&) noexcept = delete;
@@ -171,41 +155,31 @@ namespace jela::DX
         void DrawTexture(ID2D1Bitmap* bitmap, const D2D1_RECT_F& destRect, const D2D1_RECT_F& srcRect = {}, float opacity = 1.f) const;
 
         Rectf GetSize() const;
-        ID2D1DeviceContext* get() const;
 
+        HResultHandler CreateBitmapFromWicBitmap(IWICFormatConverter* pConverter, ID2D1Bitmap1*& pBitmap) const;
         HResultHandler SetTargetBitmap(const SwapChain& swapChain);
 
     private:
         void SetTransform() const;
 
-        ID2D1DeviceContext* m_pD2DDeviceContext{nullptr};
         ID2D1Bitmap1* m_pDTargetBitmap{nullptr};
         ID2D1Bitmap1* m_pDGameBitmap{nullptr};
         ID2D1SolidColorBrush* m_pDColorBrush{nullptr};
         D2D1_COLOR_F m_BGColor{D2D1::ColorF::Black };
         TransformStack m_TransformStack{};
-        mutable bool m_TransformChanged{};
     };
 
-    class SwapChain final: public DXObject
+    class SwapChain final: public DXObject<IDXGISwapChain1>
     {
     public:
         SwapChain(const Device3D& device3D, const DeviceGI& deviceGI);
-        ~SwapChain();
-
-        SwapChain(const SwapChain&) = delete;
-        SwapChain(SwapChain&&) noexcept = delete;
-        SwapChain& operator=(const SwapChain&) = delete;
-        SwapChain& operator=(SwapChain&&) noexcept = delete;
 
         HResultHandler Resize() const;
         DXGI_FORMAT GetFormat() const;
         IDXGISurface* GetBackBuffer() const;
-        IDXGISwapChain1* get() const;
         HResultHandler Present() const;
 
     private:
-        IDXGISwapChain1* m_pDSwapChain{nullptr};
         UINT m_CurrentWidth{0};
         UINT m_CurrentHeight{0};
         DXGI_FORMAT m_Format{DXGI_FORMAT_B8G8R8A8_UNORM}; // this is the most common swapchain format

@@ -34,7 +34,7 @@ namespace jela
     private:
 
         static IWICImagingFactory* m_pWICFactory;
-        ID2D1Bitmap* m_pDBitmap{ nullptr };
+        ID2D1Bitmap1* m_pDBitmap{ nullptr };
 
         float m_TextureWidth;
         float m_TextureHeight;
