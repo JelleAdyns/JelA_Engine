@@ -29,6 +29,8 @@ namespace jela
 
     bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, COLORREF bgColor, const tstring& wndwName)
     {
+        SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         // Use HeapSetInformation to specify that the process should terminate if the heap manager detects an error in any heap used by the process.
         // The return value is ignored, because we want to continue running in the unlikely event that HeapSetInformation fails.
         HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
@@ -68,7 +70,7 @@ namespace jela
         m_pGame = std::move(game);
         m_pGame->Initialize();
 
-        SetWindowPosition();
+        SetWindowPosition(true, true);
 
         LARGE_INTEGER countsPersSecond;
         LARGE_INTEGER currentCount;
@@ -82,6 +84,7 @@ namespace jela
         // Main message loop:
         while (playing)
         {
+            QueryPerformanceCounter(&currentCount);
             while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
             {
                 if (msg.message == WM_QUIT)
@@ -96,7 +99,6 @@ namespace jela
 
             if (!playing) continue;
 
-            QueryPerformanceCounter(&currentCount);
 
             if (m_IsVSyncEnabled || currentCount.QuadPart >= m_TriggerCount.QuadPart)
             {
@@ -112,7 +114,8 @@ namespace jela
                     m_pGame->HandleControllerInput();
 
                 m_pGame->Tick();
-                Paint();
+                InvalidateRect(m_hWindow, nullptr, FALSE);
+                //Paint();
 
                 m_TriggerCount.QuadPart = currentCount.QuadPart + static_cast<int>(m_SecondsPerFrame * countsPersSecond.QuadPart);
             }
@@ -123,8 +126,11 @@ namespace jela
 
     void Engine::Shutdown()
     {
-        m_pGame->Cleanup();
-        m_pGame = nullptr;
+        if (m_pGame)
+        {
+            m_pGame->Cleanup();
+            m_pGame = nullptr;
+        }
 
         AudioLocator::RegisterAudioService(nullptr);
         m_pResourceManager = nullptr;
@@ -181,14 +187,12 @@ namespace jela
                     m_ViewPortWidth = m_GameWidth * m_WindowScale;
                     m_ViewPortHeight = m_GameHeight * m_WindowScale;
 
-                    const float minScale{
-                        std::min<float>(
+                    m_MinScale = std::min<float>(
                             m_WindowWidth / m_ViewPortWidth,
                             m_WindowHeight / m_ViewPortHeight
-                        )};
-                    m_ViewPortWidth *= minScale;
-                    m_ViewPortHeight *= minScale;
-                    m_MinScale = minScale;
+                        );
+                    m_ViewPortWidth *= m_MinScale;
+                    m_ViewPortHeight *= m_MinScale;
 
                     m_ViewPortTranslationX = (m_WindowWidth - m_ViewPortWidth) / 2.f;
                     m_ViewPortTranslationY = (m_WindowHeight - m_ViewPortHeight) / 2.f;
@@ -196,7 +200,6 @@ namespace jela
                     ResizeWindow();
 
                     CalculateWindowPos();
-                    Paint();
                 }
             }
             result = 0;
@@ -219,7 +222,6 @@ namespace jela
             case WM_MOVE:
             {
                 CalculateWindowPos();
-                Paint();
             }
             result = 0;
             wasHandled = true;
@@ -228,9 +230,8 @@ namespace jela
             {
                 if (static_cast<int>(wParam) == VK_F11)
                 {
-                    if (m_IsFullscreen) SetWindowPosition();
+                    if (m_IsFullscreen) SetWindowPosition(true, true);
                     else SetFullscreen();
-
                     m_IsFullscreen = !m_IsFullscreen;
                 }
 
@@ -385,11 +386,11 @@ namespace jela
 
     }
 
-    HResultHandler Engine::OnRender()
+    HResultHandler Engine::OnRender() const
     {
         HResultHandler hr{S_OK, _T("ENGINE::OnRender")};
 
-        hr = m_pDXHandler->dDeviceContext2D.Draw(std::bind(&BaseGame::Draw, m_pGame.get()));
+        hr = m_pDXHandler->dDeviceContext2D.Draw([pGame = m_pGame.get()] { pGame->Draw(); });
         hr = m_pDXHandler->dSwapChain.Present();
 
         return hr;
@@ -438,13 +439,13 @@ namespace jela
         const float endY = originY + vectorY;
 
         constexpr float desiredHeadAngle = std::numbers::pi_v<float> / 12.f;
-        const float mirroredVectorAngle = atan2f(vectorY, vectorX) + std::numbers::pi_v<float>;
+        const float flippedVectorAngle = atan2f(-vectorY, -vectorX);
 
-        const Point2f arrowP2{ endX + cosf(mirroredVectorAngle - desiredHeadAngle) * headLineLength,
-                                endY + sinf(mirroredVectorAngle - desiredHeadAngle) * headLineLength };
+        const Point2f arrowP2{ endX + cosf(flippedVectorAngle - desiredHeadAngle) * headLineLength,
+                                endY + sinf(flippedVectorAngle - desiredHeadAngle) * headLineLength };
 
-        const Point2f arrowP3{ endX + cosf(mirroredVectorAngle + desiredHeadAngle) * headLineLength,
-                                endY + sinf(mirroredVectorAngle + desiredHeadAngle) * headLineLength };
+        const Point2f arrowP3{ endX + cosf(flippedVectorAngle + desiredHeadAngle) * headLineLength,
+                                endY + sinf(flippedVectorAngle + desiredHeadAngle) * headLineLength };
 
         DrawLine(originX, originY, endX, endY, lineThickness);
         DrawLine(endX, endY, arrowP2.x, arrowP2.y, lineThickness);
@@ -861,13 +862,13 @@ namespace jela
     {
         m_GameWidth = width;
         m_GameHeight = height;
-        if(refreshWindowPos) SetWindowPosition();
+        if(refreshWindowPos) SetWindowPosition(false, true);
     }
     void Engine::SetWindowScale(float scale)
     {
         m_WindowScale = scale;
     }
-    void Engine::SetWindowPosition()
+    void Engine::SetWindowPosition(bool setPos, bool setSize)
     {
         MONITORINFOEX mi{};
         mi.cbSize = sizeof(MONITORINFOEX);
@@ -877,19 +878,23 @@ namespace jela
             ::SetWindowLongPtr(m_hWindow, GWL_STYLE, m_OriginalStyle);
 
             const UINT dpi = GetDpiForWindow(m_hWindow);
+            const float dpiMultiplier = dpi / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
 
-            m_WindowWidth = static_cast<int>(m_GameWidth * m_WindowScale);
-            m_WindowHeight = static_cast<int>(m_GameHeight * m_WindowScale);
+            if (setSize)
+            {
+                m_WindowWidth = static_cast<int>(m_GameWidth * m_WindowScale * dpiMultiplier);
+                m_WindowHeight = static_cast<int>(m_GameHeight * m_WindowScale * dpiMultiplier);
+            }
 
-            int windowWidth{ (GetSystemMetrics(SM_CXFIXEDFRAME) * 2 + m_WindowWidth + m_WindowPosOffset * 2) };
-            int windowHeight{ (GetSystemMetrics(SM_CYFIXEDFRAME) * 2 +
-                                GetSystemMetrics(SM_CYCAPTION) + m_WindowHeight + m_WindowPosOffset * 2) };
+            const int windowWidth{ static_cast<int>(GetSystemMetricsForDpi(SM_CXFIXEDFRAME, dpi) * 2 + m_WindowWidth + m_WindowPosOffset * dpiMultiplier * 2) };
+            const int windowHeight{ static_cast<int>(GetSystemMetricsForDpi(SM_CYFIXEDFRAME, dpi) * 2 +
+                                GetSystemMetricsForDpi(SM_CYCAPTION, dpi) + m_WindowHeight + m_WindowPosOffset * dpiMultiplier * 2) };
 
-            windowWidth = static_cast<int>(windowWidth * dpi / 96.f);
-            windowHeight = static_cast<int>(windowHeight * dpi / 96.f);
-
-            m_WindowPosX = mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - windowWidth / 2;
-            m_WindowPosY = mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - windowHeight / 2;
+            if (setPos)
+            {
+                m_WindowPosX = mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - windowWidth / 2;
+                m_WindowPosY = mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - windowHeight / 2;
+            }
 
             ::SetWindowPos(m_hWindow, nullptr, m_WindowPosX, m_WindowPosY, windowWidth, windowHeight, SWP_FRAMECHANGED);
         }

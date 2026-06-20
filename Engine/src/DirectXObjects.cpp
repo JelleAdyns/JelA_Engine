@@ -496,8 +496,8 @@ namespace jela::DX
             const auto& windowRect = ENGINE.GetWindowSize();
             m_CurrentWidth = static_cast<UINT>(windowRect.x);
             m_CurrentHeight = static_cast<UINT>(windowRect.y);
-            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
-            swapChainDesc.Width = m_CurrentWidth;                           // use automatic sizing
+            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+            swapChainDesc.Width = m_CurrentWidth;
             swapChainDesc.Height = m_CurrentHeight;
             swapChainDesc.Format = m_Format;
             swapChainDesc.Stereo = false;
@@ -522,6 +522,7 @@ namespace jela::DX
     }
     HResultHandler SwapChain::Resize() const
     {
+        if (IsInFaultyState()) return E_FAIL;
         HResultHandler& hr{StartHResult(_T("jela::DX::SwapChain Resize"))};
         hr = get()->ResizeBuffers(0, 0, 0, m_Format, 0);
         return hr;

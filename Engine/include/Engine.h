@@ -211,7 +211,7 @@ namespace jela
             constexpr size_t MESSAGE_LEN = 512;
             TCHAR message[MESSAGE_LEN];
 
-            if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, _T("%s (HRESULT = 0x%X)"),
+            if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, _T("%s (HRESULT = 0x%X)\n"),
                 pszErrorMessage.c_str(), hrErr)))
             {
                 MessageBox(hWnd, message, _T("ERROR"), MB_OK | MB_ICONERROR);
@@ -228,11 +228,11 @@ namespace jela
 
         void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f) const;
         void FillGeometry(const Geometry* pGeometryObject) const;
-        void SetWindowPosition();
+        void SetWindowPosition(bool setPos, bool setSize);
         void SetFullscreen();
         void SetDeltaTime(float elapsedSec);
         void Paint();
-        HResultHandler OnRender();
+        HResultHandler OnRender() const;
         void MakeWindow();
         void CalculateWindowPos();
         HResultHandler ResizeWindow() const;
