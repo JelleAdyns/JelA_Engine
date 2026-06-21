@@ -516,6 +516,7 @@ namespace jela::DX
             fullscreenDesc.Windowed = true;
             hr = device3D.CreateSwapChain(dxgiFactory, swapChainDesc, fullscreenDesc, pSwapChain);
             Init(pSwapChain);
+            hr = dxgiFactory->MakeWindowAssociation(ENGINE.GetWindow(), DXGI_MWA_NO_ALT_ENTER);
         }
         SafeRelease(&dxgiFactory);
         SafeRelease(&dxgiAdapter);
