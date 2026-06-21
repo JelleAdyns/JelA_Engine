@@ -9,12 +9,23 @@
 #include "framework.h"
 #include "Controller.h"
 #include "ResourceManager.h"
+#include "HResultHandler.h"
 #include <vector>
 #include <chrono>
+
+#include "DirectXObjects.h"
 
 
 namespace jela
 {
+    inline constexpr bool USE_MATHEMATICAL_COORDINATESYSTEM {
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+        true
+#else
+        false
+#endif
+    };
+
     enum class MouseButtons
     {
         Left = MK_LBUTTON,
@@ -23,8 +34,7 @@ namespace jela
         Control = MK_CONTROL,
         Middle = MK_MBUTTON
     };
-    bool operator==(jela::MouseButtons lhs, jela::MouseButtons rhs);
-
+    bool ContainsMouseButtons(jela::MouseButtons collectionOfButtons, jela::MouseButtons buttonsToCheckFor);
 
     class Engine final
     {
@@ -37,11 +47,10 @@ namespace jela
 
         ~Engine() = default;
 
-        void Shutdown();
-        bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, const COLORREF& bgColor, const tstring& wndwName);
-
-
+        bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, COLORREF bgColor = RGB(0,0,0), const tstring& wndwName = _T("Game"));
         int Run(std::unique_ptr<BaseGame>&& game);
+        void Shutdown();
+
         LRESULT HandleMessages(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
         void Quit();
 
@@ -56,80 +65,80 @@ namespace jela
         void DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f) const;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-        void DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness = 1.f)const;
-        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f)const;
-        void DrawRectangle(float left, float bottom, float width, float height, float lineThickness = 1.f)const;
+        void DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness = 1.f) const;
+        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f) const;
+        void DrawRectangle(float left, float bottom, float width, float height, float lineThickness = 1.f) const;
 
-        void DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
+        void DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
 
-        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect = false) const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect = false) const;
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect = false) const;
 
-        void DrawTexture(const Texture* const texture, float destLeft, float destBottom, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Point2f& destLeftBottom = {}, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* texture, float destLeft, float destBottom, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Point2f& destLeftBottom = {}, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f) const;
 
-        void FillRectangle(const Point2f& leftBottom, float width, float height)const;
-        void FillRectangle(const Rectf& rect)const;
-        void FillRectangle(float left, float bottom, float width, float height)const;
+        void FillRectangle(const Point2f& leftBottom, float width, float height) const;
+        void FillRectangle(const Rectf& rect) const;
+        void FillRectangle(float left, float bottom, float width, float height) const;
 
-        void FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY)const;
-        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const;
-        void FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY)const;
+        void FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY) const;
+        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const;
+        void FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const;
 #else
-        void DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness = 1.f)const;
-        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f)const;
-        void DrawRectangle(float left, float top, float width, float height, float lineThickness = 1.f)const;
+        void DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness = 1.f) const;
+        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f) const;
+        void DrawRectangle(float left, float top, float width, float height, float lineThickness = 1.f) const;
 
-        void DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f)const;
+        void DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
 
-        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false)const;
-        void DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false) const;
+        void DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect = false) const;
 
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect = false) const;
         //Takes the size of the font as Height of the destination rectangle in order to have a logical position
-        void DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect = false)const;
+        void DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect = false) const;
 
-        void DrawTexture(const Texture* const texture, float destLeft, float destTop, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Point2f& destLeftTop = {}, const Rectf& srcRect = {}, float opacity = 1.f)const;
-        void DrawTexture(const Texture* const texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f)const;
+        void DrawTexture(const Texture* texture, float destLeft, float destTop, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Point2f& destLeftTop = {}, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f) const;
 
-        void FillRectangle(const Point2f& leftTop, float width, float height)const;
-        void FillRectangle(const Rectf& rect)const;
-        void FillRectangle(float left, float top, float width, float height)const;
+        void FillRectangle(const Point2f& leftTop, float width, float height) const;
+        void FillRectangle(const Rectf& rect) const;
+        void FillRectangle(float left, float top, float width, float height) const;
 
-        void FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY)const;
-        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY)const;
-        void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY)const;
+        void FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY) const;
+        void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const;
+        void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-        void DrawPolygon(const Polygon& polygon, float lineThickness = 1.f);
-        void FillPolygon(const Polygon& polygon);
+        void DrawPolygon(const Polygon& polygon, float lineThickness = 1.f) const;
+        void FillPolygon(const Polygon& polygon) const;
 
-        void DrawArc(const Arc& arc, float lineThickness = 1.f);
-        void FillArc(const Arc& arc);
+        void DrawArc(const Arc& arc, float lineThickness = 1.f) const;
+        void FillArc(const Arc& arc) const;
 
-        void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f)const;
-        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f)const;
-        void DrawCircle(const Circlef& circle, float lineThickness = 1.f)const;
+        void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f) const;
+        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawCircle(const Circlef& circle, float lineThickness = 1.f) const;
 
-        void FillEllipse(const Point2f& center, float radiusX, float radiusY)const;
-        void FillEllipse(const Ellipsef& ellipse)const;
-        void FillEllipse(float centerX, float centerY, float radiusX, float radiusY)const;
-        void FillCircle(const Circlef& circle)const;
+        void FillEllipse(const Point2f& center, float radiusX, float radiusY) const;
+        void FillEllipse(const Ellipsef& ellipse) const;
+        void FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const;
+        void FillCircle(const Circlef& circle) const;
 
         //Use CAPITAL letters or the virtual keycodes
         bool IsKeyPressed(int virtualKeycode) const;
@@ -151,28 +160,27 @@ namespace jela
 
         // Transform stuff
 
-        void PushTransform();
-        void PopTransform();
-        void Translate(float xTranslation, float yTranslation);
-        void Translate(const Vector2f& translation);
-        void Rotate(float angle, float xPivotPoint, float yPivotPoint);
-        void Rotate(float angle, const Point2f& pivotPoint);
-        void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom);
-        void Scale(float scale, float xPointToScaleFrom, float yPointToScaleFrom);
-        void Scale(float xScale, float yScale, const Point2f& PointToScaleFrom);
-        void Scale(float scale, const Point2f& PointToScaleFrom);
-        void Scale(float xScale, float yScale);
-        void Scale(float scale);
-
+        void PushTransform() const;
+        void PopTransform() const;
+        void Translate(float xTranslation, float yTranslation) const;
+        void Translate(const Vector2f& translation) const;
+        void Rotate(float angle, float xPivotPoint, float yPivotPoint) const;
+        void Rotate(float angle, const Point2f& pivotPoint) const;
+        void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom) const;
+        void Scale(float scale, float xPointToScaleFrom, float yPointToScaleFrom) const;
+        void Scale(float xScale, float yScale, const Point2f& PointToScaleFrom) const;
+        void Scale(float scale, const Point2f& PointToScaleFrom) const;
+        void Scale(float xScale, float yScale) const;
+        void Scale(float scale) const;
 
         // Setters
 
-        void ShowMouse(bool show);
+        void ShowMouse(bool show) const;
         void UseSystemFramerate(bool enable);
-        void SetFont(const Font* const pFont);
-        void SetTextFormat(TextFormat* const pTextFormat);
-        void SetColor(COLORREF newColor, float opacity = 1.F);
-        void SetBackGroundColor(COLORREF newColor);
+        void SetFont(const Font* pFont) const;
+        void SetTextFormat(TextFormat* pTextFormat) const;
+        void SetColor(COLORREF newColor, float opacity = 1.F) const;
+        void SetBackGroundColor(COLORREF newColor, float opacity = 1.F) const;
         void SetInstance(HINSTANCE hInst);
         void SetTitle(const tstring& newTitle);
         void SetWindowDimensions(int width, int height, bool refreshWindowPos = true);
@@ -181,53 +189,53 @@ namespace jela
 
         // Getters
 
-        ResourceManager* const ResourceMngr() const;
-        const Font* const GetCurrentFont() const;
-        Rectf GetWindowRect() const;
+        ResourceManager* ResourceMngr() const;
+        const Font* GetCurrentFont() const;
+        Vector2f GetGameSize() const;
+        Point2f GetViewportPos() const;
+        Vector2f GetViewportSize() const;
+        Point2f GetWindowPos() const;
+        Vector2f GetWindowSize() const;
         float GetWindowScale() const;
         HWND GetWindow() const;
-        HINSTANCE GetHInstance() const;
         float GetDeltaTime() const;
         float GetTotalTime() const;
         bool IsKeyBoardActive() const;
+        bool IsQuitting() const;
 
-        ID2D1Factory* GetFactory() const;
-        ID2D1HwndRenderTarget* GetRenderTarget() const;
-        ID2D1BitmapRenderTarget* GetBitmapRenderTarget() const;
-
+        const DX::Factory2D& Get2DFactory() const;
+        const DX::DeviceContext2D& Get2DDeviceContext() const;
 
         static void NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
         {
             constexpr size_t MESSAGE_LEN = 512;
             TCHAR message[MESSAGE_LEN];
 
-            if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, _T("%s (HRESULT = 0x%X)"),
+            if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, _T("%s (HRESULT = 0x%X)\n"),
                 pszErrorMessage.c_str(), hrErr)))
             {
                 MessageBox(hWnd, message, _T("ERROR"), MB_OK | MB_ICONERROR);
             }
+            OutputDebugString(message);
         }
 
-        void NotifyException(const std::string& exceptionMessage, const std::string& title = "ERROR")
+        void NotifyException(const std::string& exceptionMessage, const std::string& title = "ERROR") const
         {
             MessageBoxA(m_hWindow, exceptionMessage.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
         }
 
     private:
 
-        void DrawGeometry(const Geometry* const pGeometryObject, float lineThickness = 1.f);
-        void FillGeometry(const Geometry* const pGeometryObject);
-        void SetWindowPosition();
+        void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f) const;
+        void FillGeometry(const Geometry* pGeometryObject) const;
+        void SetWindowPosition(bool setPos, bool setSize);
         void SetFullscreen();
-        void SetTransform() const;
         void SetDeltaTime(float elapsedSec);
-        Rectf GetRenderTargetSize() const;
         void Paint();
-        HRESULT OnRender();
-        HRESULT MakeWindow();
-        HRESULT CreateRenderTargets();
-        void ResetRenderTargets();
+        HResultHandler OnRender() const;
+        void MakeWindow();
         void CalculateWindowPos();
+        HResultHandler ResizeWindow() const;
 
         //Win32
         HWND                            m_hWindow;
@@ -235,23 +243,14 @@ namespace jela
         DWORD                           m_OriginalStyle;
         LARGE_INTEGER                   m_TriggerCount{};
 
-        //Direct2D
-        ID2D1Factory*                   m_pDFactory{};
-        ID2D1HwndRenderTarget*          m_pDRenderTarget{};
-        ID2D1SolidColorBrush*           m_pDColorBrush{};
-        D2D1_COLOR_F                    m_DColorBackGround{};
-        ID2D1BitmapRenderTarget*        m_pDBitmapRenderTarget{};
-        ID2D1Bitmap*                    m_pDBitmap{};
+        //DirectX
+        std::unique_ptr<DX::DXHandler>  m_pDXHandler{};
 
         //BaseGame
         std::unique_ptr<BaseGame>       m_pGame{};
 
         //Transform
-        FLOAT                           m_ViewPortTranslationX{};
-        FLOAT                           m_ViewPortTranslationY{};
-
         std::vector<D2D1::Matrix3x2F>   m_VecTransformMatrices{};
-
         mutable bool                    m_TransformChanged{};
 
         //General datamembers
@@ -262,9 +261,14 @@ namespace jela
         int                             m_GameHeight{};
         int                             m_WindowWidth{};
         int                             m_WindowHeight{};
+        float                           m_ViewPortWidth{};
+        float                           m_ViewPortHeight{};
+        float                           m_ViewPortTranslationX{};
+        float                           m_ViewPortTranslationY{};
+        float                           m_MinScale{};
         int                             m_WindowPosX{};
         int                             m_WindowPosY{};
-        int                             m_WindowPosOffset{5};
+        static constexpr int            m_WindowPosOffset{5};
 
         float                           m_SecondsPerFrame{};
         float                           m_DeltaTime{};
@@ -275,6 +279,7 @@ namespace jela
         bool                            m_WindowIsActive{ true };
         bool                            m_IsKeyboardActive{true};
         bool                            m_IsVSyncEnabled{true};
+        bool                            m_IsQuitting{false};
 
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 

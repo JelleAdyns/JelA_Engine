@@ -14,13 +14,16 @@ target_include_directories(${PROJECT_NAME}
         PRIVATE "./src"
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    "xinput"
-    "shlwapi"
-    "Dwrite"
-    "d2d1"
-    "mf"
-    "mfplat"
-    "mfuuid"
-    "xaudio2"
+        "xinput"
+        "shlwapi"
+        "Dwrite"
+        "d2d1"
+        "d3d11"
+        "dxgi"
+        "dxguid"
+        "mf"
+        "mfplat"
+        "mfuuid"
+        "xaudio2"
 )
 

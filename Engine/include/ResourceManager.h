@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "Observer.h"
+#include "HResultHandler.h"
 #include <map>
 #include <unordered_map>
 
@@ -22,7 +23,7 @@ namespace jela
 
         ~Texture();
 
-        ID2D1Bitmap* const  GetBitmap() const { return m_pDBitmap; }
+        ID2D1Bitmap* GetBitmap() const { return m_pDBitmap; }
         float GetWidth() const { return m_TextureWidth; }
         float GetHeight() const { return m_TextureHeight; }
         const tstring& GetFileName() const { return m_FileName; }
@@ -33,7 +34,7 @@ namespace jela
     private:
 
         static IWICImagingFactory* m_pWICFactory;
-        ID2D1Bitmap* m_pDBitmap{ nullptr };
+        ID2D1Bitmap1* m_pDBitmap{ nullptr };
 
         float m_TextureWidth;
         float m_TextureHeight;
@@ -64,7 +65,7 @@ namespace jela
     private:
         // using friend class for tight coupling
         friend class TextFormat;
-        HRESULT Initialize(const std::wstring& filename);
+        HResultHandler Initialize(const std::wstring& filename);
 
         static IDWriteFactory5* m_pDWriteFactory;
 
@@ -73,7 +74,7 @@ namespace jela
         std::wstring m_FontName;
     };
 
-    class TextFormat final : public Observer<const Font* const>
+    class TextFormat final : public Observer<const Font*>
     {
     public:
 
@@ -98,23 +99,22 @@ namespace jela
         TextFormat& operator=(const TextFormat& other) = delete;
         TextFormat& operator=(TextFormat&& other) noexcept = delete;
 
-        ~TextFormat();
+        ~TextFormat() override;
 
-        float GetFontSize() const { return m_Size; };
-        IDWriteTextFormat* const GetTextFormat() const { return m_pTextFormat; };
+        float GetFontSize() const { return m_Size; }
+        IDWriteTextFormat* GetTextFormat() const { return m_pTextFormat; }
     private:
-
-        virtual void Notify(const Font* const pFont) override
+        void Notify(const Font* pFont) override
         {
             if(pFont) SetFont(pFont);
         }
-        virtual void OnSubjectDestroy(Subject<const Font* const>*) override
+        void OnSubjectDestroy(Subject<const Font*>*) override
         {
         }
 
-        void SetHorizontalAllignment(HorAllignment allignment);
-        void SetVerticalAllignment(VertAllignment allignment);
-        void SetFont(const Font* const pFont);
+        HResultHandler SetHorizontalAllignment(HorAllignment allignment);
+        HResultHandler SetVerticalAllignment(VertAllignment allignment);
+        HResultHandler SetFont(const Font* pFont);
 
         IDWriteTextFormat* m_pTextFormat{ nullptr };
         float m_Size;
@@ -163,12 +163,14 @@ namespace jela
         void RemoveAllFonts();
 
         const tstring& GetDataPath() const { return m_DataPath; }
-        const Font* const GetCurrentFont() const { return m_pCurrentFont; }
-        const TextFormat* const GetCurrentTextFormat() const { return m_pCurrentTextFormat; }
+        const Font* GetCurrentFont() const { return m_pCurrentFont; }
+        const TextFormat* GetCurrentTextFormat() const { return m_pCurrentTextFormat; }
 
         void SetDataPath(const tstring& newPath) { m_DataPath = newPath; }
-        void SetCurrentFont(const Font* const pFont);
-        void SetCurrentTextFormat(TextFormat* const pTextFormat);
+        void SetCurrentFont(const Font* pFont);
+        void SetCurrentTextFormat(TextFormat* pTextFormat);
+        void SetDefaultFont();
+        void SetDefaultTextFormat();
     private:
 
         //-----------------------------------------------------------------------------------------------------------------
@@ -212,11 +214,13 @@ namespace jela
         template <typename ResourceType>
         struct ResourcePtr final : public Observer<>
         {
-            const ResourceType* pObject = nullptr;
 
             ResourcePtr() = default;
 
-            virtual ~ResourcePtr() { if (m_pSubject) m_pSubject->RemoveObserver(this); }
+            ~ResourcePtr() override
+            {
+                if (m_pSubject) m_pSubject->RemoveObserver(this);
+            }
 
             ResourcePtr(const ResourcePtr& other)
                 : pObject{other.pObject}
@@ -226,59 +230,68 @@ namespace jela
             }
 
             ResourcePtr(ResourcePtr&& other) noexcept
-                : pObject{std::move(other.pObject)}
-                  , m_pSubject{std::move(other.m_pSubject)}
+                : pObject{std::exchange(other.pObject, nullptr)}
+                  , m_pSubject{std::exchange(other.m_pSubject, nullptr)}
             {
                 if (m_pSubject)
                 {
                     m_pSubject->RemoveObserver(&other);
                     m_pSubject->AddObserver(this);
                 }
-
-                other.m_pSubject = nullptr;
-                other.pObject = nullptr;
             }
 
             ResourcePtr& operator= (const ResourcePtr& other)
             {
-                if (m_pSubject) m_pSubject->RemoveObserver(this);
-
-                pObject = other.pObject;
-                m_pSubject = other.m_pSubject;
-                if (m_pSubject) m_pSubject->AddObserver(this);
-
+                ResourcePtr{ other }.swap(*this);
                 return *this;
             }
 
             ResourcePtr& operator= (ResourcePtr&& other) noexcept
             {
-                if (m_pSubject) m_pSubject->RemoveObserver(this);
-
-                m_pSubject = std::move(other.m_pSubject);
-                pObject = std::move(other.pObject);
-
-                if (m_pSubject)
-                {
-                    m_pSubject->RemoveObserver(&other);
-                    m_pSubject->AddObserver(this);
-                }
-
-                other.m_pSubject = nullptr;
-                other.pObject = nullptr;
-
+                ResourcePtr{ std::move(other) }.swap(*this);
                 return *this;
             }
 
+            const ResourceType* get() const { return pObject; }
+
+            explicit operator bool() const
+            {
+                return pObject;
+            }
+            const ResourceType& operator*() const
+            {
+                if (pObject == nullptr) throw std::runtime_error(
+                       "pObject was nullptr when trying to dereference it using the '->' operator!");
+                return *pObject;
+            }
+            const ResourceType* operator->() const
+            {
+                if (pObject == nullptr) throw std::runtime_error(
+                    "pObject was nullptr when trying to acces it using the '->' operator!");
+                return pObject;
+            }
         private:
             friend struct ManagedResource<ResourceType>;
+            void Notify() override { pObject = nullptr; }
+            void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
 
-            virtual void Notify() override { pObject = nullptr; }
-            virtual void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
             void SaveSubject(Subject<>* pSubject)
             {
-                if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr SingleSubjectsObserver."));
+                if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr Observer."));
                 else m_pSubject = pSubject;
             }
+            void swap(ResourcePtr& other) noexcept
+            {
+                std::swap(pObject, other.pObject);
+
+                other.m_pSubject->RemoveObserver(&other);
+                m_pSubject->RemoveObserver(this);
+                std::swap(m_pSubject, other.m_pSubject);
+                other.m_pSubject->AddObserver(&other);
+                m_pSubject->AddObserver(this);
+            }
+
+            const ResourceType* pObject = nullptr;
             Subject<>* m_pSubject{};
         };
         //-----------------------------------------------------------------------------------------------------------------
@@ -293,7 +306,7 @@ namespace jela
         ResourceMap<Font>               m_MapFonts{};
 
         // CURRENTLY USED FONT
-        Subject<const Font* const>      m_OnFontChange{};
+        Subject<const Font*>            m_OnFontChange{};
 
         const Font*                     m_pCurrentFont{ nullptr };
         TextFormat*                     m_pCurrentTextFormat{ nullptr };
@@ -305,8 +318,7 @@ namespace jela
         tstring m_DataPath;
         //------------------------------------------------------
 
-
-        static ResourceManager* const GetResourceManager();
+        static ResourceManager* GetResourceManager();
     };
 
     template <typename ResourceType>

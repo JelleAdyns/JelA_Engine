@@ -21,12 +21,13 @@ namespace jela
 			m_hAudioWnd{},
 			m_Exists{}
 		{
-			HRESULT hr = CPlayer::CreateInstance(m_hAudioWnd, &m_pPlayer);
+			HResultHandler hr{};
+			hr = CPlayer::CreateInstance(m_hAudioWnd, &m_pPlayer);
 
-			if (SUCCEEDED(hr)) OpenFile(m_FilePath);
+			if (hr.Succeeded()) OpenFile(m_FilePath);
 			else
 			{
-				Engine::NotifyError(m_hAudioWnd, _T("Could not initialize the player object."), hr);
+				Engine::NotifyError(m_hAudioWnd, _T("Could not initialize the player object."), hr.Get());
 				SafeRelease(&m_pPlayer);
 				return;
 			}
@@ -48,18 +49,18 @@ namespace jela
 
 		void Play(bool repeat, bool resume = false) const
 		{
-			HRESULT hr = m_pPlayer->Play(repeat, resume);
-			if (FAILED(hr)) OutputDebugString((_T("\n\"Play\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
+			if (const HResultHandler hr = m_pPlayer->Play(repeat, resume); hr.Failed())
+				OutputDebugString((_T("\n\"Play\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
 		}
 		void Stop() const
 		{
-			HRESULT hr = m_pPlayer->Stop();
-			if (FAILED(hr)) OutputDebugString((_T("\n\"Stop\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
+			if (const HResultHandler hr = m_pPlayer->Stop(); hr.Failed())
+				OutputDebugString((_T("\n\"Stop\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
 		}
 		void Pause() const
 		{
-			HRESULT hr = m_pPlayer->Pause();
-			if (FAILED(hr)) OutputDebugString((_T("\n\"Pause\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
+			if (const HResultHandler hr = m_pPlayer->Pause(); hr.Failed())
+				OutputDebugString((_T("\n\"Pause\" reported on error. Filename: ") + m_FilePath + _T('\n')).c_str());
 		}
 		bool IsPlaying() const
 		{
@@ -89,9 +90,9 @@ namespace jela
 
 		void OpenFile(const tstring& fileName)
 		{
-			HRESULT hr = m_pPlayer->OpenURL(fileName);
-			if (SUCCEEDED(hr)) m_Exists = true;
-			else Engine::NotifyError(m_hAudioWnd, _T("Could not open the file." + fileName), hr);
+			if (const HResultHandler hr = m_pPlayer->OpenURL(fileName); hr.Succeeded())
+				m_Exists = true;
+			else Engine::NotifyError(m_hAudioWnd, _T("Could not open the file." + fileName), hr.Get());
 		}
 
 
@@ -116,7 +117,6 @@ namespace jela
 
 		void AddSoundImpl(const tstring& filename, SoundID id)
 		{
-
 			std::lock_guard<std::mutex> lck{ m_EventsMutex };
 			m_Events.push(QueueInfo{ .id{id}, .playBackEvent{Event::Add}, .filename{ENGINE.ResourceMngr()->GetDataPath() + filename} });
 		}
@@ -136,27 +136,27 @@ namespace jela
 		}
 		void SetMasterVolumeImpl(uint8_t volumePercentage)
 		{
-			HRESULT hr = CPlayer::SetVolume(volumePercentage);
-			if (FAILED(hr)) Engine::NotifyError(NULL, _T("SetVolume reported on error."), hr);
+			if (const HResultHandler hr = CPlayer::SetVolume(volumePercentage); hr.Failed())
+				Engine::NotifyError(nullptr, _T("SetVolume reported on error."), hr.Get());
 		}
 		void IncrementMasterVolumeImpl()
 		{
-			uint8_t newVolume{ CPlayer::GetVolume()  };
-			if (newVolume < CPlayer::GetMaxVolume())
+			if (uint8_t newVolume{ CPlayer::GetVolume()  };
+				newVolume < CPlayer::GetMaxVolume())
 			{
 				newVolume += uint8_t{ 1 };
-				HRESULT hr = CPlayer::SetVolume(newVolume);
-				if (FAILED(hr)) Engine::NotifyError(NULL, _T("IncrementVolume reported on error."), hr);
+				if (const HResultHandler hr = CPlayer::SetVolume(newVolume); hr.Failed())
+					Engine::NotifyError(nullptr, _T("IncrementVolume reported on error."), hr.Get());
 			}
 		}
 		void DecrementMasterVolumeImpl()
 		{
-			uint8_t newVolume{ CPlayer::GetVolume() };
-			if (newVolume > CPlayer::GetMinVolume())
+			if (uint8_t newVolume{ CPlayer::GetVolume() };
+				newVolume > CPlayer::GetMinVolume())
 			{
 				newVolume -= uint8_t{ 1 };
-				HRESULT hr = CPlayer::SetVolume(newVolume);
-				if (FAILED(hr)) Engine::NotifyError(NULL, _T("DecrementVolume reported on error."), hr);
+				if (const HResultHandler hr = CPlayer::SetVolume(newVolume); hr.Failed())
+					Engine::NotifyError(nullptr, _T("DecrementVolume reported on error."), hr.Get());
 			}
 		}
 		void ToggleMuteImpl()
@@ -298,10 +298,10 @@ namespace jela
 		}
 		void ResumeAll(std::map<SoundID, AudioInfo>& audioMap) const
         {
-            for (auto& audioInfo : audioMap | std::views::values)
+            for (auto& [pAudioFile, repeat] : audioMap | std::views::values)
             {
-                const AudioFile* audioFile = audioInfo.pAudioFile.get();
-				if (audioFile->IsPaused()) audioFile->Play(audioInfo.repeat, true);
+                const AudioFile* audioFile = pAudioFile.get();
+				if (audioFile->IsPaused()) audioFile->Play(repeat, true);
 			}
 		}
 		void Stop(SoundID id, std::map<SoundID, AudioInfo>& audioMap) const
@@ -314,9 +314,9 @@ namespace jela
 		}
 		void StopAll(std::map<SoundID, AudioInfo>& audioMap) const
         {
-            for (const auto& audioInfo : audioMap | std::views::values)
+            for (const auto& [pAudioFile, repeat] : audioMap | std::views::values)
 			{
-				audioInfo.pAudioFile->Stop();
+				pAudioFile->Stop();
 			}
 		}
 	};

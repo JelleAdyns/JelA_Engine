@@ -41,17 +41,18 @@ namespace jela
     public:
         AudioImpl()
         {
+            HResultHandler hr{};
 #ifdef _DEBUG
-            HRESULT hr = XAudio2Create(&m_pAudioEngine, XAUDIO2_DEBUG_ENGINE, XAUDIO2_DEFAULT_PROCESSOR);
+            hr = XAudio2Create(&m_pAudioEngine, XAUDIO2_DEBUG_ENGINE, XAUDIO2_DEFAULT_PROCESSOR);
 #else
-            HRESULT hr = XAudio2Create(&m_pAudioEngine, 0, XAUDIO2_DEFAULT_PROCESSOR);
+            hr = XAudio2Create(&m_pAudioEngine, 0, XAUDIO2_DEFAULT_PROCESSOR);
 #endif // _DEBUG
-            if (FAILED(hr))
+            if (hr.Failed())
                 OutputDebugString(_T("ERROR! Unable to create the XAudio2 Engine!"));
 
 
             hr = m_pAudioEngine->CreateMasteringVoice(&m_pMasteringVoice);
-            if (FAILED(hr))
+            if (hr.Failed())
                 OutputDebugString(_T("ERROR! Unable to create the XAudio2 Mastering Voice!"));
         }
 
@@ -133,9 +134,10 @@ namespace jela
 
         void SetMasterVolumeImpl(uint8_t newVolume)
         {
+            HResultHandler hr{};
             m_IsMute = false;
             const float fVolume = newVolume / 100.f;
-            m_pMasteringVoice->SetVolume(fVolume);
+            hr = m_pMasteringVoice->SetVolume(fVolume);
             m_LatestVolume = newVolume;
         }
 
@@ -153,9 +155,10 @@ namespace jela
 
         void ToggleMuteImpl()
         {
+            HResultHandler hr{};
             m_IsMute = !m_IsMute;
-            if (m_IsMute) m_pMasteringVoice->SetVolume(0);
-            else m_pMasteringVoice->SetVolume(m_LatestVolume / 100.f);
+            if (m_IsMute) hr = m_pMasteringVoice->SetVolume(0);
+            else hr = m_pMasteringVoice->SetVolume(m_LatestVolume / 100.f);
         }
 
         void PauseSoundImpl(SoundID id)
@@ -289,7 +292,7 @@ namespace jela
             AudioFile& operator=(const AudioFile& other) = delete;
             AudioFile& operator=(AudioFile&& other) noexcept = delete;
 
-            const WAVEFORMATEX* const GetFormatPtr() const { return m_pFormat; }
+            const WAVEFORMATEX* GetFormatPtr() const { return m_pFormat; }
             const tstring& GetFileName() const { return m_FileName; }
             void StopChannel(const SoundInstanceID& id) { m_ActiveChannelPtrs.at(id.GetID().value())->Stop(); }
             void PauseChannel(const SoundInstanceID& id) { m_ActiveChannelPtrs.at(id.GetID().value())->Pause(); }
@@ -481,9 +484,10 @@ namespace jela
             {
                 ZeroMemory(&m_XAudioBuffer, sizeof(m_XAudioBuffer));
                 m_XAudioBuffer.pContext = this;
-                HRESULT hr = pAudioSystem->m_pAudioEngine->CreateSourceVoice(&m_pAudioVoice, pFormat, 0u, XAUDIO2_MAX_FREQ_RATIO, &m_Callback);
-                if (FAILED(hr))
-                    OutputDebugString(std::format(_T("Creating Source Voice failed. HRESULT {}"), hr).c_str());
+                HResultHandler hr{};
+                hr = pAudioSystem->m_pAudioEngine->CreateSourceVoice(&m_pAudioVoice, pFormat, 0u, XAUDIO2_MAX_FREQ_RATIO, &m_Callback);
+                if (hr.Failed())
+                    OutputDebugString(std::format(_T("Creating Source Voice failed. HRESULT {}"), hr.Get()).c_str());
             }
 
             Channel(const Channel&) = delete;
@@ -505,7 +509,7 @@ namespace jela
                 }
             }
 
-            const WAVEFORMATEX* const GetFormatPtr() const { return m_pFormat; }
+            const WAVEFORMATEX* GetFormatPtr() const { return m_pFormat; }
 
             void Play(AudioFile& s, bool repeat, float vol, float frequency, SoundInstanceID& instanceId)
             {
@@ -516,22 +520,25 @@ namespace jela
                 m_XAudioBuffer.LoopCount = repeat ? XAUDIO2_LOOP_INFINITE : 0;
                 m_XAudioBuffer.pAudioData = s.m_pData.data();
                 m_XAudioBuffer.AudioBytes = static_cast<UINT32>(s.m_pData.size());
-                m_pAudioVoice->SubmitSourceBuffer(&m_XAudioBuffer, nullptr);
+
+                HResultHandler hr{};
+                hr = m_pAudioVoice->SubmitSourceBuffer(&m_XAudioBuffer, nullptr);
                 const float freq = std::max(XAUDIO2_MIN_FREQ_RATIO, std::min(XAUDIO2_MAX_FREQ_RATIO, frequency));
-                m_pAudioVoice->SetFrequencyRatio(freq);
-                m_pAudioVoice->SetVolume(vol);
-                m_pAudioVoice->Start();
+                hr = m_pAudioVoice->SetFrequencyRatio(freq);
+                hr = m_pAudioVoice->SetVolume(vol);
+                hr = m_pAudioVoice->Start();
             }
 
             void Stop()
             {
                 if (m_pAudioVoice && m_pAudioFile)
                 {
-                    m_pAudioVoice->Stop();
+                    HResultHandler hr{};
+                    hr = m_pAudioVoice->Stop();
                     m_pAudioFile->RemoveChannel(this);
                     m_pAudioFile = nullptr;
                     m_pAudioSystem->DeactivateChannel(*this);
-                    m_pAudioVoice->FlushSourceBuffers();
+                    hr = m_pAudioVoice->FlushSourceBuffers();
                     m_IsPaused = false;
                 }
             }
@@ -540,7 +547,8 @@ namespace jela
             {
                 if (m_pAudioVoice && m_pAudioFile)
                 {
-                    m_pAudioVoice->Stop();
+                    HResultHandler hr{};
+                    hr = m_pAudioVoice->Stop();
                     m_IsPaused = true;
                 }
             }
@@ -549,7 +557,8 @@ namespace jela
             {
                 if (m_pAudioVoice && m_pAudioFile && m_IsPaused)
                 {
-                    m_pAudioVoice->Start();
+                    HResultHandler hr{};
+                    hr = m_pAudioVoice->Start();
                     m_IsPaused = false;
                 }
             }

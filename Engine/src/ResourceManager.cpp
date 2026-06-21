@@ -11,15 +11,15 @@ namespace jela
 
     IWICImagingFactory* Texture::m_pWICFactory{ nullptr };
 
-    Texture::Texture(const tstring& filename) : m_pDBitmap{ NULL },
+    Texture::Texture(const tstring& filename) : m_pDBitmap{nullptr},
                                                 m_TextureWidth{ 0 },
                                                 m_TextureHeight{ 0 }
     {
-        HRESULT creationResult = S_OK;
+        HResultHandler creationResult{};
 
-        IWICBitmapDecoder* pDecoder = NULL;
-        IWICBitmapFrameDecode* pSource = NULL;
-        IWICFormatConverter* pConverter = NULL;
+        IWICBitmapDecoder* pDecoder = nullptr;
+        IWICBitmapFrameDecode* pSource = nullptr;
+        IWICFormatConverter* pConverter = nullptr;
 
         if (const std::filesystem::path filePath{ ENGINE.ResourceMngr()->GetDataPath() + filename };
             std::filesystem::exists(filePath))
@@ -32,18 +32,18 @@ namespace jela
                     { ".png", ".jpg", ".jpeg" }
                 };
 
-            if (SUCCEEDED(creationResult))
+            if (creationResult.Succeeded())
             {
                 creationResult = m_pWICFactory->CreateDecoderFromFilename(
                     filePath.c_str(),
-                    NULL,
+                    nullptr,
                     GENERIC_READ,
                     WICDecodeMetadataCacheOnLoad,
                     &pDecoder);
             }
 
 
-            if (SUCCEEDED(creationResult))
+            if (creationResult.Succeeded() && pDecoder)
             {
                 // Create the initial frame.
                 creationResult = pDecoder->GetFrame(0, &pSource);
@@ -52,30 +52,25 @@ namespace jela
 
             // Convert the image format to 32bppPBGRA
             // (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
-            if (SUCCEEDED(creationResult)) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
-            if (SUCCEEDED(creationResult))
+            if (creationResult.Succeeded()) creationResult = m_pWICFactory->CreateFormatConverter(&pConverter);
+            if (creationResult.Succeeded() && pConverter)
             {
                 creationResult = pConverter->Initialize(
                     pSource,
                     GUID_WICPixelFormat32bppPBGRA,
                     WICBitmapDitherTypeNone,
-                    NULL,
+                    nullptr,
                     0.f,
                     WICBitmapPaletteTypeMedianCut
                 );
             }
 
 
-            if (SUCCEEDED(creationResult))
+            if (creationResult.Succeeded())
             {
-                creationResult = ENGINE.GetRenderTarget()->CreateBitmapFromWicBitmap(
-                    pConverter,
-                    NULL,
-                    &m_pDBitmap
-                );
+                creationResult = ENGINE.Get2DDeviceContext().CreateBitmapFromWicBitmap(pConverter,m_pDBitmap);
 
-
-                if (SUCCEEDED(creationResult))
+                if (creationResult.Succeeded())
                 {
                     m_TextureWidth = m_pDBitmap->GetSize().width;
                     m_TextureHeight = m_pDBitmap->GetSize().height;
@@ -87,12 +82,12 @@ namespace jela
             SafeRelease(&pSource);
             SafeRelease(&pConverter);
 
-            if (!SUCCEEDED(creationResult))
+            if (creationResult.Failed())
             {
                 SafeRelease(&m_pDBitmap);
                 throw FileLoadException{
                     std::format("ERROR! File \"{}\" couldn't load correctly. HRESULT Error code: {}\n",
-                                filePath.string(), creationResult)
+                                filePath.string(), creationResult.Get())
                 };
             }
         }
@@ -112,13 +107,14 @@ namespace jela
     {
         if (!m_pWICFactory)
         {
-            HRESULT creationResult = CoCreateInstance(
+            HResultHandler creationResult{};
+            creationResult = CoCreateInstance(
                 CLSID_WICImagingFactory,
-                NULL,
+                nullptr,
                 CLSCTX_ALL,
                 IID_PPV_ARGS(&m_pWICFactory)
             );
-            if (!SUCCEEDED(creationResult)) throw std::runtime_error("WIC Factory not created correctly.");
+            if (creationResult.Failed()) throw std::runtime_error("WIC Factory not created correctly.");
         }
     }
 
@@ -159,10 +155,10 @@ namespace jela
                         { ".ttf", ".otf" }
                     };
 
-                if (const HRESULT hr = Initialize(fullPath); !SUCCEEDED(hr))
+                if (const HResultHandler hr = Initialize(fullPath); hr.Failed())
                     throw FileLoadException{
                         std::format("Font {} wasn't initialized properly. HRESULT Error value: {}.",
-                                    std::filesystem::path{ fontName }.string(), hr)
+                                    std::filesystem::path{ fontName }.string(), hr.Get())
                     };
             }
             catch (...)
@@ -179,12 +175,18 @@ namespace jela
 
     Font::~Font()
     {
+        if (!ENGINE.IsQuitting())
+        {
+            if (const auto mngr = ENGINE.ResourceMngr(); this == mngr->GetCurrentFont())
+                mngr->SetDefaultFont();
+        }
+
         SafeRelease(&m_pFontCollection);
     }
 
-    HRESULT Font::Initialize(const std::wstring& fontName)
+    HResultHandler Font::Initialize(const std::wstring& fontName)
     {
-        HRESULT hr = S_OK;
+        HResultHandler hr{};
 
         IDWriteFontSetBuilder1* pFontSetBuilder{ nullptr };
         IDWriteFontSet* pFontSet{ nullptr };
@@ -192,13 +194,13 @@ namespace jela
         m_pFontCollection = nullptr;
 
         hr = m_pDWriteFactory->CreateFontSetBuilder(&pFontSetBuilder);
-        if (SUCCEEDED(hr)) hr = m_pDWriteFactory->CreateFontFileReference(fontName.c_str(), NULL, &pFontFile);
+        if (hr.Succeeded()) hr = m_pDWriteFactory->CreateFontFileReference(fontName.c_str(), nullptr, &pFontFile);
 
-        if (SUCCEEDED(hr)) hr = pFontSetBuilder->AddFontFile(pFontFile);
+        if (hr.Succeeded()) hr = pFontSetBuilder->AddFontFile(pFontFile);
 
-        if (SUCCEEDED(hr)) hr = pFontSetBuilder->CreateFontSet(&pFontSet);
+        if (hr.Succeeded()) hr = pFontSetBuilder->CreateFontSet(&pFontSet);
 
-        if (SUCCEEDED(hr)) hr = m_pDWriteFactory->CreateFontCollectionFromFontSet(pFontSet, &m_pFontCollection);
+        if (hr.Succeeded()) hr = m_pDWriteFactory->CreateFontCollectionFromFontSet(pFontSet, &m_pFontCollection);
 
         IDWriteFontFamily* pFontFamily{ nullptr };
         IDWriteLocalizedStrings* pStrings{ nullptr };
@@ -206,19 +208,19 @@ namespace jela
         UINT32 length{};
         std::wstring name{};
 
-        if (SUCCEEDED(hr)) hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
+        if (hr.Succeeded() && m_pFontCollection) hr = m_pFontCollection->GetFontFamily(0, &pFontFamily);
 
-        if (SUCCEEDED(hr)) hr = pFontFamily->GetFamilyNames(&pStrings);
+        if (hr.Succeeded()) hr = pFontFamily->GetFamilyNames(&pStrings);
 
-        if (SUCCEEDED(hr)) hr = pStrings->GetStringLength(0, &length);
+        if (hr.Succeeded()) hr = pStrings->GetStringLength(0, &length);
 
-        if (SUCCEEDED(hr))
+        if (hr.Succeeded())
         {
             name.resize(length);
             hr = pStrings->GetString(0, &name[0], length + 1);
         }
 
-        if (SUCCEEDED(hr)) m_FontName = name;
+        if (hr.Succeeded()) m_FontName = name;
 
         SafeRelease(&pFontSetBuilder);
         SafeRelease(&pFontSet);
@@ -233,10 +235,12 @@ namespace jela
     {
         if (!m_pDWriteFactory)
         {
-            DWriteCreateFactory(
+            HResultHandler hr{};
+            hr = DWriteCreateFactory(
                 DWRITE_FACTORY_TYPE_SHARED,
                 __uuidof(IDWriteFactory5),
                 reinterpret_cast<IUnknown**>(&m_pDWriteFactory));
+            if (hr.Failed()) throw std::runtime_error("DWrite Factory not created correctly.");
         }
     }
 
@@ -248,7 +252,8 @@ namespace jela
 
     TextFormat::TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign)
     {
-        Font::m_pDWriteFactory->CreateTextFormat(
+        HResultHandler hr{};
+        hr = Font::m_pDWriteFactory->CreateTextFormat(
             ENGINE.GetCurrentFont()->m_FontName.c_str(),
             ENGINE.GetCurrentFont()->m_pFontCollection,
             bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
@@ -258,6 +263,7 @@ namespace jela
             L"en-us",
             &m_pTextFormat);
 
+        assert(hr.Succeeded());
         assert((m_pTextFormat) && _T("TextFormat was not loaded correctly"));
         m_Size = fontSize;
         SetHorizontalAllignment(horAllign);
@@ -266,45 +272,57 @@ namespace jela
 
     TextFormat::~TextFormat()
     {
+        if (!ENGINE.IsQuitting())
+        {
+            if (const auto mngr = ENGINE.ResourceMngr(); this == mngr->GetCurrentTextFormat())
+                mngr->SetDefaultTextFormat();
+        }
+
         SafeRelease(&m_pTextFormat);
     }
 
-    void TextFormat::SetHorizontalAllignment(HorAllignment allignment)
+    // ReSharper disable once CppMemberFunctionMayBeConst
+    HResultHandler TextFormat::SetHorizontalAllignment(HorAllignment allignment)
     {
+        HResultHandler hr{};
         switch (allignment)
         {
             case HorAllignment::Left:
-                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
                 break;
             case HorAllignment::Center:
-                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
                 break;
             case HorAllignment::Right:
-                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
                 break;
             case HorAllignment::Justified:
-                if (m_pTextFormat) m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
                 break;
         }
+        return hr;
     }
 
-    void TextFormat::SetVerticalAllignment(VertAllignment allignment)
+    // ReSharper disable once CppMemberFunctionMayBeConst
+    HResultHandler TextFormat::SetVerticalAllignment(VertAllignment allignment)
     {
+        HResultHandler hr{};
         switch (allignment)
         {
             case VertAllignment::Top:
-                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+                if (m_pTextFormat) hr = m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
                 break;
             case VertAllignment::Center:
-                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+                if (m_pTextFormat) hr = m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
                 break;
             case VertAllignment::Bottom:
-                if (m_pTextFormat) m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+                if (m_pTextFormat) hr = m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
                 break;
         }
+        return hr;
     }
 
-    void TextFormat::SetFont(const Font* const pFont)
+    HResultHandler TextFormat::SetFont(const Font* const pFont)
     {
         const auto vertAllign = m_pTextFormat->GetParagraphAlignment();
         const auto horAllign = m_pTextFormat->GetTextAlignment();
@@ -314,7 +332,8 @@ namespace jela
 
         SafeRelease(&m_pTextFormat);
 
-        Font::m_pDWriteFactory->CreateTextFormat(
+        HResultHandler hr{};
+        hr = Font::m_pDWriteFactory->CreateTextFormat(
             pFont->m_FontName.c_str(),
             pFont->m_pFontCollection,
             weight,
@@ -324,10 +343,15 @@ namespace jela
             L"en-us",
             &m_pTextFormat);
 
+
+        assert(hr.Succeeded());
         assert((m_pTextFormat) && _T("TextFormat was not loaded correctly"));
 
-        m_pTextFormat->SetTextAlignment(horAllign);
-        m_pTextFormat->SetParagraphAlignment(vertAllign);
+        hr = m_pTextFormat->SetTextAlignment(horAllign);
+        if (hr.Succeeded())
+            hr = m_pTextFormat->SetParagraphAlignment(vertAllign);
+
+        return hr;
     }
 
 
@@ -338,12 +362,11 @@ namespace jela
 
     void ResourceManager::Start()
     {
-        GetFont(_T("Verdana"), m_pDefaultFont);
-        SetCurrentFont(m_pDefaultFont.pObject);
+        SetDefaultFont();
 
         m_pDefaultTextFormat = std::make_unique<TextFormat>(12.f, false, false, TextFormat::HorAllignment::Left,
                                                             TextFormat::VertAllignment::Top);
-        SetCurrentTextFormat(m_pDefaultTextFormat.get());
+        SetDefaultTextFormat();
     }
 
     void ResourceManager::GetTexture(const tstring& file, ResourcePtr<Texture>& resourcePtr)
@@ -355,7 +378,7 @@ namespace jela
         }
         catch (const FileException& e)
         {
-            MessageBoxA(ENGINE.GetWindow(), e.what(), "ERROR", MB_OK | MB_ICONERROR);
+            ENGINE.NotifyException(e.what());
             OutputDebugStringA(e.what());
             m_MapTextures.erase(file);
             resourcePtr = ResourcePtr<Texture>{};
@@ -391,7 +414,7 @@ namespace jela
         }
         catch (const FileException& e)
         {
-            MessageBoxA(ENGINE.GetWindow(), e.what(), "ERROR", MB_OK | MB_ICONERROR);
+            ENGINE.NotifyException(e.what());
             OutputDebugStringA(e.what());
             m_MapFonts.erase(fontName);
             resourcePtr = ResourcePtr<Font>{};
@@ -418,41 +441,49 @@ namespace jela
         m_MapFonts.clear();
     }
 
-    void ResourceManager::SetCurrentFont(const Font* const pFont)
+    void ResourceManager::SetCurrentFont(const Font* pFont)
     {
-        if (pFont != m_pCurrentFont)
-        {
-            if (pFont == nullptr && pFont != m_pDefaultFont.pObject)
-            {
-                m_pCurrentFont = m_pDefaultFont.pObject;
-                OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
-            }
-            else m_pCurrentFont = pFont;
+        if (pFont == m_pCurrentFont) return;
 
-            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+        if (pFont == nullptr)
+        {
+            m_pCurrentFont = m_pDefaultFont.get();
+            OutputDebugString(_T("ERROR! New Font was 'nullptr'. Continuing with default Font!\n"));
         }
+        else m_pCurrentFont = pFont;
+
+        m_OnFontChange.NotifyObservers(m_pCurrentFont);
     }
 
-    void ResourceManager::SetCurrentTextFormat(TextFormat* const pTextFormat)
+    void ResourceManager::SetCurrentTextFormat(TextFormat* pTextFormat)
     {
-        if (pTextFormat != m_pCurrentTextFormat)
+        if (pTextFormat == m_pCurrentTextFormat) return;
+
+        m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
+
+        if (pTextFormat == nullptr)
         {
-            m_OnFontChange.RemoveObserver(m_pCurrentTextFormat);
-
-            if (pTextFormat == nullptr && pTextFormat != m_pDefaultTextFormat.get())
-            {
-                m_pCurrentTextFormat = m_pDefaultTextFormat.get();
-                OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
-            }
-            else m_pCurrentTextFormat = pTextFormat;
-
-            m_OnFontChange.AddObserver(m_pCurrentTextFormat);
-
-            m_OnFontChange.NotifyObservers(m_pCurrentFont);
+            m_pCurrentTextFormat = m_pDefaultTextFormat.get();
+            OutputDebugString(_T("ERROR! New TextFormat was 'nullptr'. Continuing with default TextFormat!\n"));
         }
+        else m_pCurrentTextFormat = pTextFormat;
+
+        m_OnFontChange.AddObserver(m_pCurrentTextFormat);
+
+        m_OnFontChange.NotifyObservers(m_pCurrentFont);
     }
 
-    ResourceManager* const ResourceManager::GetResourceManager()
+    void ResourceManager::SetDefaultFont()
+    {
+        m_pCurrentFont = nullptr;
+        GetFont(_T("Verdana"), m_pDefaultFont);
+        SetCurrentFont(m_pDefaultFont.get());
+    }
+    void ResourceManager::SetDefaultTextFormat()
+    {
+        SetCurrentTextFormat(m_pDefaultTextFormat.get());
+    }
+    ResourceManager* ResourceManager::GetResourceManager()
     {
         return ENGINE.ResourceMngr();
     }

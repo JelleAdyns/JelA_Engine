@@ -1,3 +1,6 @@
+// ReSharper disable CppDFAUnusedValue
+// ReSharper disable CppDFAUnreachableCode
+// ReSharper disable CppDFAConstantConditions
 #include "Geometry.h"
 #include "Engine.h"
 #include <algorithm>
@@ -8,10 +11,49 @@ namespace jela
 {
 	//--------------------------------------------------------------------------------------------------------------------
 	// Geometry
-	HRESULT Geometry::Recreate()
+	Geometry::Geometry(const Geometry& other):
+		m_Translation{other.m_Translation}
 	{
-		SafeRelease(&m_pGeo);
-		return ENGINE.GetFactory()->CreatePathGeometry(&m_pGeo);
+		HResultHandler hr = Recreate();
+		if (hr.Failed())
+		{
+			SafeRelease(&m_pGeo);
+			return;
+		}
+
+		assert((m_pGeo));
+		assert((other.m_pGeo));
+		ID2D1GeometrySink* pSink{};
+		hr = m_pGeo->Open(&pSink);
+		if (hr.Succeeded()) hr = other.m_pGeo->Stream(pSink);
+		if (hr.Succeeded()) hr = pSink->Close();
+
+		SafeRelease(&pSink);
+	}
+	Geometry::Geometry(Geometry&& other) noexcept:
+		m_Translation{std::exchange(other.m_Translation, {})},
+		m_pGeo{std::exchange(other.m_pGeo, nullptr)}
+	{
+	}
+	Geometry& Geometry::operator=(const Geometry& other)
+	{
+		Geometry{other}.swap(*this);
+		return *this;
+	}
+	Geometry& Geometry::operator=(Geometry&& other) noexcept
+	{
+		Geometry{std::move(other)}.swap(*this);
+		return *this;
+	}
+	HRESULT Geometry::Recreate(bool releasePrevious)
+	{
+		if (releasePrevious) SafeRelease(&m_pGeo);
+		return ENGINE.Get2DFactory().get()->CreatePathGeometry(&m_pGeo);
+	}
+	void Geometry::swap(Geometry& other) noexcept
+	{
+		std::swap(m_Translation, other.m_Translation);
+		std::swap(m_pGeo, other.m_pGeo);
 	}
 	//--------------------------------------------------------------------------------------------------------------------
 
@@ -24,49 +66,48 @@ namespace jela
 		m_Points{points}
 	{
 		AdjustPoints([&](Point2f& point) { point += GetTranslation(); });
-		Recreate(points, closeSegment);
+		if (!Recreate(points, closeSegment))
+			OutputDebugString(std::format(_T("Creation of Polygon failed!\n")).c_str());
 	}
+
 	bool Polygon::Recreate(const std::vector<Point2f>& points, bool closeSegment)
 	{
-		HRESULT hr = Geometry::Recreate();
+		HRESULT hr = S_OK;
 
 		m_Points = points;
+		if (m_Points.empty()) return false;
 
-		if (!m_Points.empty())
+		hr = Geometry::Recreate();
+
+
+		if (!SUCCEEDED(hr)) return false;
+
+		const auto pGeo = GetGeometry();
+		if (!pGeo) return false;
+
+		ID2D1GeometrySink* pSink{};
+		hr = pGeo->Open(&pSink);
+
+		if (SUCCEEDED(hr))
 		{
-			ID2D1GeometrySink* pSink{};
+			std::vector<D2D1_POINT_2F> D2points(m_Points.size());
 
-			if (SUCCEEDED(hr))
+			const auto windowHeight = ENGINE.GetGameSize().y;
+			for (size_t i = 0; i < m_Points.size(); i++)
 			{
-				hr = GetGeometry()->Open(&pSink);
+				auto pointY = m_Points[i].y;
+				if (USE_MATHEMATICAL_COORDINATESYSTEM) pointY = windowHeight - pointY;
+				D2points[i] = D2D1::Point2F(m_Points[i].x, pointY);
 			}
-			if (SUCCEEDED(hr))
-			{
 
-				std::vector<D2D1_POINT_2F> D2points(m_Points.size());
+			pSink->BeginFigure(D2points.front(), D2D1_FIGURE_BEGIN_FILLED);
+			pSink->AddLines(D2points.data(), static_cast<UINT32>(D2points.size()));
+			pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
 
-				for (size_t i = 0; i < m_Points.size(); i++)
-				{
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-
-					D2points[i] = D2D1::Point2F(m_Points[i].x, ENGINE.GetWindowRect().height - m_Points[i].y);
-#else
-					D2points[i] = D2D1::Point2F(m_Points[i].x, m_Points[i].y);
-
-#endif // MATHEMATICAL_COORDINATESYSTEM
-				}
-
-				pSink->BeginFigure(D2points.front(), D2D1_FIGURE_BEGIN_FILLED);
-                pSink->AddLines(D2points.data(), static_cast<UINT32>(D2points.size()));
-                pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-            }
-
-            HRESULT closeHr = pSink->Close();
-            if (SUCCEEDED(hr)) hr = closeHr;
-
-            SafeRelease(&pSink);
-
+			hr = pSink->Close();
 		}
+        SafeRelease(&pSink);
+
 		return hr == S_OK;
 	}
 
@@ -115,7 +156,7 @@ namespace jela
         //    and count how often it hits any side of the polygon.
 		//    If the number of hits is even, it's outside of the polygon, if it's odd, it's inside.
 		int numberOfIntersectionPoints{ 0 };
-		Point2f p2{ xMax + 10, yMax + 20 }; // random point outside the box
+		const Point2f p2{ xMax + 10, yMax + 20 }; // random point outside the box
 
 		// Count the number of intersection points
 		float lambda1{}, lambda2{};
@@ -146,7 +187,12 @@ namespace jela
 		m_Angle{angle}
 	{
 		SetPosition(centerX,centerY);
-		Recreate(radiusX, radiusY, startAngle, angle, closeSegment);
+		if (!Recreate(radiusX, radiusY, startAngle, angle, closeSegment))
+		{
+			OutputDebugString(std::format(_T("Creation of Arc failed! Tried to create an arc with:\n"
+									"center: ({}, {})\nradius: (x:{}, y:{})\nstart angle: {}\nangle: {}\nclose segments: {} "),
+				centerX,centerY,radiusX,radiusY,startAngle,angle, closeSegment).c_str());
+		}
 	}
 	Arc::Arc(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
 		Arc{ center.x, center.y, radiusX, radiusY, startAngle, angle, closeSegment }
@@ -154,7 +200,12 @@ namespace jela
 	Arc::Arc(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment) :
 		Geometry{}
 	{
-		Recreate(point1, point2, clockwise, closeSegment);
+		if (!Recreate(point1, point2, clockwise, closeSegment))
+		{
+			OutputDebugString(std::format(_T("Creation of Arc failed! Tried to create an arc with:\n"
+									"point 1: ({}, {})\npoint 2: ({}, {})\nclockwise: {}\nclose segments: {} "),
+				point1.x,point1.y,point2.x,point2.y,clockwise,closeSegment).c_str());
+		}
 	}
 
 	bool Arc::Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment)
@@ -174,45 +225,43 @@ namespace jela
 		while (startAngle >= 360.f) startAngle -= 360;
 		while (startAngle <= -360.f) startAngle += 360;
 
-		Geometry::Recreate();
+		HRESULT hr = Geometry::Recreate();
+
+		if (!SUCCEEDED(hr)) return false;
+
+		const auto pGeo = GetGeometry();
+		if (!pGeo) return false;
 
 		ID2D1GeometrySink* pSink;
-
-		HRESULT hr = GetGeometry()->Open(&pSink);
+		hr = pGeo->Open(&pSink);
 
 		if (SUCCEEDED(hr))
 		{
-			auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
-			auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
+			const auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
+			const auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
+			const auto windowHeight = ENGINE.GetGameSize().y;
 
-			auto beginPoint = D2D1::Point2F(radiusX * std::cosf(startRad), ENGINE.GetWindowRect().height - (radiusY * std::sinf(startRad)));
-			auto endPoint = D2D1::Point2F(radiusX * std::cosf(endRad), ENGINE.GetWindowRect().height - (radiusY * std::sinf(endRad)));
-#else
-			auto beginPoint = D2D1::Point2F(radiusX * std::cosf(startRad), - radiusY * std::sinf(startRad));
-			auto endPoint = D2D1::Point2F(radiusX * std::cosf(endRad), - radiusY * std::sinf(endRad));
+			const auto startX = radiusX * std::cosf(startRad);
+			auto startY = radiusY * std::sinf(startRad);
+			if (USE_MATHEMATICAL_COORDINATESYSTEM) startY = windowHeight - startY;
 
-#endif // MATHEMATICAL_COORDINATESYSTEM
+			const auto endX = radiusX * std::cosf(endRad);
+			auto endY = radiusY * std::sinf(endRad);
+			if (USE_MATHEMATICAL_COORDINATESYSTEM) endY = windowHeight - endY;
 
-			D2D1_ARC_SEGMENT arcSegment{
-				endPoint,
+			const D2D1_ARC_SEGMENT arcSegment{
+				D2D1::Point2F(endX, endY),
 				D2D1::SizeF(radiusX, radiusY),
 				0,
 				D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
 				std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
 			};
 
-			pSink->BeginFigure(beginPoint, D2D1_FIGURE_BEGIN_FILLED);
+			pSink->BeginFigure(D2D1::Point2F(startX, startY), D2D1_FIGURE_BEGIN_FILLED);
 			pSink->AddArc(arcSegment);
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-
-			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, ENGINE.GetWindowRect().height));
-#else
-			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, 0));
-
-#endif // MATHEMATICAL_COORDINATESYSTEM
+			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, USE_MATHEMATICAL_COORDINATESYSTEM ? windowHeight : 0));
 
 			pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
 			hr = pSink->Close();
@@ -238,19 +287,17 @@ namespace jela
 
 		m_Angle = clockwise ? -90.f : 90.f;
 
-        const auto& swapCenterPoint = [&](bool xComparison) // CP1  _____P2
-        { //	   /
-            if (xComparison) m_StartAngle += 90; //	  /
+        const auto& swapCenterPoint = [&](bool xComparison)					// CP1  _____P2
+        {																			//	   /
+            if (xComparison) m_StartAngle += 90;									//	  /
 			if (xComparison == clockwise) SetPosition(point1.x, point2.y);			//   |
 		};																			//	 |
 																					// P1		 CP2
 		SetPosition(point2.x, point1.y);
 
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-		if (point1.y >= point2.y)
-#else
-		if (point1.y <= point2.y)
-#endif
+		if (USE_MATHEMATICAL_COORDINATESYSTEM ?
+			(point1.y >= point2.y) :
+			(point1.y <= point2.y))
 		{
 			m_StartAngle = 0;
 			swapCenterPoint(point1.x <= point2.x);

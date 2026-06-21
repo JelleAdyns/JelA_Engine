@@ -16,8 +16,8 @@ namespace jela
 	{
 		Point2f() = default;
 		explicit Point2f(float x, float y);
-		float x;
-		float y;
+		float x{};
+		float y{};
 
 		bool operator==(const Point2f& rhs) const;
 		bool operator!=(const Point2f& rhs) const;
@@ -29,12 +29,20 @@ namespace jela
 	{
 		Rectf() = default;
 		explicit Rectf(float left, float bottom, float width, float height);
-		explicit Rectf(const Point2f& leftBottom, float width, float height);
+		explicit Rectf(const Point2f& bottomLeft, float width, float height);
+		explicit Rectf(const Point2f& bottomLeft, const Point2f& topRight);
 
-		float left;
-		float bottom;
-		float width;
-		float height;
+		float Right() { return left + width; }
+		float Top() { return bottom + height; }
+		Point2f BottomLeft() { return Point2f{left, bottom}; }
+		Point2f BottomRight() { return Point2f{Right(), bottom}; }
+		Point2f TopLeft() { return Point2f{left, Top()}; }
+		Point2f TopRight() { return Point2f{Right(), Top()}; }
+
+		float left{};
+		float bottom{};
+		float width{};
+		float height{};
 	};
 #else
 	struct Rectf
@@ -42,12 +50,20 @@ namespace jela
 	public:
 		Rectf() = default;
 		explicit Rectf(float left, float top, float width, float height);
-		explicit Rectf(const Point2f& leftTop, float width, float height);
+		explicit Rectf(const Point2f& topLeft, float width, float height);
+		explicit Rectf(const Point2f& topLeft, const Point2f& bottomRight);
 
-		float left;
-		float top;
-		float width;
-		float height;
+		float Right() { return left + width; }
+		float Bottom() { return top + height; }
+		Point2f BottomLeft() { return Point2f{left, Bottom()}; }
+		Point2f BottomRight() { return Point2f{Right(), Bottom()}; }
+		Point2f TopLeft() { return Point2f{left, top}; }
+		Point2f TopRight() { return Point2f{Right(), top}; }
+
+		float left{};
+		float top{};
+		float width{};
+		float height{};
 	};
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
@@ -57,9 +73,9 @@ namespace jela
 		explicit Ellipsef(float xCenter, float yCenter, float xRadius, float yRadius);
 		explicit Ellipsef(const Point2f& center, float xRadius, float yRadius);
 
-		Point2f center;
-		float radiusX;
-		float radiusY;
+		Point2f center{};
+		float radiusX{};
+		float radiusY{};
 	};
 
 	struct Circlef
@@ -68,8 +84,8 @@ namespace jela
 		explicit Circlef(float xCenter, float yCenter, float radius);
 		explicit Circlef(const Point2f& center, float radius);
 
-		Point2f center;
-		float rad;
+		Point2f center{};
+		float rad{};
 	};
 
 
@@ -129,9 +145,9 @@ namespace jela
 		Vector2f Orthogonal() const;
 
 
-		float x;
-		float y;
-	};
+        float x{};
+        float y{};
+    };
 
 	Vector2f operator*(cArithmetic auto lhs, Vector2f rhs)
 	{

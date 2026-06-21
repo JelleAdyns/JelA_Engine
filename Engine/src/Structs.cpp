@@ -25,12 +25,22 @@ namespace jela
 		width{ width },
 		height{ height }
 	{}
-	Rectf::Rectf(const Point2f& leftBottom, float width, float height) :
-		left{ leftBottom.x },
-		bottom{ leftBottom.y },
+
+	Rectf::Rectf(const Point2f& bottomLeft, float width, float height) :
+		left{bottomLeft.x},
+		bottom{bottomLeft.y},
 		width{ width },
 		height{ height }
 	{}
+
+	Rectf::Rectf(const Point2f& bottomLeft, const Point2f& topRight) :
+		left{bottomLeft.x},
+		bottom{bottomLeft.y},
+		width{topRight.x - bottomLeft.x},
+		height{topRight.y - bottomLeft.y}
+	{
+		assert((topRight.x >= bottomLeft.x && topRight.y >= bottomLeft.y));
+	}
 #else
 	Rectf::Rectf(float left, float top, float width, float height) :
 		left{ left },
@@ -38,12 +48,20 @@ namespace jela
 		width{ width },
 		height{ height }
 	{}
-	Rectf::Rectf(const Point2f& leftTop, float width, float height) :
-		left{ leftTop.x },
-		top{ leftTop.y },
-		width{ width },
+	Rectf::Rectf(const Point2f& topLeft, float width, float height) :
+		left{topLeft.x},
+		top{topLeft.y},
+		width{width },
 		height{ height }
 	{}
+	Rectf::Rectf(const Point2f& topLeft, const Point2f& bottomRight) :
+		left{topLeft.x},
+		top{topLeft.y},
+		width{bottomRight.x - topLeft.x},
+		height{bottomRight.y - topLeft.y}
+	{
+		assert((bottomRight.x >= topLeft.x && bottomRight.y >= topLeft.y));
+	}
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
 
@@ -100,13 +118,13 @@ namespace jela
 	}
 	Vector2f Vector2f::Reflect(const Vector2f& vector, const Vector2f& surfaceNormal)
 	{
-		return vector - (2.f * Dot(vector, surfaceNormal.Normalized()) * surfaceNormal.Normalized());
+		const auto n = surfaceNormal.Normalized();
+		return vector - (2.f * Dot(vector, n) * n);
 	}
 
 	tstring Vector2f::ToString(uint8_t decimalPrecision) const
 	{
-		return _T("( ") + std::format(_T("{:.{}f}"), x, decimalPrecision) +
-			_T(", ") + std::format(_T("{:.{}f}"), y, decimalPrecision) + _T(" )");
+		return std::format(_T("( {1:.{0}f}, {2:.{0}f} )"), decimalPrecision, x, y);
 	}
 	float Vector2f::Length() const
 	{

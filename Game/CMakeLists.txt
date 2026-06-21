@@ -37,10 +37,9 @@ add_dependencies(${PROJECT_NAME} copyResources)
 #Filter the Source files
 source_group("src" REGULAR_EXPRESSION ".cpp|.h")
 
-#Define MATHEMATICAL_COORDINATESYSTEM to position the origin at the bottom-left corner of the screen
-#When not defined, the origin is positioned at the top-left corner of the screen
-target_compile_definitions(JelA_Engine PRIVATE MATHEMATICAL_COORDINATESYSTEM)
-
+if(USE_MATHEMATICAL_COORDINATESYSTEM)
+target_compile_definitions(JelA_Engine PUBLIC MATHEMATICAL_COORDINATESYSTEM)
+endif()
 #Link Visual Leak Detector for MSVC
 if (MSVC)
     find_path(VLD_INCLUDE_DIR vld.h PATHS "C:/Program Files (x86)/Visual Leak Detector/include")
