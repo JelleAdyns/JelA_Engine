@@ -23,3 +23,4 @@ The JelA Engine is **free to use** for all types of users. In case of experienci
 Here you can find personal projects that were made with the JelA Engine:
 - [The Clashing Elements: The Game](https://github.com/JelleAdyns/TheClashingElements-SaviorsOfTheMultiverse-Game) (Unofficial Engine version)
 - [In Plane Sight](https://github.com/JelleAdyns/GA_Project) (Unofficial Engine version)
+- [Grad work - SAT VS GJK](https://github.com/JelleAdyns/SATvsGJK_GradWork) (JelA Engine Version 1.1.0)
