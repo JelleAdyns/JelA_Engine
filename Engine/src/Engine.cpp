@@ -232,7 +232,6 @@ namespace jela
                 {
                     if (m_IsFullscreen) SetWindowPosition(true, true);
                     else SetFullscreen();
-                    m_IsFullscreen = !m_IsFullscreen;
                 }
 
                 m_pGame->KeyUp(static_cast<int>(wParam));
@@ -862,7 +861,7 @@ namespace jela
     {
         m_GameWidth = width;
         m_GameHeight = height;
-        if(refreshWindowPos) SetWindowPosition(false, true);
+        SetWindowPosition(refreshWindowPos, true);
     }
     void Engine::SetWindowScale(float scale)
     {
@@ -897,6 +896,8 @@ namespace jela
             }
 
             ::SetWindowPos(m_hWindow, nullptr, m_WindowPosX, m_WindowPosY, windowWidth, windowHeight, SWP_FRAMECHANGED);
+
+            m_IsFullscreen = false;
         }
 
         if (m_pGame)
@@ -925,6 +926,7 @@ namespace jela
             m_WindowPosY = mi.rcMonitor.top;
 
             ::SetWindowPos(m_hWindow, nullptr, m_WindowPosX, m_WindowPosY, m_WindowWidth, m_WindowHeight, SWP_FRAMECHANGED);
+            m_IsFullscreen = true;
         }
         if (m_pGame)
         {
