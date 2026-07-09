@@ -325,6 +325,15 @@ namespace jela
         bool IntersectLines(const Vector2f& l1, const Point2f& origin1, const Vector2f& l2, const Point2f& origin2);
         bool IntersectLineSegments(const Point2f& p1, const Point2f& p2, const Point2f& q1, const Point2f& q2, float& line1Interpolation, float& line2Interpolation);
         Intersections IntersectRectLine(const Rectf& r, const Point2f& p1, const Point2f& p2, std::pair<Point2f, Point2f>& intersections);
+
+        template <std::swappable E>
+        static void SwapEraseOnVector(std::vector<E>& v, size_t idx)
+        {
+            if (idx >= v.size()) throw std::out_of_range{"Index out of range"};
+
+            v[idx].swap(v.back());
+            v.pop_back();
+        }
     }
     //---------------------------------------------------------------
 }
