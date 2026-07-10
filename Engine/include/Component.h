@@ -1,6 +1,6 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
-#include <set>
+#include <assert.h>
 
 #include "Audio.h"
 
@@ -27,6 +27,12 @@ namespace jela
             else return DEFAULT_MAX_AMOUNT;
         }
 
+        static void SetDefaultMaxAmount(std::size_t maxAmount)
+        {
+            assert(maxAmount > 0);
+            DEFAULT_MAX_AMOUNT = maxAmount;
+        }
+
         virtual ~Component()
         {
             OutputDebugString(_T("Component Destructor!\n"));
@@ -42,7 +48,7 @@ namespace jela
         public:
             static constexpr bool value = std::is_same_v<decltype(test<T>(0)), std::true_type>;
         };
-        static constexpr std::size_t DEFAULT_MAX_AMOUNT { 20 };
+        static inline std::size_t DEFAULT_MAX_AMOUNT { 20 };
 
     };
 
