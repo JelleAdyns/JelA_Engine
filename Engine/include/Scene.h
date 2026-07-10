@@ -8,7 +8,6 @@
 #include "Component.h"
 #include "ComponentAllocator.h"
 #include "Engine.h"
-#include "FixedSizeAllocator.h"
 
 namespace jela
 {
@@ -23,10 +22,9 @@ namespace jela
             static AnyComponent make_component(Args... args)
             {
                 const auto& typeID = typeid(T);
-                OutputDebugStringA(std::format("Name T: {}\n",typeID.name()).c_str());
                 if (!m_Allocs.contains(typeID))
                 {
-                    auto [it, succeeded] = m_Allocs.try_emplace(typeID, sizeof(T), alignof(T), T::GetMaxAmount());
+                    auto [it, succeeded] = m_Allocs.try_emplace(typeID, sizeof(T), alignof(T), Component::GetAmount<T>());
                     if (!succeeded) throw std::runtime_error{std::format("Couldn't add typeID '{}'.", typeID.name())};
                 }
 

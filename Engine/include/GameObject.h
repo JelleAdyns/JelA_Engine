@@ -15,6 +15,7 @@ namespace jela
             m_pScene{scene}
         {
             AddComponent<derived>();
+            AddComponent<derived2>();
             const auto comp = GetComponent<derived>();
             comp->kaas = 4;
         };
