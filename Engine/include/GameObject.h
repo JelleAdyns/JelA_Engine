@@ -22,30 +22,40 @@ namespace jela
         template <cDerivedComponent T, typename ...Args>
         void AddComponent(Args&&... args)
         {
-            if (!HasComponent<T>()) m_Components[typeid(T)] = m_pScene.AddComponent<T>(args...);
+            if (const auto& typeID = typeid(T);
+                !HasComponent(typeID))
+            {
+                m_Components[typeID] = m_pScene.AddComponent<T>(args...);
+            }
             else throw std::runtime_error("Object already owns a reference to an instance of the passed component type." );
         }
 
         template <cDerivedComponent T>
         void RemoveComponent()
         {
-            if (HasComponent<T>())
+            if (const auto& typeID = typeid(T);
+                HasComponent(typeID))
             {
-                const auto index = m_Components.at(typeid(T));
-                m_pScene.RemoveComponent<T>(index);
-                m_Components.erase(typeid(T));
+                const auto index = m_Components.at(typeID);
+                m_pScene.RemoveComponent(index);
+                m_Components.erase(typeID);
             }
         }
 
         template <cDerivedComponent T>
         T* GetComponent() const
         {
-            if (HasComponent<T>()) return m_pScene.GetComponent<T>(m_Components.at(typeid(T)));
+            if (const auto& typeID = typeid(T);
+                HasComponent(typeID))
+            {
+                return m_pScene.GetComponent<T>(m_Components.at(typeID));
+            }
             throw std::runtime_error("Object doesn't own a reference to an instance of the passed component type.");
         }
 
         template <cDerivedComponent T>
-        bool HasComponent() const { return m_Components.contains(typeid(T)); }
+        bool HasComponent() const { return HasComponent(typeid(T)); }
+        bool HasComponent(const std::type_index& typeID) const { return m_Components.contains(typeID); }
 
     private:
 

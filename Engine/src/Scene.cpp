@@ -7,12 +7,12 @@ namespace jela
         if (m_pComponent)
         {
             m_pComponent->~Component();
-            operator delete(m_pComponent, m_Alloc);
+            operator delete(m_pComponent, m_Allocs.at(m_TypeID));
         }
     }
     Scene::AnyComponent::AnyComponent(AnyComponent&& other) noexcept:
         m_pComponent{std::exchange(other.m_pComponent, nullptr)},
-        m_Alloc{other.m_Alloc}
+        m_TypeID{other.m_TypeID}
     {}
     Scene::AnyComponent& Scene::AnyComponent::operator=(AnyComponent&& other) noexcept
     {
@@ -22,5 +22,6 @@ namespace jela
     void Scene::AnyComponent::swap(AnyComponent& other) noexcept
     {
         std::swap(m_pComponent, other.m_pComponent);
+        std::swap(m_TypeID, other.m_TypeID);
     }
 }

@@ -48,11 +48,7 @@ namespace jela
             std::memset(m_InUse, IN_USE_PATTERN, ((sizeof(bool) * m_Capacity) / m_BlockAlignment + 1) * m_BlockAlignment);
 #endif // NDEBUG
 
-            for (std::uint32_t index = 0; index < static_cast<std::uint32_t>(m_Capacity); index++)
-            {
-                SetInUse(index, false);
-            }
-
+            std::memset(m_InUse, 0, sizeof(bool) * m_Capacity);
         }
 
         ~ComponentAllocator()
@@ -94,7 +90,7 @@ namespace jela
         void Release(void* p)
         {
             const ptrdiff_t ptrDifference = static_cast<std::byte*>(p) - m_Begin;
-            const auto index = static_cast<std::size_t>(ptrDifference);
+            const auto index = static_cast<std::size_t>(ptrDifference) / m_BlockSize;
 
             if (p < m_Begin ||
                 index >= m_Capacity)
