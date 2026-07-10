@@ -10,6 +10,14 @@
 
 namespace jela
 {
+    class WrongIndexException : public std::runtime_error
+    {
+    public :
+        explicit WrongIndexException(const std::string& info) :
+            runtime_error(std::format("BadIndexException: {}", info))
+        {}
+    };
+
     class ComponentAllocator final
     {
     public:
@@ -61,27 +69,33 @@ namespace jela
             if (n > m_BlockSize)
                 throw std::length_error("Invalid block size.");
 
-            if (m_FirstFreeObjectIndex >= m_Capacity)
+            if (!m_FirstFreeObjectIndex.has_value())
+            {
+               return AllocateOverflow(n, OverflowMessage());
+            }
+
+            const auto freeIndex = m_FirstFreeObjectIndex.value();
+
+            if (freeIndex >= m_Capacity)
                 throw std::bad_alloc();
 
-            if (IsInUse(m_FirstFreeObjectIndex))
-                throw std::bad_alloc();
+            if (IsInUse(freeIndex))
+                throw WrongIndexException{"Index had a value, but was refering to a block that was already in use."};
 
-            void* block = GetAddressFromIndex(m_FirstFreeObjectIndex);
+            void* block = GetAddressFromIndex(freeIndex);
 
             // Mark as 'In Use'
-            SetInUse(m_FirstFreeObjectIndex, true);
+            SetInUse(freeIndex, true);
 
             // Find next free object
-            for (std::uint32_t index = m_FirstFreeObjectIndex + 1; index < static_cast<std::uint32_t>(m_Capacity); index++)
+            m_FirstFreeObjectIndex.reset();
+            for (std::uint32_t index = freeIndex + 1; index < static_cast<std::uint32_t>(m_Capacity); index++)
             {
                 if (!IsInUse(index))
                 {
                     m_FirstFreeObjectIndex = index;
                     break;
                 }
-
-                // throw something here
             }
 
             return block;
@@ -95,6 +109,7 @@ namespace jela
             if (p < m_Begin ||
                 index >= m_Capacity)
             {
+                if (TryDeallocateOverfow(p)) return;
                 throw std::runtime_error("Invalid pointer to release.");
             }
 
@@ -116,7 +131,7 @@ namespace jela
         const std::size_t m_Capacity;
         const std::size_t m_BlockSize;
         const std::size_t m_BlockAlignment;
-        std::uint32_t m_FirstFreeObjectIndex;
+        std::optional<std::uint32_t> m_FirstFreeObjectIndex;
 
         void* GetAddressFromIndex(std::size_t index) const
         {
@@ -132,8 +147,35 @@ namespace jela
             *(m_InUse + sizeof(bool) * index) = value;
         }
 
+        tstring OverflowMessage() const
+        {
+            return std::format(_T("ComponentAllocator with block size {}, block aligment {} and capacity {} was full when trying to allocate a component. Continuing with 'std::malloc'.\n"
+                                    "TIP: Define a 'static constexpr std::size_t MAX_AMOUNT' field in your component class to customize the max amount of that component.\n"),
+                                    m_BlockSize, m_BlockAlignment, m_Capacity);
+        }
+
         static constexpr uint8_t DATA_PATTERN = 0xAA;
         static constexpr uint8_t IN_USE_PATTERN = 0xBB;
+
+        static inline std::vector<void*> OVERFLOWED_ALLOCATIONS{};
+
+        static void* AllocateOverflow(std::size_t n, const tstring& message)
+        {
+            OutputDebugString(message.c_str());
+            return OVERFLOWED_ALLOCATIONS.emplace_back(std::malloc(n));
+        }
+        static bool TryDeallocateOverfow(void* p)
+        {
+            if (const auto it = std::ranges::find(OVERFLOWED_ALLOCATIONS, p);
+                    it != OVERFLOWED_ALLOCATIONS.cend())
+            {
+                OVERFLOWED_ALLOCATIONS.erase(it);
+                std::free(p);
+                return true;
+            }
+
+            return false;
+        }
     };
 
 }
