@@ -114,6 +114,17 @@ namespace jela
                 m_FirstFreeObjectIndex = static_cast<std::uint32_t>(index);
         }
 
+        bool IsOverflown() const
+        {
+            return m_OverflowKey && OVERFLOWED_ALLOCATIONS.contains(m_OverflowKey);
+        }
+
+        std::size_t AmountOfOverflowAllocations() const
+        {
+            if (!IsOverflown()) return 0;
+            return  OVERFLOWED_ALLOCATIONS.at(m_OverflowKey).size();
+        }
+
     private:
 
         const std::size_t m_Capacity;
@@ -125,6 +136,8 @@ namespace jela
         bool* m_InUse;
 
         std::optional<std::uint32_t> m_FirstFreeObjectIndex;
+
+        void* m_OverflowKey{nullptr};
 
         void* GetAddressFromIndex(std::size_t index) const
         {
@@ -150,24 +163,33 @@ namespace jela
         static constexpr uint8_t DATA_PATTERN = 0xAA;
         static constexpr uint8_t IN_USE_PATTERN = 0xBB;
 
-        static inline std::vector<void*> OVERFLOWED_ALLOCATIONS{};
 
-        static void* AllocateOverflow(std::size_t n, const tstring& message)
+        static inline std::unordered_map<void*, std::vector<void*>> OVERFLOWED_ALLOCATIONS{};
+
+        void* AllocateOverflow(std::size_t n, const tstring& message)
         {
             OutputDebugString(message.c_str());
-            return OVERFLOWED_ALLOCATIONS.emplace_back(std::malloc(n));
-        }
-        static bool TryDeallocateOverfow(void* p)
-        {
-            if (const auto it = std::ranges::find(OVERFLOWED_ALLOCATIONS, p);
-                    it != OVERFLOWED_ALLOCATIONS.cend())
-            {
-                OVERFLOWED_ALLOCATIONS.erase(it);
-                std::free(p);
-                return true;
-            }
 
-            return false;
+            if (m_OverflowKey == nullptr)
+                m_OverflowKey = this;
+
+            return OVERFLOWED_ALLOCATIONS[m_OverflowKey].emplace_back(std::malloc(n));
+        }
+        bool TryDeallocateOverfow(void* p) const
+        {
+            if (m_OverflowKey == nullptr) return false;
+            if (!OVERFLOWED_ALLOCATIONS.contains(m_OverflowKey)) return false;
+
+            auto& addresses = OVERFLOWED_ALLOCATIONS.at(m_OverflowKey);
+            const auto it = std::ranges::find(addresses, p);
+
+            if (it == addresses.cend()) return false;
+
+            addresses.erase(it);
+            if (addresses.empty()) OVERFLOWED_ALLOCATIONS.erase(m_OverflowKey);
+
+            std::free(p);
+            return true;
         }
     };
 
