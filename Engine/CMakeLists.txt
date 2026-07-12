@@ -7,7 +7,9 @@ file(GLOB SRC
 
 add_library(${PROJECT_NAME} STATIC ${SRC})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE YES)
+if(USE_MATHEMATICAL_COORDINATESYSTEM)
+    target_compile_definitions(JelA_Engine PUBLIC MATHEMATICAL_COORDINATESYSTEM)
+endif()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC "./include"

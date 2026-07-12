@@ -12,6 +12,11 @@ add_compile_options(/W4 /WX)
 
 add_definitions(-DUNICODE -D_UNICODE)
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 add_subdirectory(Engine)
 add_subdirectory(Game)
+add_subdirectory(Tests)
 
+if (USE_MATHEMATICAL_COORDINATESYSTEM)
+add_compile_definitions(MATHEMATICAL_COORDINATESYSTEM)
+endif ()

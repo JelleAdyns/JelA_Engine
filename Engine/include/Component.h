@@ -1,8 +1,8 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
-#include <assert.h>
-
-#include "Audio.h"
+#include <cassert>
+#include <optional>
+#include "Defines.h"
 
 namespace jela
 {
@@ -16,21 +16,29 @@ namespace jela
     class Component
     {
     public:
+        static constexpr std::size_t DEFAULT_MAX_AMOUNT { 20 };
+
         template <cDerivedComponent T>
-        static std::size_t GetAmount()
+        static constexpr std::size_t GetAmount()
         {
             if  constexpr (ComponentHasMaxAmount<T>::value)
             {
                 static_assert(std::is_same_v<const std::size_t, decltype(T::MAX_AMOUNT)>);
                 return T::MAX_AMOUNT;
             }
+            else if (!std::is_constant_evaluated())
+            {
+                if (MAX_AMOUNT.has_value())
+                    return MAX_AMOUNT.value();
+                return DEFAULT_MAX_AMOUNT;
+            }
             else return DEFAULT_MAX_AMOUNT;
         }
 
-        static void SetDefaultMaxAmount(std::size_t maxAmount)
+        static void SetMaxAmount(std::size_t maxAmount)
         {
             assert(maxAmount > 0);
-            DEFAULT_MAX_AMOUNT = maxAmount;
+            MAX_AMOUNT = maxAmount;
         }
 
         virtual ~Component()
@@ -43,12 +51,14 @@ namespace jela
         };
     private:
         template<typename T> class ComponentHasMaxAmount {
+            // ReSharper disable once CppFunctionIsNotImplemented
             template<typename> static std::false_type test(...);
+            // ReSharper disable once CppFunctionIsNotImplemented
             template<typename U> static decltype(U::MAX_AMOUNT, std::true_type()) test(int);
         public:
             static constexpr bool value = std::is_same_v<decltype(test<T>(0)), std::true_type>;
         };
-        static inline std::size_t DEFAULT_MAX_AMOUNT { 20 };
+        static inline std::optional<std::size_t> MAX_AMOUNT { 20 };
 
     };
 
@@ -76,7 +86,7 @@ namespace jela
         {
             OutputDebugString(_T("derived2 Constructor!\n"));
         };
-        static constexpr std::size_t MAX_AMOUNT { 30 };
+        static constexpr std::size_t MAX_AMOUNT { 0 };
     };
 
 }
