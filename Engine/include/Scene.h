@@ -24,7 +24,7 @@ namespace jela
                 const auto& typeID = typeid(T);
                 if (!m_Allocs.contains(typeID))
                 {
-                    auto [it, succeeded] = m_Allocs.try_emplace(typeID, sizeof(T), alignof(T), Component::GetAmount<T>());
+                    auto [it, succeeded] = m_Allocs.try_emplace(std::type_identity<T>{});
                     if (!succeeded) throw std::runtime_error{std::format("Couldn't add typeID '{}'.", typeID.name())};
                 }
 

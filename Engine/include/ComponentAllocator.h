@@ -4,52 +4,42 @@
 #include <cassert>
 #include <cstdint>
 #include <new>
-
-
-
+#include <format>
+#include "Defines.h"
 
 namespace jela
 {
-    class WrongIndexException : public std::runtime_error
-    {
-    public :
-        explicit WrongIndexException(const std::string& info) :
-            runtime_error(std::format("BadIndexException: {}", info))
-        {}
-    };
 
     class ComponentAllocator final
     {
     public:
 
-
-        explicit ComponentAllocator(std::size_t blockSize, std::size_t blockAlignment, std::size_t capacity):
+        template <cDerivedComponent T>
+        explicit ComponentAllocator(std::type_identity<T>):
+            m_Capacity{Component::GetAmount<T>()},
+            m_BlockSize{sizeof(T)},
+            m_BlockAlignment{alignof(T)},
             m_Begin{[&]()
             {
-                auto boolSize = sizeof(bool) * capacity;
+                auto boolSize = sizeof(bool) * m_Capacity;
 
                 // -------------------------------------------------------------------------------------------
                 // Add trailing padding
-                if (boolSize % blockAlignment != 0)
+                if (boolSize % m_BlockAlignment != 0)
                 {
-                    const auto boolSizeAligned = (boolSize / blockAlignment + 1) * blockAlignment;
+                    const auto boolSizeAligned = (boolSize / m_BlockAlignment + 1) * m_BlockAlignment;
                     assert(boolSizeAligned > boolSize);
-                    assert(boolSizeAligned % blockAlignment == 0);
+                    assert(boolSizeAligned % m_BlockAlignment == 0);
                     boolSize = boolSizeAligned;
                 }
                 // -------------------------------------------------------------------------------------------
 
-                return static_cast<std::byte*>(::operator new (blockSize * capacity + boolSize, std::align_val_t{blockAlignment}));
+                return static_cast<std::byte*>(::operator new (m_BlockSize * m_Capacity + boolSize, std::align_val_t{m_BlockAlignment}));
             }()},
-            m_InUse{reinterpret_cast<bool*>(m_Begin + blockSize * capacity)},
-            m_Capacity{capacity},
-            m_BlockSize{blockSize},
-            m_BlockAlignment{blockAlignment},
+            m_InUse{reinterpret_cast<bool*>(m_Begin + m_BlockSize * m_Capacity)},
             m_FirstFreeObjectIndex{0}
         {
-            assert(capacity > 0);
-            assert(blockSize > 0);
-            assert(blockSize % blockAlignment == 0);
+
 
 #ifndef NDEBUG
             std::memset(m_Begin, DATA_PATTERN, m_BlockSize * m_Capacity);
@@ -64,9 +54,9 @@ namespace jela
             ::operator delete(m_Begin, std::align_val_t{m_BlockAlignment});
         }
 
-        [[nodiscard]] void* Acquire(std::size_t n)
+        void* Acquire(std::size_t n)
         {
-            if (n > m_BlockSize)
+            if (n != m_BlockSize)
                 throw std::length_error("Invalid block size.");
 
             if (!m_FirstFreeObjectIndex.has_value())
@@ -75,12 +65,8 @@ namespace jela
             }
 
             const auto freeIndex = m_FirstFreeObjectIndex.value();
-
-            if (freeIndex >= m_Capacity)
-                throw std::bad_alloc();
-
-            if (IsInUse(freeIndex))
-                throw WrongIndexException{"Index had a value, but was refering to a block that was already in use."};
+            assert(freeIndex < static_cast<std::uint32_t>(m_Capacity));
+            assert((!IsInUse(freeIndex) && "Index had a value, but was refering to a block that was already in use."));
 
             void* block = GetAddressFromIndex(freeIndex);
 
@@ -103,6 +89,12 @@ namespace jela
 
         void Release(void* p)
         {
+            if (p == nullptr)
+            {
+                OutputDebugString(_T("Trying to release a nullptr! Returning...\n"));
+                return;
+            }
+
             const ptrdiff_t ptrDifference = static_cast<std::byte*>(p) - m_Begin;
             const auto index = static_cast<std::size_t>(ptrDifference) / m_BlockSize;
 
@@ -124,13 +116,14 @@ namespace jela
 
     private:
 
+        const std::size_t m_Capacity;
+        const std::size_t m_BlockSize;
+        const std::size_t m_BlockAlignment;
+
         // Reserved buffer
         std::byte* m_Begin;
         bool* m_InUse;
 
-        const std::size_t m_Capacity;
-        const std::size_t m_BlockSize;
-        const std::size_t m_BlockAlignment;
         std::optional<std::uint32_t> m_FirstFreeObjectIndex;
 
         void* GetAddressFromIndex(std::size_t index) const
