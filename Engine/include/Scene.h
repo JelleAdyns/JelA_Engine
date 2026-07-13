@@ -24,11 +24,11 @@ namespace jela
                 const auto& typeID = typeid(T);
                 if (!m_Allocs.contains(typeID))
                 {
-                    auto [it, succeeded] = m_Allocs.try_emplace(std::type_identity<T>{});
+                    auto [it, succeeded] = m_Allocs.try_emplace(typeID, std::type_identity<T>{});
                     if (!succeeded) throw std::runtime_error{std::format("Couldn't add typeID '{}'.", typeID.name())};
                 }
 
-                return AnyComponent{new (operator new(sizeof(T), m_Allocs.at(typeID))) T{args...}};
+                return AnyComponent{ new (m_Allocs.at(typeID)) T{args...}};
             }
 
             template <cDerivedComponent T>

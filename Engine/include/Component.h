@@ -28,8 +28,8 @@ namespace jela
             }
             else if (!std::is_constant_evaluated())
             {
-                if (MAX_AMOUNT.has_value())
-                    return MAX_AMOUNT.value();
+                if (BASE_MAX_AMOUNT.has_value())
+                    return BASE_MAX_AMOUNT.value();
                 return DEFAULT_MAX_AMOUNT;
             }
             else return DEFAULT_MAX_AMOUNT;
@@ -38,7 +38,7 @@ namespace jela
         static void SetMaxAmount(std::size_t maxAmount)
         {
             assert(maxAmount > 0);
-            MAX_AMOUNT = maxAmount;
+            BASE_MAX_AMOUNT = maxAmount;
         }
 
         virtual ~Component()
@@ -50,15 +50,17 @@ namespace jela
             OutputDebugString(_T("Component Constructor!\n"));
         };
     private:
-        template<typename T> class ComponentHasMaxAmount {
+        template<typename T> class ComponentHasMaxAmount
+        {
             // ReSharper disable once CppFunctionIsNotImplemented
             template<typename> static std::false_type test(...);
             // ReSharper disable once CppFunctionIsNotImplemented
             template<typename U> static decltype(U::MAX_AMOUNT, std::true_type()) test(int);
+
         public:
             static constexpr bool value = std::is_same_v<decltype(test<T>(0)), std::true_type>;
         };
-        static inline std::optional<std::size_t> MAX_AMOUNT { 20 };
+        static inline std::optional<std::size_t> BASE_MAX_AMOUNT {};
 
     };
 
@@ -86,7 +88,7 @@ namespace jela
         {
             OutputDebugString(_T("derived2 Constructor!\n"));
         };
-        static constexpr std::size_t MAX_AMOUNT { 0 };
+        static constexpr std::size_t MAX_AMOUNT { 20 };
     };
 
 }

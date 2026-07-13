@@ -3,7 +3,7 @@ project(Tests)
 #set(GUI_TYPE WIN32)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    message("Fetching Google Tests")
+    message(STATUS "Fetching Google Tests")
     cmake_policy(SET CMP0135 NEW)
     include(FetchContent)
     FetchContent_Declare(
@@ -13,7 +13,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
-    message("Fetching Google Tests Succesfull!")
+    message(STATUS "Fetching Google Tests Succesfull!")
 
 endif()
 

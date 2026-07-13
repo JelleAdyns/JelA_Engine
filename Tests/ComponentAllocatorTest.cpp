@@ -17,12 +17,21 @@ namespace jela
 
     public:
 
-        //static constexpr std::size_t MAX_AMOUNT{ 100 };
+        DerivedComp()
+        {
+            std::cout << "DerivedComp::DerivedComp()" << std::endl;
+            y = MAX_AMOUNT;
+        }
+        ~DerivedComp() override
+        {
+            std::cout << "DerivedComp::~DerivedComp()" << std::endl;
+        }
+        static constexpr std::size_t MAX_AMOUNT{ 100 };
 
-        double x;
-        int y;
-        bool z;
-        Component* p;
+        double x{};
+        int y{};
+        bool z{};
+        Component* p{};
     };
 
     constexpr auto BLOCK_SIZE = sizeof(DerivedComp);
@@ -48,10 +57,11 @@ namespace jela
         ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
 
         void* p{nullptr};
-        alloc.Release(p);
+        EXPECT_NO_THROW(alloc.Release(p));
         p = new char{'e'};
 
-        EXPECT_THROW(alloc.Release(p), std::runtime_error);
+        EXPECT_NO_THROW(alloc.Release(p));
+        EXPECT_EQ((*static_cast<char*>(p)), 'e');
 
         delete static_cast<char*>(p);
     }
@@ -88,8 +98,8 @@ namespace jela
             EXPECT_NE(pointers[i], nullptr);
             std::memset(pointers[i], static_cast<int>( i ), BLOCK_SIZE);
         }
-        for (size_t i = 0; i < amountOfAllocs; i++)
-            EXPECT_NO_THROW(alloc.Release(pointers[i]));
+        for (auto & pointer : pointers)
+            EXPECT_NO_THROW(alloc.Release(pointer));
     }
 
 
@@ -111,10 +121,83 @@ namespace jela
         EXPECT_TRUE(alloc.IsOverflown());
         EXPECT_EQ(alloc.AmountOfOverflowAllocations(), amountOfOverflowAllocations);
 
-        for (size_t i = 0; i < amountOfAllocs; i++)
-            EXPECT_ANY_THROW(alloc.Release(pointers[i]));
+        for (auto & pointer : pointers)
+            EXPECT_NO_THROW(alloc.Release(pointer));
 
         EXPECT_FALSE(alloc.IsOverflown());
+    }
+
+    TEST(component_allocator_test, Release_In_Middle)
+    {
+        constexpr size_t amountOfAllocs{ Component::GetAmount<DerivedComp>()};
+
+        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+
+        void* pointers[amountOfAllocs]{};
+        for (size_t i = 0; i < amountOfAllocs ; i++)
+        {
+            EXPECT_NO_THROW(pointers[i] = alloc.Acquire(BLOCK_SIZE));
+            EXPECT_NE(pointers[i], nullptr);
+            std::memset(pointers[i], static_cast<int>( i ), BLOCK_SIZE);
+        }
+        EXPECT_FALSE(alloc.IsOverflown());
+
+        constexpr size_t middleIndex{amountOfAllocs/2 };
+        EXPECT_NO_THROW(alloc.Release(pointers[middleIndex]));
+
+        for (auto & pointer : pointers)
+            EXPECT_NO_THROW(alloc.Release(pointer));
+
+    }
+
+    TEST(component_allocator_test, New_And_Delete_Operator)
+    {
+        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+
+        EXPECT_THROW(operator new (BLOCK_SIZE - 1, alloc), std::length_error);
+        EXPECT_THROW(operator new (BLOCK_SIZE + 1, alloc), std::length_error);
+
+        void* p{};
+
+        EXPECT_NO_THROW(p = operator new (BLOCK_SIZE, alloc));
+        EXPECT_NE(p, nullptr);
+
+        std::memset(p, 1, BLOCK_SIZE);
+
+        EXPECT_NO_THROW(operator delete(p, alloc));
+
+
+        EXPECT_THROW(operator new[](BLOCK_SIZE - 1, alloc), std::length_error);
+        EXPECT_THROW(operator new[](BLOCK_SIZE + 1, alloc), std::length_error);
+
+
+        EXPECT_NO_THROW(p = operator new[](BLOCK_SIZE, alloc));
+        EXPECT_NE(p, nullptr);
+
+        std::memset(p, 1, BLOCK_SIZE);
+
+        EXPECT_NO_THROW(operator delete[](p, alloc));
+    }
+
+    TEST(component_allocator_test, New_And_Delete)
+    {
+        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+
+        DerivedComp* pDC {nullptr};
+        EXPECT_NO_THROW(pDC = new (alloc) DerivedComp{});
+        EXPECT_NE(pDC, nullptr);
+        EXPECT_EQ(pDC->y, DerivedComp::MAX_AMOUNT);
+
+        if (pDC) pDC->x = 1234;
+
+        EXPECT_NO_THROW(operator delete (pDC, alloc));
+
+        pDC = nullptr;
+
+        EXPECT_THROW(pDC = new (alloc) DerivedComp[2]{}, std::length_error);
+        EXPECT_EQ(pDC, nullptr);
+
+        EXPECT_NO_THROW(operator delete (pDC, alloc));
     }
 
 }
