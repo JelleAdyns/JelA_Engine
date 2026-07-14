@@ -4,14 +4,13 @@
 #include "BaseGame.h"
 #include "Structs.h"
 #include "Geometry.h"
-#include "CPlayer.h"
-#include "Audio.h"
 #include "framework.h"
 #include "Controller.h"
 #include "ResourceManager.h"
 #include "HResultHandler.h"
 #include <vector>
 #include <chrono>
+#include <strsafe.h>
 
 #include "DirectXObjects.h"
 

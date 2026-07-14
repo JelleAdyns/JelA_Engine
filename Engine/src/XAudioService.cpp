@@ -1,4 +1,4 @@
-#include "Audio.h"
+#include "AudioService.h"
 #include "Engine.h"
 #include "FileExceptions.h"
 #include <xaudio2.h>
@@ -302,6 +302,7 @@ namespace jela
             void ResumeChannels() { std::ranges::for_each(m_ActiveChannelPtrs, [](const auto& pChannel) { if (pChannel) pChannel->Resume(); }); }
 
         private:
+            // https://learn.microsoft.com/en-us/windows/win32/xaudio2/how-to--load-audio-data-files-in-xaudio2
             enum class WaveCode
             {
 #ifdef _XBOX //Big-Endian
@@ -330,7 +331,7 @@ namespace jela
 
                 std::streampos filePosition{ 0 }; // Debug Purposes
 
-                tstring pathString{ ENGINE.ResourceMngr()->GetDataPath() + fileName };
+                const tstring pathString{ ENGINE.ResourceMngr()->GetDataPath() + fileName };
 
                 if (const std::filesystem::path filePath{ pathString }; std::filesystem::exists(filePath))
                 {
@@ -567,21 +568,21 @@ namespace jela
             class VoiceCallback final : public IXAudio2VoiceCallback
             {
             public:
-                virtual ~VoiceCallback() = default;
+                ~VoiceCallback() = default;
 
-                virtual void STDMETHODCALLTYPE OnStreamEnd() override {}
-                virtual void STDMETHODCALLTYPE OnVoiceProcessingPassEnd() override {}
-                virtual void STDMETHODCALLTYPE OnVoiceProcessingPassStart(UINT32) override {}
+                void STDMETHODCALLTYPE OnStreamEnd() override {}
+                void STDMETHODCALLTYPE OnVoiceProcessingPassEnd() override {}
+                void STDMETHODCALLTYPE OnVoiceProcessingPassStart(UINT32) override {}
 
-                virtual void STDMETHODCALLTYPE OnBufferEnd(void* pBufferContext) override
+                void STDMETHODCALLTYPE OnBufferEnd(void* pBufferContext) override
                 {
                     Channel& chan = *(static_cast<Channel*>(pBufferContext));
                     chan.Stop();
                 }
 
-                virtual void STDMETHODCALLTYPE OnBufferStart(void*) override {}
-                virtual void STDMETHODCALLTYPE OnLoopEnd(void*) override {}
-                virtual void STDMETHODCALLTYPE OnVoiceError(void*, HRESULT) override {}
+                void STDMETHODCALLTYPE OnBufferStart(void*) override {}
+                void STDMETHODCALLTYPE OnLoopEnd(void*) override {}
+                void STDMETHODCALLTYPE OnVoiceError(void*, HRESULT) override {}
             };
 
             XAUDIO2_BUFFER m_XAudioBuffer{};
@@ -703,12 +704,27 @@ namespace jela
     {
         m_pImpl->RemoveSoundImpl(id);
     }
-
+    void XAudio::PlaySoundClip(SoundID id, bool repeat) const
+    {
+        PlaySoundClip(id, repeat, 100, 1.f);
+    }
+    void XAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const
+    {
+        PlaySoundClip(id, repeat, volume, 1.f);
+    }
     void XAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const
     {
         m_pImpl->PlaySoundClipImpl(id, repeat, volume, frequency);
     }
 
+    void XAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId) const
+    {
+        PlaySoundInstance(id, repeat, instanceId, 100, 1.f);
+    }
+    void XAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const
+    {
+        PlaySoundInstance(id, repeat, instanceId, volume, 1.f);
+    }
     void XAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const
     {
         m_pImpl->PlaySoundInstanceImpl(id, repeat, volume, instanceId, frequency);

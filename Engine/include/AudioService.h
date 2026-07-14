@@ -60,8 +60,12 @@ namespace jela
 
 		virtual void AddSound(const tstring& filename, SoundID id) = 0;
 		virtual void RemoveSound(SoundID id) = 0;
-		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100, float frequency = 1.f) const = 0;
-		virtual void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume = 100, float frequency = 1.f) const = 0;
+		virtual void PlaySoundClip(SoundID id, bool repeat) const = 0;
+		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const = 0;
+		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const = 0;
+		virtual void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId) const = 0;
+		virtual void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const = 0;
+		virtual void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const = 0;
 		virtual uint8_t GetMasterVolume() const = 0;
 		virtual void SetMasterVolume(uint8_t newVolume) = 0;
 		virtual void IncrementMasterVolume() = 0;
@@ -83,70 +87,122 @@ namespace jela
 	{
 	public:
 		NullAudio() = default;
-		virtual ~NullAudio() = default;
+		~NullAudio() override = default;
 
 		NullAudio(const NullAudio&) = delete;
 		NullAudio(NullAudio&&) noexcept = delete;
 		NullAudio& operator= (const NullAudio&) = delete;
 		NullAudio& operator= (NullAudio&&) noexcept = delete;
 
-		virtual void AddSound(const tstring&, SoundID) override {}
-		virtual void RemoveSound(SoundID) override {}
-		virtual void PlaySoundClip(SoundID, bool, uint8_t = 100, float = 1.f) const override {}
-		virtual void PlaySoundInstance(SoundID, bool, SoundInstanceID&, uint8_t = 100, float = 1.f) const override {};
-		virtual uint8_t GetMasterVolume() const override { return 0; }
-		virtual void SetMasterVolume(uint8_t) override {}
-		virtual void IncrementMasterVolume() override {}
-		virtual void DecrementMasterVolume() override {}
-		virtual void ToggleMute() override {}
-		virtual void PauseSound(SoundID) const override {};
-		virtual void PauseSound(SoundID, const SoundInstanceID&) const override{};
-		virtual void PauseAllSounds() const override{};
-		virtual void ResumeSound(SoundID) const override{};
-		virtual void ResumeSound(SoundID, const SoundInstanceID&) const override{};
-		virtual void ResumeAllSounds() const override{};
-		virtual void StopSound(SoundID) const override{};
-		virtual void StopSound(SoundID, const SoundInstanceID&) const override{};
-		virtual void StopAllSounds() const override{};
+		void AddSound(const tstring&, SoundID) override {}
+		void RemoveSound(SoundID) override {}
+		void PlaySoundClip(SoundID, bool) const override {}
+		void PlaySoundClip(SoundID, bool, uint8_t) const override {}
+		void PlaySoundClip(SoundID, bool, uint8_t, float) const override {}
+		void PlaySoundInstance(SoundID, bool, SoundInstanceID&) const override {}
+		void PlaySoundInstance(SoundID, bool, SoundInstanceID&, uint8_t) const override {}
+		void PlaySoundInstance(SoundID, bool, SoundInstanceID&, uint8_t, float) const override {}
+		uint8_t GetMasterVolume() const override { return 0; }
+		void SetMasterVolume(uint8_t) override {}
+		void IncrementMasterVolume() override {}
+		void DecrementMasterVolume() override {}
+		void ToggleMute() override {}
+		void PauseSound(SoundID) const override {};
+		void PauseSound(SoundID, const SoundInstanceID&) const override{};
+		void PauseAllSounds() const override{};
+		void ResumeSound(SoundID) const override{};
+		void ResumeSound(SoundID, const SoundInstanceID&) const override{};
+		void ResumeAllSounds() const override{};
+		void StopSound(SoundID) const override{};
+		void StopSound(SoundID, const SoundInstanceID&) const override{};
+		void StopAllSounds() const override{};
 	};
 
 	class LogAudio final : public AudioService
 	{
 	public:
-
-		LogAudio(std::unique_ptr<AudioService>&& pService) :
+		explicit LogAudio(std::unique_ptr<AudioService>&& pService) :
 			m_pRealService{ std::move(pService) }
 		{}
-		virtual ~LogAudio() = default;
+		~LogAudio() override = default;
 
 		LogAudio(const LogAudio&) = delete;
 		LogAudio(LogAudio&&) noexcept = delete;
 		LogAudio& operator= (const LogAudio&) = delete;
 		LogAudio& operator= (LogAudio&&) noexcept = delete;
 
-		virtual void AddSound(const tstring& filename, SoundID id) override;
-		virtual void RemoveSound(SoundID id) override;
-		virtual void PlaySoundClip(SoundID id, bool repeat, uint8_t volume = 100, float frequency = 1.f) const override;
-		virtual void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume = 100, float frequency = 1.f) const override;
-		virtual uint8_t GetMasterVolume() const override;
-		virtual void SetMasterVolume(uint8_t newVolume) override;
-		virtual void IncrementMasterVolume() override;
-		virtual void DecrementMasterVolume() override;
-		virtual void ToggleMute() override;
-		virtual void PauseSound(SoundID id) const override;
-		virtual void PauseSound(SoundID id, const SoundInstanceID& instanceId) const override;
-		virtual void PauseAllSounds() const override;
-		virtual void ResumeSound(SoundID id) const override;
-		virtual void ResumeSound(SoundID id, const SoundInstanceID& instanceId) const override;
-		virtual void ResumeAllSounds() const override;
-		virtual void StopSound(SoundID id) const override;
-		virtual void StopSound(SoundID id, const SoundInstanceID& instanceId) const override;
-		virtual void StopAllSounds() const override;
+		void AddSound(const tstring& filename, SoundID id) override;
+		void RemoveSound(SoundID id) override;
+		void PlaySoundClip(SoundID id, bool repeat) const override;
+		void PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const override;
+		void PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const override;
+		void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId) const override;
+		void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const override;
+		void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const override;
+		uint8_t GetMasterVolume() const override;
+		void SetMasterVolume(uint8_t newVolume) override;
+		void IncrementMasterVolume() override;
+		void DecrementMasterVolume() override;
+		void ToggleMute() override;
+		void PauseSound(SoundID id) const override;
+		void PauseSound(SoundID id, const SoundInstanceID& instanceId) const override;
+		void PauseAllSounds() const override;
+		void ResumeSound(SoundID id) const override;
+		void ResumeSound(SoundID id, const SoundInstanceID& instanceId) const override;
+		void ResumeAllSounds() const override;
+		void StopSound(SoundID id) const override;
+		void StopSound(SoundID id, const SoundInstanceID& instanceId) const override;
+		void StopAllSounds() const override;
 	private:
 
 		std::unique_ptr<AudioService> m_pRealService;
 	};
 
+	class XAudio final : public AudioService
+    {
+    public:
+
+        XAudio();
+        ~XAudio() override;
+
+        XAudio(const XAudio&) = delete;
+        XAudio(XAudio&&) noexcept = delete;
+        XAudio& operator= (const XAudio&) = delete;
+        XAudio& operator= (XAudio&&) noexcept = delete;
+
+        void AddSound(const tstring& filename, SoundID id) override;
+        void RemoveSound(SoundID id) override;
+        void PlaySoundClip(SoundID id, bool repeat) const override;
+        void PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const override;
+        void PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const override;
+        void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId) const override;
+        void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const override;
+        void PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const override;
+        uint8_t GetMasterVolume() const override;
+        void SetMasterVolume(uint8_t newVolume) override;
+        void IncrementMasterVolume() override;
+        void DecrementMasterVolume() override;
+        void ToggleMute() override;
+        void PauseSound(SoundID id) const override;
+        void PauseSound(SoundID id, const SoundInstanceID& instanceId) const override;
+        void PauseAllSounds() const override;
+        void ResumeSound(SoundID id) const override;
+        void ResumeSound(SoundID id, const SoundInstanceID& instanceId) const override;
+        void ResumeAllSounds() const override;
+        void StopSound(SoundID id) const override;
+        void StopSound(SoundID id, const SoundInstanceID& instanceId) const override;
+        void StopAllSounds() const override;
+
+        static void SetNrOfChannelsPerFormat(uint16_t amount);
+
+    private:
+        class AudioImpl;
+        AudioImpl* m_pImpl;
+
+        inline static uint16_t m_NrOfChannelsPerFormat{ 64 };
+        inline static bool m_ChannelPoolCreated{ false };
+
+    };
 
 	class AudioLocator final
 	{

@@ -80,6 +80,14 @@ namespace jela
 		OutputDebugString(std::format(_T("LogAudio: RemoveSound: id: {}\n"), id).c_str());
 		m_pRealService->RemoveSound(id);
 	}
+	void LogAudio::PlaySoundClip(SoundID id, bool repeat) const
+	{
+		PlaySoundClip(id, repeat, 100, 1.f);
+	}
+	void LogAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume) const
+	{
+		PlaySoundClip(id, repeat, volume, 1.f);
+	}
 	void LogAudio::PlaySoundClip(SoundID id, bool repeat, uint8_t volume, float frequency) const
     {
         OutputDebugString(
@@ -87,6 +95,14 @@ namespace jela
                 _T("LogAudio: PlaySoundClip: id: {}, repeat: {}, Volume {}, Frequency {}\n"), id, repeat,
                 static_cast<int>(volume), frequency).c_str());
 		m_pRealService->PlaySoundClip(id, repeat, volume, frequency);
+	}
+	void LogAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId) const
+	{
+		PlaySoundInstance(id, repeat, instanceId, 100, 1.f);
+	}
+	void LogAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume) const
+	{
+		PlaySoundInstance(id, repeat, instanceId, volume, 1.f);
 	}
 	void LogAudio::PlaySoundInstance(SoundID id, bool repeat, SoundInstanceID& instanceId, uint8_t volume, float frequency) const
 	{
