@@ -26,13 +26,16 @@ namespace jela
                 static_assert(std::is_same_v<const std::size_t, decltype(T::MAX_AMOUNT)>);
                 return T::MAX_AMOUNT;
             }
-            else if (!std::is_constant_evaluated())
+            else if (std::is_constant_evaluated())
+            {
+                return DEFAULT_MAX_AMOUNT;
+            }
+            else
             {
                 if (BASE_MAX_AMOUNT.has_value())
                     return BASE_MAX_AMOUNT.value();
                 return DEFAULT_MAX_AMOUNT;
             }
-            else return DEFAULT_MAX_AMOUNT;
         }
 
         static void SetMaxAmount(std::size_t maxAmount)

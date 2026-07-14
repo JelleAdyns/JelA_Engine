@@ -15,20 +15,13 @@ namespace jela
     {
 
     private:
-        class AnyComponent
+        class AnyComponent final
         {
         public:
             template <cDerivedComponent T, typename ...Args>
-            static AnyComponent make_component(Args... args)
+            static AnyComponent make_component(ComponentAllocator& alloc, Args... args)
             {
-                const auto& typeID = typeid(T);
-                if (!m_Allocs.contains(typeID))
-                {
-                    auto [it, succeeded] = m_Allocs.try_emplace(typeID, std::type_identity<T>{});
-                    if (!succeeded) throw std::runtime_error{std::format("Couldn't add typeID '{}'.", typeID.name())};
-                }
-
-                return AnyComponent{ new (m_Allocs.at(typeID)) T{args...}};
+                return AnyComponent{new (alloc) T{args...}, alloc};
             }
 
             template <cDerivedComponent T>
@@ -54,42 +47,70 @@ namespace jela
         private:
 
             template <cDerivedComponent T>
-            explicit AnyComponent(T* component):
+            AnyComponent(T* component, ComponentAllocator& alloc):
                 m_pComponent{component},
-                m_TypeID{typeid(T)}
+                m_Alloc{alloc}
             {}
 
             Component* m_pComponent;
-            std::type_index m_TypeID;
-            static inline std::unordered_map<std::type_index, ComponentAllocator> m_Allocs{};
+            std::reference_wrapper<ComponentAllocator> m_Alloc;
         };
 
+
+        class ComponentHandler final
+        {
+        public:
+
+            ComponentHandler() = default;
+            ~ComponentHandler()
+            {
+                // First destroy the components, then the allocators.
+                m_Components.clear();
+                m_Allocs.clear();
+            }
+            ComponentHandler(const ComponentHandler& other) = default;
+            ComponentHandler(ComponentHandler&& other) noexcept = default;
+            ComponentHandler& operator=(const ComponentHandler& other) = default;
+            ComponentHandler& operator=(ComponentHandler&& other) noexcept = default;
+
+            template <cDerivedComponent T, typename ...Args>
+            size_t AddComponent(Args ...args)
+            {
+                const auto& typeID = typeid(T);
+                if (!m_Allocs.contains(typeID))
+                {
+                    auto [it, succeeded] = m_Allocs.try_emplace(typeID, std::type_identity<T>{});
+                    if (!succeeded) throw std::runtime_error{std::format("Couldn't add typeID '{}'.", typeID.name())};
+                }
+
+                m_Components.emplace_back(AnyComponent::make_component<T>(m_Allocs.at(typeID), args...));
+                return m_Components.size() - 1;
+            }
+
+            void RemoveComponent(size_t vecIndex) { utils::SwapEraseOnVector(m_Components, vecIndex); }
+
+            template <cDerivedComponent T>
+            T* GetComponent(size_t vecIndex) { return m_Components.at(vecIndex).Get<T>(); }
+        private:
+            std::vector<AnyComponent> m_Components{};
+            std::unordered_map<std::type_index, ComponentAllocator> m_Allocs{};
+        };
 
     public:
 
         Scene() = default;
 
         template <cDerivedComponent T, typename ...Args>
-        size_t AddComponent(Args ...args)
-        {
-            m_Components.emplace_back(AnyComponent::make_component<T>(args...));
-            return m_Components.size() - 1;
-        }
+        size_t AddComponent(Args ...args) { return m_ComponentHandler.AddComponent<T>(args...); }
 
-        void RemoveComponent(size_t vecIndex)
-        {
-            jela::utils::SwapEraseOnVector(m_Components, vecIndex);
-        }
+        void RemoveComponent(size_t vecIndex) { m_ComponentHandler.RemoveComponent(vecIndex); }
 
         template <cDerivedComponent T>
-        T* GetComponent(size_t vecIndex)
-        {
-            return m_Components.at(vecIndex).Get<T>();
-        }
+        T* GetComponent(size_t vecIndex) { return m_ComponentHandler.GetComponent<T>(vecIndex); }
 
     private:
 
-        std::vector<AnyComponent> m_Components{};
+        ComponentHandler m_ComponentHandler{};
     };
 
 
