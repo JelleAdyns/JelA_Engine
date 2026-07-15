@@ -1,8 +1,10 @@
-#include "ComponentAllocator.h"
+#include "FixedSizeAllocators.h"
+
+#include <cassert>
 
 namespace jela
 {
-    void* ComponentAllocator::Acquire(std::size_t n)
+    void* FixedSizeAllocator::Acquire(std::size_t n)
     {
         if (n != m_BlockSize)
             throw std::length_error("Invalid block size.");
@@ -31,7 +33,7 @@ namespace jela
 
         return block;
     }
-    void ComponentAllocator::Release(void* p) noexcept
+    void FixedSizeAllocator::Release(void* p) noexcept
     {
         if (p == nullptr)
         {
@@ -68,34 +70,34 @@ namespace jela
         if (uintIndex < m_FirstFreeObjectIndex) m_FirstFreeObjectIndex = uintIndex;
     }
 
-    bool ComponentAllocator::IsOverflown() const
+    bool FixedSizeAllocator::IsOverflown() const
     {
         return m_OverflowKey && OVERFLOWED_ALLOCATIONS.contains(m_OverflowKey);
     }
-    std::size_t ComponentAllocator::AmountOfOverflowAllocations() const
+    std::size_t FixedSizeAllocator::AmountOfOverflowAllocations() const
     {
         if (!IsOverflown()) return 0;
         return  OVERFLOWED_ALLOCATIONS.at(m_OverflowKey).size();
     }
-    void* ComponentAllocator::GetAddressFromIndex(std::size_t index) const
+    void* FixedSizeAllocator::GetAddressFromIndex(std::size_t index) const
     {
         return m_Begin + index * m_BlockSize;
     }
-    bool ComponentAllocator::IsInUse(std::uint32_t index) const
+    bool FixedSizeAllocator::IsInUse(std::uint32_t index) const
     {
         return *(m_InUse + sizeof(bool) * index);
     }
-    void ComponentAllocator::SetInUse(std::uint32_t index, bool value) const
+    void FixedSizeAllocator::SetInUse(std::uint32_t index, bool value) const
     {
         *(m_InUse + sizeof(bool) * index) = value;
     }
-    tstring ComponentAllocator::OverflowMessage() const
+    tstring FixedSizeAllocator::OverflowMessage() const
     {
-        return std::format(_T("ComponentAllocator with block size {}, block aligment {} and capacity {} was full when trying to allocate a component. Continuing with 'std::malloc'.\n"
+        return std::format(_T("FixedSizeAllocator with block size {}, block aligment {} and capacity {} was full when trying to allocate a component. Continuing with 'std::malloc'.\n"
                                 "TIP: Define a 'static constexpr std::size_t MAX_AMOUNT' field in your component class to customize the max amount of that component.\n"),
                                 m_BlockSize, m_BlockAlignment, m_Capacity);
     }
-    void* ComponentAllocator::AllocateOverflow(std::size_t n, const tstring& message)
+    void* FixedSizeAllocator::AllocateOverflow(std::size_t n, const tstring& message)
     {
         OutputDebugString(message.c_str());
 
@@ -108,7 +110,7 @@ namespace jela
 
         return OVERFLOWED_ALLOCATIONS[m_OverflowKey].emplace_back(p);
     }
-    bool ComponentAllocator::TryDeallocateOverfow(void* p) const
+    bool FixedSizeAllocator::TryDeallocateOverfow(void* p) const
     {
         if (m_OverflowKey == nullptr) return false;
         if (!OVERFLOWED_ALLOCATIONS.contains(m_OverflowKey)) return false;
@@ -124,7 +126,7 @@ namespace jela
         std::free(p);
         return true;
     }
-    std::byte* ComponentAllocator::CreateBuffer() const
+    std::byte* FixedSizeAllocator::CreateBuffer() const
     {
         auto boolSize = sizeof(bool) * m_Capacity;
 

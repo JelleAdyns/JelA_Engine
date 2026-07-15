@@ -1,25 +1,21 @@
-#ifndef COMPONENTALLOCATOR_H
-#define COMPONENTALLOCATOR_H
+#ifndef FIXEDSIZEALLOCATORS_H
+#define FIXEDSIZEALLOCATORS_H
 
-#include <cassert>
-#include <cstdint>
-#include <new>
-#include <format>
+#include <optional>
+#include <typeindex>
 #include <unordered_map>
 
 #include "Defines.h"
-#include "Component.h"
 
 namespace jela
 {
-
-    class ComponentAllocator final
+    class FixedSizeAllocator
     {
     public:
 
-        template <cDerivedComponent T>
-        explicit ComponentAllocator(std::type_identity<T>):
-            m_Capacity{Component::GetAmount<T>()},
+    template <typename T>
+        explicit FixedSizeAllocator(std::type_identity<T>, std::size_t capacity):
+            m_Capacity{capacity},
             m_BlockSize{sizeof(T)},
             m_BlockAlignment{alignof(T)},
             m_Begin{CreateBuffer()},
@@ -34,16 +30,16 @@ namespace jela
             std::memset(m_InUse, 0, sizeof(bool) * m_Capacity);
         }
 
-        ~ComponentAllocator()
+        ~FixedSizeAllocator()
         {
             ::operator delete(m_Begin, std::align_val_t{m_BlockAlignment});
         }
 
-        ComponentAllocator(const ComponentAllocator& other) = delete;
-        ComponentAllocator& operator=(const ComponentAllocator& other) = delete;
+        FixedSizeAllocator(const FixedSizeAllocator& other) = delete;
+        FixedSizeAllocator& operator=(const FixedSizeAllocator& other) = delete;
 
-        ComponentAllocator(ComponentAllocator&& other) noexcept = default;      // Defined
-        ComponentAllocator& operator=(ComponentAllocator&& other) noexcept = delete;
+        FixedSizeAllocator(FixedSizeAllocator&& other) noexcept = default;      // Defined
+        FixedSizeAllocator& operator=(FixedSizeAllocator&& other) noexcept = delete;
 
         void* Acquire(std::size_t n);
         void Release(void* p) noexcept;
@@ -80,23 +76,30 @@ namespace jela
         std::byte* CreateBuffer() const;
     };
 
+    template <typename T, std::size_t N>
+    class TypeAllocator final : public FixedSizeAllocator
+    {
+    public:
+        explicit TypeAllocator():
+            FixedSizeAllocator{std::type_identity<T>{}, N}
+        {}
+    };
 }
 
-inline void* operator new(std::size_t n, jela::ComponentAllocator& alloc)
+inline void* operator new(std::size_t n, jela::FixedSizeAllocator& alloc)
 {
     return alloc.Acquire(n);
 }
-inline void* operator new[](std::size_t n, jela::ComponentAllocator& alloc)
+inline void* operator new[](std::size_t n, jela::FixedSizeAllocator& alloc)
 {
     return operator new(n, alloc);
 }
-inline void operator delete(void* p, jela::ComponentAllocator& alloc) noexcept
+inline void operator delete(void* p, jela::FixedSizeAllocator& alloc) noexcept
 {
     alloc.Release(p);
 }
-inline void operator delete[](void* p, jela::ComponentAllocator& alloc) noexcept
+inline void operator delete[](void* p, jela::FixedSizeAllocator& alloc) noexcept
 {
     operator delete(p, alloc);
 }
-
-#endif //COMPONENTALLOCATOR_H
+#endif //FIXEDSIZEALLOCATORS_H

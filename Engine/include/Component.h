@@ -3,6 +3,7 @@
 #include <cassert>
 #include <optional>
 #include "Defines.h"
+#include "FixedSizeAllocators.h"
 
 namespace jela
 {
@@ -19,7 +20,7 @@ namespace jela
         static constexpr std::size_t DEFAULT_MAX_AMOUNT { 20 };
 
         template <cDerivedComponent T>
-        static constexpr std::size_t GetAmount()
+        static constexpr std::size_t GetMaxAmount()
         {
             if  constexpr (ComponentHasMaxAmount<T>::value)
             {
@@ -67,6 +68,15 @@ namespace jela
 
     };
 
+    class ComponentAllocator final: public FixedSizeAllocator
+    {
+    public:
+        template <cDerivedComponent T>
+        explicit ComponentAllocator(std::type_identity<T> t):
+            FixedSizeAllocator{t, Component::GetMaxAmount<T>()}
+        {}
+    };
+
     class derived: public Component
     {
     public:
@@ -91,7 +101,7 @@ namespace jela
         {
             OutputDebugString(_T("derived2 Constructor!\n"));
         };
-        static constexpr std::size_t MAX_AMOUNT { 20 };
+        static constexpr std::size_t MAX_AMOUNT { 30 };
     };
 
 }

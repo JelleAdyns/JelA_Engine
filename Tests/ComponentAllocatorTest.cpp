@@ -88,7 +88,7 @@ namespace jela
 
     TEST(component_allocator_test, Fill_Allocator)
     {
-        constexpr size_t amountOfAllocs{ Component::GetAmount<DerivedComp>() };
+        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedComp>() };
         ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
 
         void* pointers[amountOfAllocs]{};
@@ -106,7 +106,7 @@ namespace jela
     TEST(component_allocator_test, Overflow)
     {
         constexpr size_t amountOfOverflowAllocations{ 10 };
-        constexpr size_t amountOfAllocs{ Component::GetAmount<DerivedComp>() + amountOfOverflowAllocations };
+        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedComp>() + amountOfOverflowAllocations };
 
         ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
 
@@ -129,7 +129,7 @@ namespace jela
 
     TEST(component_allocator_test, Release_In_Middle)
     {
-        constexpr size_t amountOfAllocs{ Component::GetAmount<DerivedComp>()};
+        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedComp>()};
 
         ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
 
