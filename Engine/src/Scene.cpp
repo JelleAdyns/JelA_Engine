@@ -24,4 +24,14 @@ namespace jela
         std::swap(m_pComponent, other.m_pComponent);
         std::swap(m_Alloc, other.m_Alloc);
     }
+    Scene::ComponentHandler::~ComponentHandler()
+    {
+        // First destroy the components, then the allocators.
+        m_Components.clear();
+        m_Allocs.clear();
+    }
+    void Scene::ComponentHandler::RemoveComponent(size_t vecIndex)
+    {
+        utils::SwapEraseOnVector(m_Components, vecIndex);
+    }
 }
