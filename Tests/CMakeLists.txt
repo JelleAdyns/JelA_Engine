@@ -19,7 +19,7 @@ endif()
 
 set(SOURCES
         "Main.cpp"
-        ComponentAllocatorTest.cpp
+        FixedSizeAllocatorsTests.cpp
 )
 
 add_executable(${PROJECT_NAME}  ${SOURCES})
