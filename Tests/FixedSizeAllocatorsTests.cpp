@@ -7,19 +7,19 @@
 namespace jela
 {
 
-    class DerivedComp final : Component
+    class DerivedCompA : Component
     {
 
     public:
 
-        DerivedComp()
+        DerivedCompA()
         {
-            std::cout << "DerivedComp::DerivedComp()" << std::endl;
+            std::cout << "DerivedComp::DerivedCompA()" << std::endl;
             y = MAX_AMOUNT;
         }
-        ~DerivedComp() override
+        ~DerivedCompA() override
         {
-            std::cout << "DerivedComp::~DerivedComp()" << std::endl;
+            std::cout << "DerivedComp::~DerivedCompA()" << std::endl;
         }
         static constexpr std::size_t MAX_AMOUNT{ 100 };
 
@@ -29,7 +29,46 @@ namespace jela
         Component* p{};
     };
 
-    constexpr std::size_t BLOCK_SIZE = sizeof(DerivedComp);
+    class SmallAmountA : DerivedCompA
+    {
+    public:
+        static constexpr std::size_t MAX_AMOUNT{ 1 };
+    };
+
+    class LargeAmountA : DerivedCompA
+    {
+    public:
+        static constexpr std::size_t MAX_AMOUNT{ 1'000'000 };
+    };
+
+    class DerivedCompB : Component
+    {
+
+    public:
+
+        DerivedCompB()
+        {
+            std::cout << "DerivedComp::DerivedCompB()" << std::endl;
+        }
+        ~DerivedCompB() override
+        {
+            std::cout << "DerivedComp::~DerivedCompB()" << std::endl;
+        }
+        static constexpr std::size_t MAX_AMOUNT{ 100 };
+    };
+    class SmallAmountB : DerivedCompA
+    {
+    public:
+        static constexpr std::size_t MAX_AMOUNT{ 1 };
+    };
+
+    class LargeAmountB : DerivedCompA
+    {
+    public:
+        static constexpr std::size_t MAX_AMOUNT{ 1'000'000 };
+    };
+
+    constexpr std::size_t BLOCK_SIZE = sizeof(DerivedCompA);
     constexpr std::size_t BUFFER_SIZE = 20;
     constexpr std::size_t AMOUNT_OF_OVERFLOW_ALLOCATIONS{ 10 };
 
@@ -154,10 +193,10 @@ namespace jela
 
     void TestNewAndDelete(FixedSizeAllocator& alloc)
     {
-        DerivedComp* pDC {nullptr};
-        EXPECT_NO_THROW(pDC = new (alloc) DerivedComp{});
+        DerivedCompA* pDC {nullptr};
+        EXPECT_NO_THROW(pDC = new (alloc) DerivedCompA{});
         EXPECT_NE(pDC, nullptr);
-        EXPECT_EQ(pDC->y, DerivedComp::MAX_AMOUNT);
+        EXPECT_EQ(pDC->y, DerivedCompA::MAX_AMOUNT);
 
         if (pDC) pDC->x = 1234;
 
@@ -165,63 +204,91 @@ namespace jela
 
         pDC = nullptr;
 
-        EXPECT_THROW(pDC = new (alloc) DerivedComp[2]{}, std::length_error);
+        EXPECT_THROW(pDC = new (alloc) DerivedCompA[2]{}, std::length_error);
         EXPECT_EQ(pDC, nullptr);
 
         EXPECT_NO_THROW(operator delete (pDC, alloc));
+    }
+
+    void TestCompleteBufferSize(const FixedSizeAllocator& alloc)
+    {
+        const auto blockSize = alloc.GetBlockSize();
+        const auto bufferSize = alloc.GetCapacity();
+        const auto completeSize = alloc.CompleteBufferSize();
+        const auto objectBufferSize = bufferSize * blockSize;
+        EXPECT_GT(completeSize, objectBufferSize);
+        EXPECT_GE(completeSize, objectBufferSize + bufferSize * sizeof(bool));
+        EXPECT_LE(completeSize, objectBufferSize * 2);
     }
 
     // -------------------------------------------------------------------------------------------------------
     // FixedSizeAllocator
     TEST(fixed_size_allocator_test, Single_Allocation)
     {
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestSingleAllocation(alloc);
     }
 
     TEST(fixed_size_allocator_test, Invalid_Release)
     {
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestInvalidRelease(alloc);
     }
 
     TEST(fixed_size_allocator_test, Two_Allocations)
     {
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestTwoAllocations(alloc);
     }
 
     TEST(fixed_size_allocator_test, Fill_Allocator)
     {
         void* pointers[BUFFER_SIZE]{};
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestFillAllocator(alloc, pointers);
     }
 
     TEST(fixed_size_allocator_test, Overflow)
     {
         void* pointers[BUFFER_SIZE + AMOUNT_OF_OVERFLOW_ALLOCATIONS]{};
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestOverflow(alloc, pointers);
     }
 
     TEST(fixed_size_allocator_test, Release_In_Middle)
     {
         void* pointers[BUFFER_SIZE]{};
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestReleaseInMiddle(alloc, pointers);
     }
 
     TEST(fixed_size_allocator_test, New_And_Delete_Operator)
     {
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestNewAndDeleteOperators(alloc);
     }
 
     TEST(fixed_size_allocator_test, New_And_Delete)
     {
-        FixedSizeAllocator alloc{std::type_identity<DerivedComp>{}, BUFFER_SIZE};
+        FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestNewAndDelete(alloc);
+    }
+
+    TEST(fixed_size_allocator_test, Complete_Buffer_Size)
+    {
+        const FixedSizeAllocator alloc1{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
+        TestCompleteBufferSize(alloc1);
+        const FixedSizeAllocator alloc2{std::type_identity<DerivedCompA>{}, 1};
+        TestCompleteBufferSize(alloc2);
+        const FixedSizeAllocator alloc3{std::type_identity<DerivedCompA>{}, 1'000'000};
+        TestCompleteBufferSize(alloc3);
+
+        const FixedSizeAllocator alloc4{std::type_identity<bool>{}, BUFFER_SIZE};
+        TestCompleteBufferSize(alloc4);
+        const FixedSizeAllocator alloc5{std::type_identity<bool>{}, 1};
+        TestCompleteBufferSize(alloc5);
+        const FixedSizeAllocator alloc6{std::type_identity<bool>{}, 1'000'000};
+        TestCompleteBufferSize(alloc6);
     }
     // -------------------------------------------------------------------------------------------------------
 
@@ -229,53 +296,70 @@ namespace jela
     // TypeAllocator
     TEST(type_allocator_test, Single_Allocation)
     {
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestSingleAllocation(alloc);
     }
 
     TEST(type_allocator_test, Invalid_Release)
     {
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestInvalidRelease(alloc);
     }
 
     TEST(type_allocator_test, Two_Allocations)
     {
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestTwoAllocations(alloc);
     }
 
     TEST(type_allocator_test, Fill_Allocator)
     {
         void* pointers[BUFFER_SIZE]{};
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestFillAllocator(alloc, pointers);
     }
 
     TEST(type_allocator_test, Overflow)
     {
         void* pointers[BUFFER_SIZE + AMOUNT_OF_OVERFLOW_ALLOCATIONS]{};
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestOverflow(alloc, pointers);
     }
 
     TEST(type_allocator_test, Release_In_Middle)
     {
         void* pointers[BUFFER_SIZE]{};
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestReleaseInMiddle(alloc, pointers);
     }
 
     TEST(type_allocator_test, New_And_Delete_Operator)
     {
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestNewAndDeleteOperators(alloc);
     }
 
     TEST(type_allocator_test, New_And_Delete)
     {
-        TypeAllocator<DerivedComp, BUFFER_SIZE> alloc{};
+        TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestNewAndDelete(alloc);
+    }
+
+    TEST(type_allocator_test, Complete_Buffer_Size)
+    {
+        const TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc1{};
+        TestCompleteBufferSize(alloc1);
+        const TypeAllocator<DerivedCompA, 1> alloc2{};
+        TestCompleteBufferSize(alloc2);
+        const TypeAllocator<DerivedCompA, 1'000'000> alloc3{};
+        TestCompleteBufferSize(alloc3);
+
+        const TypeAllocator<bool, BUFFER_SIZE> alloc4{};
+        TestCompleteBufferSize(alloc4);
+        const TypeAllocator<bool, 1> alloc5{};
+        TestCompleteBufferSize(alloc5);
+        const TypeAllocator<bool, 1'000'000> alloc6{};
+        TestCompleteBufferSize(alloc6);
     }
     // -------------------------------------------------------------------------------------------------------
 
@@ -283,59 +367,76 @@ namespace jela
     // ComponentAllocator
     TEST(component_allocator_test, Single_Allocation)
     {
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestSingleAllocation(alloc);
     }
 
     TEST(component_allocator_test, Invalid_Release)
     {
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestInvalidRelease(alloc);
     }
 
     TEST(component_allocator_test, Two_Allocations)
     {
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestTwoAllocations(alloc);
     }
 
     TEST(component_allocator_test, Fill_Allocator)
     {
-        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedComp>() };
+        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedCompA>() };
         void* pointers[amountOfAllocs]{};
 
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestFillAllocator(alloc, pointers);
     }
 
     TEST(component_allocator_test, Overflow)
     {
-        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedComp>() + AMOUNT_OF_OVERFLOW_ALLOCATIONS };
+        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedCompA>() + AMOUNT_OF_OVERFLOW_ALLOCATIONS };
         void* pointers[amountOfAllocs]{};
 
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestOverflow(alloc, pointers);
     }
 
     TEST(component_allocator_test, Release_In_Middle)
     {
-        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedComp>() };
+        constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedCompA>() };
         void* pointers[amountOfAllocs]{};
 
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestReleaseInMiddle(alloc, pointers);
     }
 
     TEST(component_allocator_test, New_And_Delete_Operator)
     {
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestNewAndDeleteOperators(alloc);
     }
 
     TEST(component_allocator_test, New_And_Delete)
     {
-        ComponentAllocator alloc{std::type_identity<DerivedComp>{}};
+        ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestNewAndDelete(alloc);
+    }
+
+    TEST(component_allocator_test, Complete_Buffer_Size)
+    {
+        const ComponentAllocator alloc1{std::type_identity<DerivedCompA>{}};
+        TestCompleteBufferSize(alloc1);
+        const ComponentAllocator alloc2{std::type_identity<SmallAmountA>{}};
+        TestCompleteBufferSize(alloc2);
+        const ComponentAllocator alloc3{std::type_identity<LargeAmountA>{}};
+        TestCompleteBufferSize(alloc3);
+
+        const ComponentAllocator alloc4{std::type_identity<DerivedCompB>{}};
+        TestCompleteBufferSize(alloc4);
+        const ComponentAllocator alloc5{std::type_identity<SmallAmountB>{}};
+        TestCompleteBufferSize(alloc5);
+        const ComponentAllocator alloc6{std::type_identity<LargeAmountB>{}};
+        TestCompleteBufferSize(alloc6);
     }
     // -------------------------------------------------------------------------------------------------------
 

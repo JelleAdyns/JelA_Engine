@@ -1,7 +1,5 @@
 #include "FixedSizeAllocators.h"
 
-#include <cassert>
-
 namespace jela
 {
     void* FixedSizeAllocator::Acquire(std::size_t n)
@@ -41,10 +39,10 @@ namespace jela
             return;
         }
 
-        const ptrdiff_t ptrDifference = static_cast<std::byte*>(p) - m_Begin;
+        const ptrdiff_t ptrDifference = static_cast<std::byte*>(p) - m_pBegin;
         const auto index = static_cast<std::size_t>(ptrDifference) / m_BlockSize;
 
-        if (p < m_Begin ||
+        if (p < m_pBegin ||
             index >= m_Capacity)
         {
             if (TryDeallocateOverfow(p))
@@ -79,17 +77,54 @@ namespace jela
         if (!IsOverflown()) return 0;
         return  OVERFLOWED_ALLOCATIONS.at(m_OverflowKey).size();
     }
+    std::size_t FixedSizeAllocator::DataSize() const
+    {
+        return m_BlockSize * m_Capacity;
+    }
+    std::size_t FixedSizeAllocator::NonDataSize() const
+    {
+        auto boolSize = sizeof(bool) * m_Capacity;
+
+        // -------------------------------------------------------------------------------------------
+        // Add trailing padding
+        if (boolSize % m_BlockAlignment != 0)
+        {
+            const auto boolSizeAligned = (boolSize / m_BlockAlignment + 1) * m_BlockAlignment;
+            assert(boolSizeAligned > boolSize);
+            assert(boolSizeAligned % m_BlockAlignment == 0);
+            boolSize = boolSizeAligned;
+        }
+        // -------------------------------------------------------------------------------------------
+
+        return boolSize;
+    }
+    std::size_t FixedSizeAllocator::CompleteBufferSize() const
+    {
+        return DataSize() + NonDataSize();
+    }
+    std::size_t FixedSizeAllocator::GetCapacity() const
+    {
+        return m_Capacity;
+    }
+    std::size_t FixedSizeAllocator::GetBlockSize() const
+    {
+        return m_BlockSize;
+    }
+    std::size_t FixedSizeAllocator::GetBlockAlignment() const
+    {
+        return m_BlockAlignment;
+    }
     void* FixedSizeAllocator::GetAddressFromIndex(std::size_t index) const
     {
-        return m_Begin + index * m_BlockSize;
+        return m_pBegin + index * m_BlockSize;
     }
     bool FixedSizeAllocator::IsInUse(std::uint32_t index) const
     {
-        return *(m_InUse + sizeof(bool) * index);
+        return *(m_pInUse + sizeof(bool) * index);
     }
     void FixedSizeAllocator::SetInUse(std::uint32_t index, bool value) const
     {
-        *(m_InUse + sizeof(bool) * index) = value;
+        *(m_pInUse + sizeof(bool) * index) = value;
     }
     tstring FixedSizeAllocator::OverflowMessage() const
     {
@@ -128,19 +163,6 @@ namespace jela
     }
     std::byte* FixedSizeAllocator::CreateBuffer() const
     {
-        auto boolSize = sizeof(bool) * m_Capacity;
-
-        // -------------------------------------------------------------------------------------------
-        // Add trailing padding
-        if (boolSize % m_BlockAlignment != 0)
-        {
-            const auto boolSizeAligned = (boolSize / m_BlockAlignment + 1) * m_BlockAlignment;
-            assert(boolSizeAligned > boolSize);
-            assert(boolSizeAligned % m_BlockAlignment == 0);
-            boolSize = boolSizeAligned;
-        }
-        // -------------------------------------------------------------------------------------------
-
-        return static_cast<std::byte*>(::operator new (m_BlockSize * m_Capacity + boolSize, std::align_val_t{m_BlockAlignment}));
+        return static_cast<std::byte*>(::operator new (CompleteBufferSize(), std::align_val_t{m_BlockAlignment}));
     }
 }
