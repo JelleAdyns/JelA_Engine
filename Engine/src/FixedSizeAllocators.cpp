@@ -7,8 +7,7 @@ namespace jela
         if (n != m_BlockSize)
             throw std::length_error("Invalid block size.");
 
-        if (!m_FirstFreeObjectIndex.has_value())
-            return AllocateOverflow(n, OverflowMessage());
+        if (!m_FirstFreeObjectIndex.has_value()) return AllocateOverflow(n);
 
         const auto freeIndex = m_FirstFreeObjectIndex.value();
         assert(freeIndex < static_cast<std::uint32_t>(m_Capacity));
@@ -68,15 +67,6 @@ namespace jela
         if (uintIndex < m_FirstFreeObjectIndex) m_FirstFreeObjectIndex = uintIndex;
     }
 
-    bool FixedSizeAllocator::IsOverflown() const
-    {
-        return m_OverflowKey && OVERFLOWED_ALLOCATIONS.contains(m_OverflowKey);
-    }
-    std::size_t FixedSizeAllocator::AmountOfOverflowAllocations() const
-    {
-        if (!IsOverflown()) return 0;
-        return  OVERFLOWED_ALLOCATIONS.at(m_OverflowKey).size();
-    }
     std::size_t FixedSizeAllocator::DataSize() const
     {
         return m_BlockSize * m_Capacity;
@@ -128,43 +118,13 @@ namespace jela
     }
     tstring FixedSizeAllocator::OverflowMessage() const
     {
-        return std::format(_T("FixedSizeAllocator with block size {}, block aligment {} and capacity {} was full when trying to allocate a component. Continuing with 'std::malloc'.\n"
-                                "TIP: Define a 'static constexpr std::size_t MAX_AMOUNT' field in your component class to customize the max amount of that component.\n"),
+        return std::format(_T("FixedSizeAllocator with block size {}B, block aligment {}B and capacity {} was full when trying to allocate a object. Continuing with 'std::malloc'.\n"),
                                 m_BlockSize, m_BlockAlignment, m_Capacity);
-    }
-    void* FixedSizeAllocator::AllocateOverflow(std::size_t n, const tstring& message)
-    {
-        OutputDebugString(message.c_str());
-
-        if (m_OverflowKey == nullptr)
-            m_OverflowKey = this;
-
-        // ReSharper disable once CppDFAMemoryLeak
-        const auto p = std::malloc(n);
-        if (p == nullptr) throw std::bad_alloc();
-
-        return OVERFLOWED_ALLOCATIONS[m_OverflowKey].emplace_back(p);
-    }
-    bool FixedSizeAllocator::TryDeallocateOverfow(void* p) const
-    {
-        if (m_OverflowKey == nullptr) return false;
-        if (!OVERFLOWED_ALLOCATIONS.contains(m_OverflowKey)) return false;
-
-        auto& addresses = OVERFLOWED_ALLOCATIONS.at(m_OverflowKey);
-        const auto it = std::ranges::find(addresses, p);
-
-        if (it == addresses.cend()) return false;
-
-        addresses.erase(it);
-        if (addresses.empty()) OVERFLOWED_ALLOCATIONS.erase(m_OverflowKey);
-
-        std::free(p);
-        return true;
     }
     std::byte* FixedSizeAllocator::CreateBuffer() const
     {
-        if (m_OptionalAllocator.has_value())
-            return static_cast<std::byte*>(operator new (CompleteBufferSize(), m_OptionalAllocator.value()));
+        if (GetOptionalMemoryAllocator().has_value())
+            return static_cast<std::byte*>(operator new (CompleteBufferSize(), GetOptionalMemoryAllocator().value()));
 
         return static_cast<std::byte*>(::operator new (CompleteBufferSize(), std::align_val_t{m_BlockAlignment}));
     }

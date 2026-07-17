@@ -30,6 +30,7 @@ namespace jela
     public:
         explicit SingleLinkAllocator(std::size_t bufferSize):
             MemoryAllocator{},
+            m_RequestedBytes{bufferSize},
             m_AmountOfBlocks{bufferSize / sizeof(Block) + (bufferSize % sizeof(Block) > 0 ? 1 : 0) + 1},
             m_pHead{new Block[m_AmountOfBlocks]{}}
         {
@@ -63,9 +64,11 @@ namespace jela
         static constexpr uint8_t ALLOC_PATTERN = 0x00;
         static constexpr uint8_t ALLOC_PADDING_PATTERN = 0xFC;
 
+        const std::size_t m_RequestedBytes;
         const std::size_t m_AmountOfBlocks;
-
         Block* const m_pHead;
+
+        tstring OverflowMessage() const;
     };
 
     template <std::size_t BUFFER_SIZE>

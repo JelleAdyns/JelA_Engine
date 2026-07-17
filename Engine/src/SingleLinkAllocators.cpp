@@ -23,7 +23,7 @@ namespace jela
             pNextBlock = pNextBlock->next;
         }
 
-        if (pNextBlock == nullptr) throw std::bad_alloc();
+        if (pNextBlock == nullptr) return AllocateOverflow(n);
 
         Block* pChosenBlock = pNextBlock; // defining other name to improve readability
 
@@ -51,6 +51,9 @@ namespace jela
         if (const Block* start = m_pHead + 1;
             pBlockToRelease < start || pBlockToRelease > m_pHead + m_AmountOfBlocks)
         {
+            if (TryDeallocateOverfow(p))
+                return;
+
             OutputDebugString(_T("Pointer to relaese lays outside of buffer! Returning..."));
             return;
         }
@@ -81,5 +84,11 @@ namespace jela
         }
         // otherwise, point immediately to the next free memory
         else pBlockToMerge->next = pNextBlock;
+    }
+    tstring SingleLinkAllocator::OverflowMessage() const
+    {
+        return std::format(_T("SingleListAllocator with requested buffer size {}B (real size {}B) was full when trying "
+                              "to allocate a memory. Continuing with 'std::malloc'.\n"),
+            m_AmountOfBlocks * sizeof(Block), m_RequestedBytes);
     }
 }

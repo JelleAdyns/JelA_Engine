@@ -4,8 +4,6 @@
 #include <cassert>
 #include <optional>
 #include <ranges>
-#include <typeindex>
-#include <unordered_map>
 
 #include "Defines.h"
 #include "MemoryAllocator.h"
@@ -18,18 +16,28 @@ namespace jela
 
         template <typename T>
         explicit FixedSizeAllocator(std::type_identity<T> t, std::size_t capacity):
-        FixedSizeAllocator{t, capacity, std::nullopt}
+        FixedSizeAllocator{t, capacity, _T(""), std::nullopt}
+        {}
+
+        template <typename T>
+        explicit FixedSizeAllocator(std::type_identity<T> t, std::size_t capacity, const tstring& customOverflowMessage):
+        FixedSizeAllocator{t, capacity, customOverflowMessage, std::nullopt}
         {}
 
         template <typename T>
         explicit FixedSizeAllocator(std::type_identity<T> t, std::size_t capacity, MemoryAllocator& alloc):
-            FixedSizeAllocator{t, capacity, std::optional<std::reference_wrapper<MemoryAllocator>>{alloc}}
+            FixedSizeAllocator{t, capacity, _T(""), std::optional<std::reference_wrapper<MemoryAllocator>>{alloc}}
+        {}
+
+        template <typename T>
+        explicit FixedSizeAllocator(std::type_identity<T> t, std::size_t capacity, const tstring& customOverflowMessage, MemoryAllocator& alloc):
+            FixedSizeAllocator{ t, capacity, customOverflowMessage, alloc }
         {}
 
         ~FixedSizeAllocator() override
         {
-            if (m_OptionalAllocator.has_value())
-                operator delete(m_pBegin, m_OptionalAllocator.value());
+            if (GetOptionalMemoryAllocator().has_value())
+                operator delete(m_pBegin, GetOptionalMemoryAllocator().value());
             else ::operator delete(m_pBegin, CompleteBufferSize(), std::align_val_t{m_BlockAlignment});
         }
 
@@ -42,9 +50,6 @@ namespace jela
         void* Acquire(std::size_t n) override;
         void Release(void* p) noexcept override;
 
-        bool IsOverflown() const;
-        std::size_t AmountOfOverflowAllocations() const;
-
         std::size_t DataSize() const;
         std::size_t NonDataSize() const;
         std::size_t CompleteBufferSize() const;
@@ -54,12 +59,11 @@ namespace jela
     private:
 
         template <typename T>
-        explicit FixedSizeAllocator(std::type_identity<T>, std::size_t capacity, std::optional<std::reference_wrapper<MemoryAllocator>> alloc):
-            MemoryAllocator{},
+        explicit FixedSizeAllocator(std::type_identity<T>, std::size_t capacity, const tstring& customOverflowMessage, std::optional<std::reference_wrapper<MemoryAllocator>> alloc):
+            MemoryAllocator{OverflowMessage() + customOverflowMessage, alloc},
             m_Capacity{capacity},
             m_BlockSize{sizeof(T)},
             m_BlockAlignment{alignof(T)},
-            m_OptionalAllocator{alloc},
             m_pBegin{CreateBuffer()},
             m_pInUse{reinterpret_cast<bool*>(m_pBegin + m_BlockSize * m_Capacity)},
             m_FirstFreeObjectIndex{0}
@@ -74,8 +78,6 @@ namespace jela
             std::memset(m_pInUse, 0, sizeof(bool) * m_Capacity);
         }
 
-        static inline std::unordered_map<void*, std::vector<void*>> OVERFLOWED_ALLOCATIONS{};
-
         static constexpr uint8_t FREE_DATA_PATTERN = 0xAA;
         static constexpr uint8_t IN_USE_PATTERN = 0xBB;
 
@@ -83,27 +85,21 @@ namespace jela
         const std::size_t m_BlockSize;
         const std::size_t m_BlockAlignment;
 
-        const std::optional<std::reference_wrapper<MemoryAllocator>> m_OptionalAllocator;
-
         std::byte* m_pBegin; // Reserved buffer
         bool* m_pInUse;
 
         std::optional<std::uint32_t> m_FirstFreeObjectIndex;
-
-        void* m_OverflowKey{nullptr};
 
         void* GetAddressFromIndex(std::size_t index) const;
         bool IsInUse(std::uint32_t index) const;
         void SetInUse(std::uint32_t index, bool value) const;
 
         tstring OverflowMessage() const;
-        void* AllocateOverflow(std::size_t n, const tstring& message);
-        bool TryDeallocateOverfow(void* p) const;
 
         std::byte* CreateBuffer() const;
     };
 
-    template <typename T, std::size_t N>
+    template <typename T, std::size_t N = 0>
     class TypeAllocator final : public FixedSizeAllocator
     {
     public:
@@ -113,22 +109,16 @@ namespace jela
             static_assert(N > 0, "Amount of objects must be greater than 0");
         }
     };
+    template <typename T>
+    class TypeAllocator<T, 0> final : public FixedSizeAllocator
+    {
+    public:
+        explicit TypeAllocator(std::size_t capacity):
+            FixedSizeAllocator{std::type_identity<T>{}, capacity}
+        {
+            assert(capacity > 0 && "Amount of objects must be greater than 0");
+        }
+    };
 }
 
-inline void* operator new(std::size_t n, jela::FixedSizeAllocator& alloc)
-{
-    return alloc.Acquire(n);
-}
-inline void* operator new[](std::size_t n, jela::FixedSizeAllocator& alloc)
-{
-    return operator new(n, alloc);
-}
-inline void operator delete(void* p, jela::FixedSizeAllocator& alloc) noexcept
-{
-    alloc.Release(p);
-}
-inline void operator delete[](void* p, jela::FixedSizeAllocator& alloc) noexcept
-{
-    operator delete(p, alloc);
-}
 #endif //FIXEDSIZEALLOCATORS_H
