@@ -72,6 +72,11 @@ namespace jela
     {
     public:
         template <cDerivedComponent T>
+        explicit ComponentAllocator(std::type_identity<T> t, MemoryAllocator& alloc):
+            FixedSizeAllocator{t, Component::GetMaxAmount<T>(), alloc}
+        {}
+
+        template <cDerivedComponent T>
         explicit ComponentAllocator(std::type_identity<T> t):
             FixedSizeAllocator{t, Component::GetMaxAmount<T>()}
         {}

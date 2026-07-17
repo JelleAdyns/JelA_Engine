@@ -163,6 +163,9 @@ namespace jela
     }
     std::byte* FixedSizeAllocator::CreateBuffer() const
     {
+        if (m_OptionalAllocator.has_value())
+            return static_cast<std::byte*>(operator new (CompleteBufferSize(), m_OptionalAllocator.value()));
+
         return static_cast<std::byte*>(::operator new (CompleteBufferSize(), std::align_val_t{m_BlockAlignment}));
     }
 }

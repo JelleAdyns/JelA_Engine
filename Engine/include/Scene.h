@@ -7,6 +7,8 @@
 
 #include "Component.h"
 #include "Engine.h"
+#include "SingleLinkAllocators.h"
+//#include "GameObject.h"
 
 namespace jela
 {
@@ -55,6 +57,9 @@ namespace jela
             template <cDerivedComponent T> T* GetComponent(size_t vecIndex);
 
         private:
+            static constexpr std::size_t POOL_SIZE = 10'000;
+
+            BufferAllocator<POOL_SIZE> m_ComponentAllocatorPool{};
             std::vector<AnyComponent> m_Components{};
             std::unordered_map<std::type_index, ComponentAllocator> m_Allocs{};
         };
@@ -106,7 +111,7 @@ namespace jela
         const auto& typeID = typeid(T);
         if (!m_Allocs.contains(typeID))
         {
-            auto [it, succeeded] = m_Allocs.try_emplace(typeID, std::type_identity<T>{});
+            auto [it, succeeded] = m_Allocs.try_emplace(typeID, std::type_identity<T>{}, m_ComponentAllocatorPool);
             if (!succeeded) throw std::runtime_error{std::format("Couldn't add typeID '{}'.", typeID.name())};
         }
 

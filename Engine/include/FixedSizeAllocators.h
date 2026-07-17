@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <optional>
+#include <ranges>
 #include <typeindex>
 #include <unordered_map>
 
@@ -15,29 +16,21 @@ namespace jela
     {
     public:
 
-    template <typename T>
-        explicit FixedSizeAllocator(std::type_identity<T>, std::size_t capacity):
-            MemoryAllocator{},
-            m_Capacity{capacity},
-            m_BlockSize{sizeof(T)},
-            m_BlockAlignment{alignof(T)},
-            m_pBegin{CreateBuffer()},
-            m_pInUse{reinterpret_cast<bool*>(m_pBegin + m_BlockSize * m_Capacity)},
-            m_FirstFreeObjectIndex{0}
-        {
-            assert(m_BlockSize % m_BlockAlignment == 0);
+        template <typename T>
+        explicit FixedSizeAllocator(std::type_identity<T> t, std::size_t capacity):
+        FixedSizeAllocator{t, capacity, std::nullopt}
+        {}
 
-#ifndef NDEBUG
-            std::memset(m_pBegin, FREE_DATA_PATTERN, DataSize());
-            std::memset(m_pInUse, IN_USE_PATTERN, NonDataSize());
-#endif // NDEBUG
-
-            std::memset(m_pInUse, 0, sizeof(bool) * m_Capacity);
-        }
+        template <typename T>
+        explicit FixedSizeAllocator(std::type_identity<T> t, std::size_t capacity, MemoryAllocator& alloc):
+            FixedSizeAllocator{t, capacity, std::optional<std::reference_wrapper<MemoryAllocator>>{alloc}}
+        {}
 
         ~FixedSizeAllocator() override
         {
-            ::operator delete(m_pBegin, CompleteBufferSize(), std::align_val_t{m_BlockAlignment});
+            if (m_OptionalAllocator.has_value())
+                operator delete(m_pBegin, m_OptionalAllocator.value());
+            else ::operator delete(m_pBegin, CompleteBufferSize(), std::align_val_t{m_BlockAlignment});
         }
 
         FixedSizeAllocator(const FixedSizeAllocator& other) = delete;
@@ -60,6 +53,27 @@ namespace jela
         std::size_t GetBlockAlignment() const;
     private:
 
+        template <typename T>
+        explicit FixedSizeAllocator(std::type_identity<T>, std::size_t capacity, std::optional<std::reference_wrapper<MemoryAllocator>> alloc):
+            MemoryAllocator{},
+            m_Capacity{capacity},
+            m_BlockSize{sizeof(T)},
+            m_BlockAlignment{alignof(T)},
+            m_OptionalAllocator{alloc},
+            m_pBegin{CreateBuffer()},
+            m_pInUse{reinterpret_cast<bool*>(m_pBegin + m_BlockSize * m_Capacity)},
+            m_FirstFreeObjectIndex{0}
+        {
+            assert(m_BlockSize % m_BlockAlignment == 0);
+
+#ifndef NDEBUG
+            std::memset(m_pBegin, FREE_DATA_PATTERN, DataSize());
+            std::memset(m_pInUse, IN_USE_PATTERN, NonDataSize());
+#endif // NDEBUG
+
+            std::memset(m_pInUse, 0, sizeof(bool) * m_Capacity);
+        }
+
         static inline std::unordered_map<void*, std::vector<void*>> OVERFLOWED_ALLOCATIONS{};
 
         static constexpr uint8_t FREE_DATA_PATTERN = 0xAA;
@@ -68,6 +82,8 @@ namespace jela
         const std::size_t m_Capacity;
         const std::size_t m_BlockSize;
         const std::size_t m_BlockAlignment;
+
+        const std::optional<std::reference_wrapper<MemoryAllocator>> m_OptionalAllocator;
 
         std::byte* m_pBegin; // Reserved buffer
         bool* m_pInUse;
