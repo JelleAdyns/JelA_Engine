@@ -116,10 +116,10 @@ namespace jela
     {
         *(m_pInUse + sizeof(bool) * index) = value;
     }
-    tstring FixedSizeAllocator::OverflowMessage() const
+    tstring FixedSizeAllocator::OverflowMessage(std::size_t blockSize, std::size_t alignment, std::size_t capacity)
     {
         return std::format(_T("FixedSizeAllocator with block size {}B, block aligment {}B and capacity {} was full when trying to allocate a object. Continuing with 'std::malloc'.\n"),
-                                m_BlockSize, m_BlockAlignment, m_Capacity);
+                                blockSize, alignment, capacity);
     }
     std::byte* FixedSizeAllocator::CreateBuffer() const
     {

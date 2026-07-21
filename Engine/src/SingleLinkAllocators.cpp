@@ -11,12 +11,12 @@ namespace jela
         if (n == 0) throw std::bad_alloc{};
         assert((m_pHead != nullptr));
 
-        constexpr std::size_t blockSize = sizeof(Block);
-        const std::size_t requestedAllocation = n + sizeof(Header);
-        const std::size_t requestedBlocks = requestedAllocation / blockSize + (requestedAllocation % blockSize > 0 ? 1 : 0);
+        constexpr std::size_t blockSize { sizeof(Block) };
+        const std::size_t requestedAllocation { n + sizeof(Header) };
+        const std::size_t requestedBlocks { requestedAllocation / blockSize + (requestedAllocation % blockSize > 0 ? 1 : 0) };
 
-        auto pPreviousBlock = m_pHead;
-        auto pNextBlock = m_pHead->next;
+        auto pPreviousBlock { m_pHead };
+        auto pNextBlock { m_pHead->next };
         while (pNextBlock != nullptr && pNextBlock->blockCount < requestedBlocks)
         {
             pPreviousBlock = pNextBlock;
@@ -25,14 +25,21 @@ namespace jela
 
         if (pNextBlock == nullptr) return AllocateOverflow(n);
 
-        Block* pChosenBlock = pNextBlock; // defining other name to improve readability
+        const Block* const pEnd {m_pHead + m_AmountOfBlocks};
 
-        Block* pNewBlock = pChosenBlock + requestedBlocks; // creating a new startpoint of free data
-        pNewBlock->blockCount = pChosenBlock->blockCount - requestedBlocks;
-        pNewBlock->next = pChosenBlock->next; // the new startpoint should point to whatever the previous startpoint pointed to
+        Block* const pChosenBlock {pNextBlock}; // defining other name to improve readability
+
+        if (Block* const pNewBlock {pChosenBlock + requestedBlocks};
+            pNewBlock != pEnd)
+        {
+            pNewBlock->blockCount = pChosenBlock->blockCount - requestedBlocks;
+            pNewBlock->next = pChosenBlock->next; // the new startpoint should point to whatever the previous startpoint pointed to
+
+            pChosenBlock->next = pNewBlock;
+        }
+        else pChosenBlock->next = nullptr;
 
         pChosenBlock->blockCount = requestedBlocks;
-        pChosenBlock->next = pNewBlock;
 
         pPreviousBlock->next = pChosenBlock->next; // the previous block should jump over the chosenblock to point to the next free data
 
@@ -46,6 +53,12 @@ namespace jela
     }
     void SingleLinkAllocator::Release(void* p) noexcept
     {
+        if (p == nullptr)
+        {
+            OutputDebugString(_T("Trying to release a nullptr! Returning...\n"));
+            return;
+        }
+
         auto* pBlockToRelease = reinterpret_cast<Block*> (static_cast<Header*> (p) - 1);
 
         if (const Block* start = m_pHead + 1;
@@ -54,7 +67,7 @@ namespace jela
             if (TryDeallocateOverfow(p))
                 return;
 
-            OutputDebugString(_T("Pointer to relaese lays outside of buffer! Returning..."));
+            OutputDebugString(_T("Pointer to release lays outside of buffer! Returning...\n"));
             return;
         }
 
@@ -72,6 +85,39 @@ namespace jela
         // Merge previous free block with the released memory, if possible.
         MergeFreeMemory(pPreviousBlock, pBlockToRelease);
 
+    }
+    std::size_t SingleLinkAllocator::RequestedSize() const
+    {
+        return m_RequestedBytes;
+    }
+    std::size_t SingleLinkAllocator::GetTotalBlocks() const
+    {
+        return m_AmountOfBlocks;
+    }
+    std::size_t SingleLinkAllocator::AmountOfDataBlocks() const
+    {
+        return m_AmountOfBlocks - 1;
+    }
+    std::size_t SingleLinkAllocator::CompleteBufferSize() const
+    {
+        return m_AmountOfBlocks * sizeof(Block);
+    }
+    std::size_t SingleLinkAllocator::AmountOfFreeBlocks() const
+    {
+        std::size_t total = 0;
+        const Block* pCurrentBlock = m_pHead->next;
+        while (pCurrentBlock != nullptr)
+        {
+            const auto pNextBlock = pCurrentBlock->next;
+            total += pCurrentBlock->blockCount;
+            pCurrentBlock = pNextBlock;
+        }
+
+        return total;
+    }
+    std::size_t SingleLinkAllocator::AmountOfOccupiedBlocks() const
+    {
+        return AmountOfDataBlocks() - AmountOfFreeBlocks();
     }
     void SingleLinkAllocator::MergeFreeMemory(Block* pBlockToMerge, Block* pNextBlock)
     {

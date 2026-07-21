@@ -80,7 +80,7 @@ namespace jela
         static inline std::unordered_map<void*, std::vector<void*>> OVERFLOWED_ALLOCATIONS{};
         void* m_OverflowKey{nullptr};
         const std::optional<std::reference_wrapper<MemoryAllocator>> m_OptionalAllocator{std::nullopt};
-        tstring m_OverflowMessage{ _T("Memory was full. Allocating via std::malloc...")};
+        tstring m_OverflowMessage{ _T("Memory was full. Allocating via std::malloc...\n")};
     };
 }
 

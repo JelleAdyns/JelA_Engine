@@ -4,12 +4,12 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 
 #include "MemoryAllocator.h"
 
 namespace jela
 {
+
     class SingleLinkAllocator : public MemoryAllocator
     {
         struct Header
@@ -22,19 +22,30 @@ namespace jela
             static constexpr std::size_t infoSize = sizeof(Header) + sizeof(Block*);
 
             Block* next {nullptr};
-            std::byte data[size - infoSize]{};
+            uint8_t data[size - infoSize]{};
 
             static_assert(infoSize <= size);
         };
 
     public:
-        explicit SingleLinkAllocator(std::size_t bufferSize):
+        explicit SingleLinkAllocator(std::size_t bufferSize, bool allowLargerBuffer = true):
             MemoryAllocator{},
             m_RequestedBytes{bufferSize},
-            m_AmountOfBlocks{bufferSize / sizeof(Block) + (bufferSize % sizeof(Block) > 0 ? 1 : 0) + 1},
+            m_AmountOfBlocks{ allowLargerBuffer ?
+                bufferSize / BLOCK_DATA_SIZE + (bufferSize % BLOCK_DATA_SIZE > 0 ? 1 : 0) + 1 :
+                bufferSize / sizeof(Block)
+            },
             m_pHead{new Block[m_AmountOfBlocks]{}}
         {
             assert(m_pHead != nullptr);
+
+            if (!allowLargerBuffer && bufferSize < MINIMUM_SIZE)
+            {
+                delete [] m_pHead;
+                throw std::length_error{std::format("Couldn't allocate the minimum required size ({}B). "
+                                                    "Either allow for a larger buffer or request a larger buffersize.",
+                                                    MINIMUM_SIZE)};
+            }
 
 #ifndef NDEBUG
             std::memset(m_pHead, HEAD_PATTERN, sizeof(Block));
@@ -56,6 +67,16 @@ namespace jela
         void* Acquire(std::size_t n) override;
         void Release(void* p) noexcept override;
 
+        std::size_t RequestedSize() const;
+        std::size_t GetTotalBlocks() const;
+        std::size_t AmountOfDataBlocks() const;
+        std::size_t CompleteBufferSize() const;
+        std::size_t AmountOfFreeBlocks() const;
+        std::size_t AmountOfOccupiedBlocks() const;
+        static constexpr std::size_t BLOCK_SIZE = sizeof(Block);
+
+        static constexpr std::size_t MINIMUM_SIZE = sizeof(Block) * 2;
+
     private:
         static void MergeFreeMemory(Block* pBlockToMerge, Block* pNextBlock);
 
@@ -64,6 +85,9 @@ namespace jela
         static constexpr uint8_t ALLOC_PATTERN = 0x00;
         static constexpr uint8_t ALLOC_PADDING_PATTERN = 0xFC;
 
+        // subtracting Header size from Block size because the header does not always count as data
+        static constexpr std::size_t BLOCK_DATA_SIZE = sizeof(Block) - sizeof(Header);
+
         const std::size_t m_RequestedBytes;
         const std::size_t m_AmountOfBlocks;
         Block* const m_pHead;
@@ -71,14 +95,16 @@ namespace jela
         tstring OverflowMessage() const;
     };
 
-    template <std::size_t BUFFER_SIZE>
+    template <std::size_t BUFFER_SIZE, bool ALLOW_LARGER = true>
     class BufferAllocator final : public SingleLinkAllocator
     {
     public:
         BufferAllocator():
-            SingleLinkAllocator{BUFFER_SIZE}
+            SingleLinkAllocator{BUFFER_SIZE, ALLOW_LARGER}
         {
             static_assert(BUFFER_SIZE > 0, "Buffer size must be greater than 0.");
+            if constexpr (!ALLOW_LARGER)
+                static_assert(BUFFER_SIZE >= MINIMUM_SIZE, "Buffer size must be greater than or equal to the minimum size.");
         }
     };
 }

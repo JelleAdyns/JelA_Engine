@@ -60,7 +60,7 @@ namespace jela
 
         template <typename T>
         explicit FixedSizeAllocator(std::type_identity<T>, std::size_t capacity, const tstring& customOverflowMessage, std::optional<std::reference_wrapper<MemoryAllocator>> alloc):
-            MemoryAllocator{OverflowMessage() + customOverflowMessage, alloc},
+            MemoryAllocator{OverflowMessage(sizeof(T), alignof(T), capacity) + customOverflowMessage, alloc},
             m_Capacity{capacity},
             m_BlockSize{sizeof(T)},
             m_BlockAlignment{alignof(T)},
@@ -94,7 +94,7 @@ namespace jela
         bool IsInUse(std::uint32_t index) const;
         void SetInUse(std::uint32_t index, bool value) const;
 
-        tstring OverflowMessage() const;
+        static tstring OverflowMessage(std::size_t blockSize, std::size_t alignment, std::size_t capacity);
 
         std::byte* CreateBuffer() const;
     };
