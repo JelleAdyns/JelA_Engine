@@ -29,13 +29,57 @@ namespace jela
 
     public:
         explicit SingleLinkAllocator(std::size_t bufferSize, bool allowLargerBuffer = true):
-            MemoryAllocator{},
+            SingleLinkAllocator{bufferSize, allowLargerBuffer, _T(""), std::nullopt}
+        {}
+
+        explicit SingleLinkAllocator(std::size_t bufferSize, bool allowLargerBuffer, const tstring& customOverflowMessage):
+            SingleLinkAllocator{bufferSize, allowLargerBuffer, customOverflowMessage, std::nullopt}
+        {}
+
+        explicit SingleLinkAllocator(std::size_t bufferSize, bool allowLargerBuffer, MemoryAllocator& alloc):
+            SingleLinkAllocator{bufferSize, allowLargerBuffer, _T(""), std::optional<std::reference_wrapper<MemoryAllocator>>{alloc}}
+        {}
+
+        explicit SingleLinkAllocator(std::size_t bufferSize, bool allowLargerBuffer, const tstring& customOverflowMessage, MemoryAllocator& alloc):
+            SingleLinkAllocator{bufferSize, allowLargerBuffer, customOverflowMessage, std::optional<std::reference_wrapper<MemoryAllocator>>{alloc}}
+        {}
+
+        SingleLinkAllocator(const SingleLinkAllocator& other) = delete;
+        SingleLinkAllocator& operator=(const SingleLinkAllocator& other) = delete;
+
+        SingleLinkAllocator(SingleLinkAllocator&& other) noexcept = default;      // Defined
+        SingleLinkAllocator& operator=(SingleLinkAllocator&& other) noexcept = delete;
+
+        ~SingleLinkAllocator() override
+        {
+            if (GetOptionalMemoryAllocator().has_value())
+                operator delete(m_pHead, GetOptionalMemoryAllocator().value());
+            else delete[] m_pHead;
+        }
+
+        void* Acquire(std::size_t n) override;
+        void Release(void* p) noexcept override;
+
+        std::size_t RequestedSize() const;
+        std::size_t GetTotalBlocks() const;
+        std::size_t AmountOfDataBlocks() const;
+        std::size_t CompleteBufferSize() const;
+        std::size_t AmountOfFreeBlocks() const;
+        std::size_t AmountOfOccupiedBlocks() const;
+        static constexpr std::size_t BLOCK_SIZE = sizeof(Block);
+
+        static constexpr std::size_t MINIMUM_SIZE = sizeof(Block) * 2;
+
+    private:
+
+        explicit SingleLinkAllocator(std::size_t bufferSize, bool allowLargerBuffer, const tstring& customOverflowMessage, std::optional<std::reference_wrapper<MemoryAllocator>> alloc):
+            MemoryAllocator{ OverflowMessage(bufferSize) + customOverflowMessage, alloc},
             m_RequestedBytes{bufferSize},
             m_AmountOfBlocks{ allowLargerBuffer ?
                 bufferSize / BLOCK_DATA_SIZE + (bufferSize % BLOCK_DATA_SIZE > 0 ? 1 : 0) + 1 :
                 bufferSize / sizeof(Block)
             },
-            m_pHead{new Block[m_AmountOfBlocks]{}}
+            m_pHead{ CreateBuffer() }
         {
             assert(m_pHead != nullptr);
 
@@ -59,25 +103,7 @@ namespace jela
             m_pHead->next->next = nullptr;
 
         }
-        ~SingleLinkAllocator() override
-        {
-            delete[] m_pHead;
-        }
 
-        void* Acquire(std::size_t n) override;
-        void Release(void* p) noexcept override;
-
-        std::size_t RequestedSize() const;
-        std::size_t GetTotalBlocks() const;
-        std::size_t AmountOfDataBlocks() const;
-        std::size_t CompleteBufferSize() const;
-        std::size_t AmountOfFreeBlocks() const;
-        std::size_t AmountOfOccupiedBlocks() const;
-        static constexpr std::size_t BLOCK_SIZE = sizeof(Block);
-
-        static constexpr std::size_t MINIMUM_SIZE = sizeof(Block) * 2;
-
-    private:
         static void MergeFreeMemory(Block* pBlockToMerge, Block* pNextBlock);
 
         static constexpr uint8_t FREE_DATA_PATTERN = 0xEE;
@@ -92,7 +118,8 @@ namespace jela
         const std::size_t m_AmountOfBlocks;
         Block* const m_pHead;
 
-        tstring OverflowMessage() const;
+        static tstring OverflowMessage(std::size_t requestedBytes);
+        Block* CreateBuffer() const;
     };
 
     template <std::size_t BUFFER_SIZE, bool ALLOW_LARGER = true>

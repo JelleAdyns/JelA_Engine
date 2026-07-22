@@ -73,15 +73,15 @@ namespace jela
     public:
         template <cDerivedComponent T>
         explicit ComponentAllocator(std::type_identity<T> t, MemoryAllocator& alloc):
-            FixedSizeAllocator{t, Component::GetMaxAmount<T>(), OverflowMessage<T>(), alloc}
+            FixedSizeAllocator{t, Component::GetMaxAmount<T>(), OverflowMessage(), alloc}
         {}
 
         template <cDerivedComponent T>
         explicit ComponentAllocator(std::type_identity<T> t):
-            FixedSizeAllocator{t, Component::GetMaxAmount<T>(), OverflowMessage<T>()}
+            FixedSizeAllocator{t, Component::GetMaxAmount<T>(), OverflowMessage()}
         {}
     private:
-        template <cDerivedComponent T>
+
         static tstring OverflowMessage()
         {
             return _T("TIP: Define a 'static constexpr std::size_t MAX_AMOUNT' field in your component class"

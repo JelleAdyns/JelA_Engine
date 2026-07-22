@@ -26,8 +26,8 @@ namespace jela
 
         MemoryAllocator(const MemoryAllocator& other) = default;
         MemoryAllocator(MemoryAllocator&& other) noexcept = default;
-        MemoryAllocator& operator=(const MemoryAllocator& other) = default;
-        MemoryAllocator& operator=(MemoryAllocator&& other) noexcept = default;
+        MemoryAllocator& operator=(const MemoryAllocator& other) = delete;
+        MemoryAllocator& operator=(MemoryAllocator&& other) noexcept = delete;
 
         virtual void* Acquire(std::size_t n) = 0;
         virtual void Release(void* p) noexcept = 0;

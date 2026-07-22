@@ -131,10 +131,16 @@ namespace jela
         // otherwise, point immediately to the next free memory
         else pBlockToMerge->next = pNextBlock;
     }
-    tstring SingleLinkAllocator::OverflowMessage() const
+    tstring SingleLinkAllocator::OverflowMessage(std::size_t requestedBytes)
     {
-        return std::format(_T("SingleListAllocator with requested buffer size {}B (real size {}B) was full when trying "
-                              "to allocate a memory. Continuing with 'std::malloc'.\n"),
-            m_AmountOfBlocks * sizeof(Block), m_RequestedBytes);
+        return std::format(_T("SingleListAllocator with requested buffer size {}B was full when trying "
+                              "to allocate memory. Continuing with 'std::malloc'.\n"), requestedBytes);
+    }
+    SingleLinkAllocator::Block* SingleLinkAllocator::CreateBuffer() const
+    {
+        if (GetOptionalMemoryAllocator().has_value())
+            return static_cast<Block*>(operator new (CompleteBufferSize(), GetOptionalMemoryAllocator().value()));
+
+        return new Block[m_AmountOfBlocks]{};
     }
 }

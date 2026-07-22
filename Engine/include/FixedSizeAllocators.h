@@ -31,7 +31,7 @@ namespace jela
 
         template <typename T>
         explicit FixedSizeAllocator(std::type_identity<T> t, std::size_t capacity, const tstring& customOverflowMessage, MemoryAllocator& alloc):
-            FixedSizeAllocator{ t, capacity, customOverflowMessage, alloc }
+            FixedSizeAllocator{ t, capacity, customOverflowMessage, std::optional<std::reference_wrapper<MemoryAllocator>>{alloc} }
         {}
 
         ~FixedSizeAllocator() override
