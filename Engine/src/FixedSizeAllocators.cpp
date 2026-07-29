@@ -128,4 +128,9 @@ namespace jela
 
         return static_cast<std::byte*>(::operator new (CompleteBufferSize(), std::align_val_t{m_BlockAlignment}));
     }
+    bool* FixedSizeAllocator::StartBoolBuffer() const
+    {
+        void* pBoolStart = m_pBegin + m_BlockSize * m_Capacity;
+        return static_cast<bool*>(std::memmove(pBoolStart, pBoolStart, NonDataSize()));
+    }
 }

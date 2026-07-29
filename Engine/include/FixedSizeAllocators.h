@@ -60,12 +60,12 @@ namespace jela
 
         template <typename T>
         explicit FixedSizeAllocator(std::type_identity<T>, std::size_t capacity, const tstring& customOverflowMessage, std::optional<std::reference_wrapper<MemoryAllocator>> alloc):
-            MemoryAllocator{OverflowMessage(sizeof(T), alignof(T), capacity) + customOverflowMessage, alloc},
+            MemoryAllocator{OverflowMessage(sizeof(T), Alignment<T>(), capacity) + customOverflowMessage, alloc},
             m_Capacity{capacity},
             m_BlockSize{sizeof(T)},
-            m_BlockAlignment{alignof(T)},
+            m_BlockAlignment{Alignment<T>()},
             m_pBegin{CreateBuffer()},
-            m_pInUse{reinterpret_cast<bool*>(m_pBegin + m_BlockSize * m_Capacity)},
+            m_pInUse{StartBoolBuffer()},
             m_FirstFreeObjectIndex{0}
         {
             assert(m_BlockSize % m_BlockAlignment == 0);
@@ -96,7 +96,14 @@ namespace jela
 
         static tstring OverflowMessage(std::size_t blockSize, std::size_t alignment, std::size_t capacity);
 
+        template <typename T>
+        static constexpr std::size_t Alignment()
+        {
+            return std::max(alignof(T), alignof(bool));
+        }
+
         std::byte* CreateBuffer() const;
+        bool* StartBoolBuffer() const;
     };
 
     template <typename T, std::size_t N = 0>

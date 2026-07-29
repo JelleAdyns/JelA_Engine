@@ -82,7 +82,7 @@ namespace jela
         {}
     private:
 
-        static tstring OverflowMessage()
+        static constexpr tstring OverflowMessage()
         {
             return _T("TIP: Define a 'static constexpr std::size_t MAX_AMOUNT' field in your component class"
                                   " to customize the max amount of that component.\n");
