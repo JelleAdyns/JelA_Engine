@@ -1,37 +1,22 @@
-#include "../include/Scene.h"
+#include "Scene.h"
+#include "GameObject.h"
 
 namespace jela
 {
-    Scene::AnyComponent::~AnyComponent()
+
+    Scene::~Scene()
     {
-        if (m_pComponent)
-        {
-            m_pComponent->~Component();
-            operator delete(m_pComponent, m_Alloc);
-        }
+        m_GameObjectHandler.Clear();
+        m_ComponentHandler.Clear();
     }
-    Scene::AnyComponent::AnyComponent(AnyComponent&& other) noexcept:
-        m_pComponent{std::exchange(other.m_pComponent, nullptr)},
-        m_Alloc{other.m_Alloc}
-    {}
-    Scene::AnyComponent& Scene::AnyComponent::operator=(AnyComponent&& other) noexcept
+    GameObject& Scene::AddGameObject()
     {
-        AnyComponent{std::move(other)}.swap(*this);
-        return *this;
+        return std::forward<GameObject&>(m_GameObjectHandler.AddGameObject(*this));
     }
-    void Scene::AnyComponent::swap(AnyComponent& other) noexcept
+    GameObject& Scene::ConsumeGameObject(GameObject&& gameObject)
     {
-        std::swap(m_pComponent, other.m_pComponent);
-        std::swap(m_Alloc, other.m_Alloc);
-    }
-    Scene::ComponentHandler::~ComponentHandler()
-    {
-        // First destroy the components, then the allocators.
-        m_Components.clear();
-        m_Allocs.clear();
-    }
-    void Scene::ComponentHandler::RemoveComponent(size_t vecIndex)
-    {
-        utils::SwapEraseOnVector(m_Components, vecIndex);
+        if (&(gameObject.GetScene()) != this)
+            throw std::runtime_error{"Cannot consume GameObject because the GameObject has a reference to a different scene."};
+        return std::forward<GameObject&>(m_GameObjectHandler.ConsumeGameObject(std::move(gameObject)));
     }
 }

@@ -11,14 +11,25 @@ namespace jela
     class GameObject final
     {
     public:
-        GameObject(Scene&scene):
+
+        explicit GameObject(Scene& scene):
             m_pScene{scene}
+        {};
+
+        ~GameObject()
         {
-            AddComponent<derived>();
-            AddComponent<derived2>();
-            const auto comp = GetComponent<derived>();
-            comp->kaas = 4;
-        };
+            for (const auto& index : m_Components | std::views::values)
+                m_pScene.RemoveComponent(index);
+
+            m_Components.clear();
+        }
+        GameObject(const GameObject& other) = delete; // disable copying because it would mean creating new components
+        GameObject(GameObject&& other) noexcept:
+            m_pScene{other.m_pScene},
+            m_Components{std::exchange(other.m_Components, {})}
+        {}
+        GameObject& operator=(const GameObject& other) = delete;
+        GameObject& operator=(GameObject&& other) noexcept = delete;
 
         template <cDerivedComponent T, typename ...Args>
         void AddComponent(Args&&... args)
@@ -58,7 +69,10 @@ namespace jela
         bool HasComponent() const { return HasComponent(typeid(T)); }
         bool HasComponent(const std::type_index& typeID) const { return m_Components.contains(typeID); }
 
+        const Scene& GetScene() const { return m_pScene; }
+
     private:
+
 
         Scene& m_pScene;
         std::unordered_map<std::type_index, size_t> m_Components{};
