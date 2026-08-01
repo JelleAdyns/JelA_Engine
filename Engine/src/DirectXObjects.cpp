@@ -55,6 +55,7 @@ namespace jela::DX
         return combinedMatrix;
      }
 
+#ifdef _DEBUG
     Debug::Debug()
     {
         IDXGIDebug1* pDebug;
@@ -69,7 +70,7 @@ namespace jela::DX
         HResultHandler& hr{StartHResult(_T("jela::DX::Debug dtor"))};
         hr = pObject->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
     }
-
+#endif
 
     Factory2D::Factory2D()
     {

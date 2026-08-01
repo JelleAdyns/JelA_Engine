@@ -198,7 +198,9 @@ namespace jela::DX
         }
 
         // Default constructed
+#ifdef _DEBUG
         Debug                       dDebug{};
+#endif
         Device3D                    dDevice3D{};
         Factory2D                   dFactory2D{};
 
@@ -210,12 +212,15 @@ namespace jela::DX
 
         bool IsValid() const
         {
-            return dDebug.IsInValidState() &&
-                dDevice3D.IsInValidState() &&
+            return dDevice3D.IsInValidState() &&
                 dFactory2D.IsInValidState() &&
                 dDeviceGI.IsInValidState() &&
                 dDevice2D.IsInValidState() &&
-                dSwapChain.IsInValidState();
+                dSwapChain.IsInValidState()
+#ifdef _DEBUG
+                && dDebug.IsInValidState()
+#endif
+                    ;
         }
 
         HResultHandler ResizeWindow()
