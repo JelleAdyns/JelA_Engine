@@ -9,9 +9,9 @@
 #include "ResourceManager.h"
 #include "HResultHandler.h"
 #include <vector>
-#include <chrono>
 #include <strsafe.h>
 
+#include "ComponentManager.h"
 #include "DirectXObjects.h"
 
 
@@ -188,6 +188,7 @@ namespace jela
 
         // Getters
 
+        ComponentManager* ComponentMngr() const;
         ResourceManager* ResourceMngr() const;
         const Font* GetCurrentFont() const;
         Vector2f GetGameSize() const;
@@ -230,7 +231,7 @@ namespace jela
         void SetWindowPosition(bool setPos, bool setSize);
         void SetFullscreen();
         void SetDeltaTime(float elapsedSec);
-        void Paint();
+        void Paint() const;
         HResultHandler OnRender() const;
         void MakeWindow();
         void CalculateWindowPos();
@@ -282,7 +283,8 @@ namespace jela
 
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 
-        std::unique_ptr<ResourceManager>m_pResourceManager{};
+        std::unique_ptr<ResourceManager> m_pResourceManager{};
+        std::unique_ptr<ComponentManager> m_pComponentManager{};
     };
 }
 

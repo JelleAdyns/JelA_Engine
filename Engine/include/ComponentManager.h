@@ -1,17 +1,16 @@
-#ifndef COMPONENTHANDLER_H
-#define COMPONENTHANDLER_H
+#ifndef COMPONENTMANAGER_H
+#define COMPONENTMANAGER_H
 
 #include <stdexcept>
 #include <typeindex>
 #include <unordered_map>
 
 #include "Component.h"
-#include "Engine.h"
 #include "SingleLinkAllocators.h"
 
 namespace jela
 {
-    class ComponentHandler final
+    class ComponentManager final
     {
     private:
         class AnyComponent final
@@ -40,12 +39,12 @@ namespace jela
             std::reference_wrapper<ComponentAllocator> m_Alloc;
         };
     public:
-        ComponentHandler() = default;
-        ~ComponentHandler() { Clear(); }
-        ComponentHandler(const ComponentHandler& other) = delete;
-        ComponentHandler(ComponentHandler&& other) noexcept = default;
-        ComponentHandler& operator=(const ComponentHandler& other) = delete;
-        ComponentHandler& operator=(ComponentHandler&& other) noexcept = delete;
+        ComponentManager() = default;
+        ~ComponentManager() { Clear(); }
+        ComponentManager(const ComponentManager& other) = delete;
+        ComponentManager(ComponentManager&& other) noexcept = delete;
+        ComponentManager& operator=(const ComponentManager& other) = delete;
+        ComponentManager& operator=(ComponentManager&& other) noexcept = delete;
 
         template <cDerivedComponent T, typename ...Args> size_t AddComponent(Args ...args);
         void RemoveComponent(size_t vecIndex);
@@ -66,12 +65,12 @@ namespace jela
 
     // AnyComponent
     template <cDerivedComponent T, typename ... Args>
-    ComponentHandler::AnyComponent ComponentHandler::AnyComponent::make_component(ComponentAllocator& alloc, Args... args)
+    ComponentManager::AnyComponent ComponentManager::AnyComponent::make_component(ComponentAllocator& alloc, Args... args)
     {
         return AnyComponent{new (alloc) T{args...}, alloc};
     }
     template <cDerivedComponent T>
-    T* ComponentHandler::AnyComponent::Get() const
+    T* ComponentManager::AnyComponent::Get() const
     {
         if (auto p = dynamic_cast<T*>(m_pComponent); p != nullptr)
             return p;
@@ -79,14 +78,14 @@ namespace jela
         throw std::bad_typeid();
     }
     template <cDerivedComponent T>
-    ComponentHandler::AnyComponent::AnyComponent(T* component, ComponentAllocator& alloc):
+    ComponentManager::AnyComponent::AnyComponent(T* component, ComponentAllocator& alloc):
             m_pComponent{component},
             m_Alloc{alloc}
     {}
 
     // ComponentHandler
     template <cDerivedComponent T, typename ... Args>
-    size_t ComponentHandler::AddComponent(Args... args)
+    size_t ComponentManager::AddComponent(Args... args)
     {
         const auto& typeID = typeid(T);
         if (!m_Allocs.contains(typeID))
@@ -99,10 +98,10 @@ namespace jela
         return m_Components.size() - 1;
     }
     template <cDerivedComponent T>
-    T* ComponentHandler::GetComponent(size_t vecIndex)
+    T* ComponentManager::GetComponent(size_t vecIndex)
     {
         return m_Components.at(vecIndex).Get<T>();
     }
 // ---------------------------------------------------------------------------------------------------------------
 }
-#endif //COMPONENTHANDLER_H
+#endif //COMPONENTMANAGER_H

@@ -4,7 +4,8 @@
 #include <typeindex>
 #include <unordered_map>
 #include "Component.h"
-#include "Scene.h"
+#include "Engine.h"
+#include "TransformComponent.h"
 
 namespace jela
 {
@@ -12,23 +13,14 @@ namespace jela
     {
     public:
 
-        explicit GameObject(Scene& scene):
-            m_pScene{scene}
-        {};
+        explicit GameObject();
 
-        ~GameObject()
-        {
-            for (const auto& index : m_Components | std::views::values)
-                m_pScene.RemoveComponent(index);
-
-            m_Components.clear();
-        }
-        GameObject(const GameObject& other) = delete; // disable copying because it would mean creating new components
-        GameObject(GameObject&& other) noexcept:
-            m_pScene{other.m_pScene},
-            m_Components{std::exchange(other.m_Components, {})}
-        {}
+        ~GameObject();
+        // disable copying because it would mean creating new components
+        GameObject(const GameObject& other) = delete;
         GameObject& operator=(const GameObject& other) = delete;
+
+        GameObject(GameObject&& other) noexcept; // Defined
         GameObject& operator=(GameObject&& other) noexcept = delete;
 
         template <cDerivedComponent T, typename ...Args>
@@ -37,7 +29,7 @@ namespace jela
             if (const auto& typeID = typeid(T);
                 !HasComponent(typeID))
             {
-                m_Components[typeID] = m_pScene.AddComponent<T>(args...);
+                m_Components[typeID] = ENGINE.ComponentMngr()->AddComponent<T>(args...);
             }
             else throw std::runtime_error("Object already owns a reference to an instance of the passed component type." );
         }
@@ -49,7 +41,7 @@ namespace jela
                 HasComponent(typeID))
             {
                 const auto index = m_Components.at(typeID);
-                m_pScene.RemoveComponent(index);
+                ENGINE.ComponentMngr()->RemoveComponent(index);
                 m_Components.erase(typeID);
             }
         }
@@ -57,11 +49,17 @@ namespace jela
         template <cDerivedComponent T>
         T* GetComponent() const
         {
+            if constexpr (std::is_same_v<T, TransformComponent>)
+            {
+                if (m_Transform) return m_Transform;
+            }
+
             if (const auto& typeID = typeid(T);
                 HasComponent(typeID))
             {
-                return m_pScene.GetComponent<T>(m_Components.at(typeID));
+                return ENGINE.ComponentMngr()->GetComponent<T>(m_Components.at(typeID));
             }
+
             throw std::runtime_error("Object doesn't own a reference to an instance of the passed component type.");
         }
 
@@ -69,12 +67,9 @@ namespace jela
         bool HasComponent() const { return HasComponent(typeid(T)); }
         bool HasComponent(const std::type_index& typeID) const { return m_Components.contains(typeID); }
 
-        const Scene& GetScene() const { return m_pScene; }
-
     private:
 
-
-        Scene& m_pScene;
+        TransformComponent* m_Transform{nullptr};
         std::unordered_map<std::type_index, size_t> m_Components{};
     };
 }

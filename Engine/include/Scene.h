@@ -1,35 +1,48 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "ComponentHandler.h"
-#include "GameObjectHandler.h"
+#include "GameObject.h"
 
 namespace jela
 {
     class Scene final
     {
+    private:
+        // class GameObjectHandler final
+        // {
+        // public:
+        //
+        //     GameObjectHandler();
+        //     ~GameObjectHandler() { Clear(); }
+        //     GameObjectHandler(const GameObjectHandler& other) = delete;
+        //     GameObjectHandler(GameObjectHandler&& other) noexcept = default;
+        //     GameObjectHandler& operator=(const GameObjectHandler& other) = delete;
+        //     GameObjectHandler& operator=(GameObjectHandler&& other) noexcept = delete;
+        //
+        //     GameObject& AddGameObject();
+        //     GameObject& ConsumeGameObject(GameObject&& gameObject);
+        //     void Clear();
+        //
+        //     static constexpr std::size_t MAX_GAME_OBJECTS = 100;
+        // private:
+        //
+        //     FixedSizeAllocator m_GameObjectAlloc;
+        //     std::vector<GameObject*> m_pGameObjects{};
+        // };
     public:
 
         Scene() = default;
 
-        ~Scene();
 
+
+        // TODO: REFERENCE BECOMES INVALID WHEN VECTOR RESIZES, FIX THIS!!!
         GameObject& AddGameObject();
         GameObject& ConsumeGameObject(GameObject&& gameObject);
 
-        template <cDerivedComponent T, typename ...Args>
-        size_t AddComponent(Args ...args) { return m_ComponentHandler.AddComponent<T>(args...); }
-
-        void RemoveComponent(size_t vecIndex) { m_ComponentHandler.RemoveComponent(vecIndex); }
-
-        template <cDerivedComponent T>
-        T* GetComponent(size_t vecIndex) { return m_ComponentHandler.GetComponent<T>(vecIndex); }
-
     private:
 
-        ComponentHandler m_ComponentHandler{};
-        GameObjectHandler m_GameObjectHandler{};
-
+        //GameObjectHandler m_GameObjectHandler{};
+        std::vector<GameObject> m_pGameObjects{};
     };
 
 

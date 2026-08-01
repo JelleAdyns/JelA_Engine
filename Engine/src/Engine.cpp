@@ -63,11 +63,14 @@ namespace jela
 
         m_pResourceManager->Start();
 
+        m_pComponentManager = std::make_unique<ComponentManager>();
+
         return true;
     }
 
     int Engine::Run(std::unique_ptr<BaseGame>&& game)
     {
+
         m_pGame = std::move(game);
         m_pGame->Initialize();
 
@@ -132,6 +135,7 @@ namespace jela
             m_pGame->Cleanup();
             m_pGame = nullptr;
         }
+        m_pComponentManager = nullptr;
 
         AudioLocator::RegisterAudioService(nullptr);
         m_pResourceManager = nullptr;
@@ -961,6 +965,10 @@ namespace jela
     {
         m_SecondsPerFrame = 1.f / FPS;
     }
+    ComponentManager* Engine::ComponentMngr() const
+    {
+        return m_pComponentManager.get();
+    }
 
     void Engine::Translate(float xTranslation, float yTranslation) const
     {
@@ -1116,7 +1124,7 @@ namespace jela
         m_pDXHandler->dDeviceContext2D.SetBackgroundColor(newColor, opacity);
     }
 
-    void Engine::Paint()
+    void Engine::Paint() const
     {
         OnRender();
         ValidateRect(m_hWindow, nullptr);
