@@ -5,6 +5,7 @@
 #include <ranges>
 #include <filesystem>
 #include <mutex>
+#include <map>
 
 // Shoutout: ChiliTomatoNoodle
 // https://www.youtube.com/watch?v=T51Eqbbald4&t=2888s

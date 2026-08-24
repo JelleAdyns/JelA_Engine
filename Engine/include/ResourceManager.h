@@ -1,10 +1,8 @@
 #ifndef RESOURCEMANAGER_H
 #define RESOURCEMANAGER_H
 
-#include "framework.h"
-#include "Observer.h"
+#include "ObservingObjects.h"
 #include "HResultHandler.h"
-#include <map>
 #include <unordered_map>
 
 namespace jela
@@ -151,9 +149,6 @@ namespace jela
         ResourceManager& operator= (const ResourceManager&) = delete;
         ResourceManager& operator= (ResourceManager&&) noexcept = delete;
 
-        template <typename ResourceType>
-        struct ResourcePtr;
-
         void GetTexture(const tstring& file, ResourcePtr<Texture>& resourcePtr);
         void RemoveTexture(const tstring& file);
         void RemoveAllTextures();
@@ -171,135 +166,12 @@ namespace jela
         void SetCurrentTextFormat(TextFormat* pTextFormat);
         void SetDefaultFont();
         void SetDefaultTextFormat();
-    private:
 
-        //-----------------------------------------------------------------------------------------------------------------
-        // Private ManagedResource struct
-
-        template <typename ResourceType>
-        struct ManagedResource
-        {
-            template <typename ...Args>
-            ManagedResource(Args&&... args) :
-                resource{ args... },
-                pOnResourceDestroy{std::make_unique<Subject<>>()}
-            {}
-
-            ~ManagedResource() { pOnResourceDestroy->NotifyObservers(); }
-
-            ManagedResource(const ManagedResource&) = delete;
-            ManagedResource(ManagedResource&&) noexcept = delete;
-            ManagedResource& operator= (const ManagedResource&) = delete;
-            ManagedResource& operator= (ManagedResource&&) noexcept = delete;
-
-            ResourceType resource;
-
-            void HandleObserver(ResourcePtr<ResourceType>& resourcePtr)
-            {
-                if (resourcePtr.pObject) resourcePtr.m_pSubject->RemoveObserver(&resourcePtr);
-                pOnResourceDestroy->AddObserver(&resourcePtr);
-                resourcePtr.SaveSubject(pOnResourceDestroy.get());
-                resourcePtr.pObject = &resource;
-            }
-
-        private:
-            std::unique_ptr<Subject<>> pOnResourceDestroy{};
-        };
-        //-----------------------------------------------------------------------------------------------------------------
-
-    public:
-
-        //-----------------------------------------------------------------------------------------------------------------
-        // Public ResourcePtr struct
-        template <typename ResourceType>
-        struct ResourcePtr final : public Observer<>
-        {
-
-            ResourcePtr() = default;
-
-            ~ResourcePtr() override
-            {
-                if (m_pSubject) m_pSubject->RemoveObserver(this);
-            }
-
-            ResourcePtr(const ResourcePtr& other)
-                : pObject{other.pObject}
-                  , m_pSubject{other.m_pSubject}
-            {
-                if (m_pSubject) m_pSubject->AddObserver(this);
-            }
-
-            ResourcePtr(ResourcePtr&& other) noexcept
-                : pObject{std::exchange(other.pObject, nullptr)}
-                  , m_pSubject{std::exchange(other.m_pSubject, nullptr)}
-            {
-                if (m_pSubject)
-                {
-                    m_pSubject->RemoveObserver(&other);
-                    m_pSubject->AddObserver(this);
-                }
-            }
-
-            ResourcePtr& operator= (const ResourcePtr& other)
-            {
-                ResourcePtr{ other }.swap(*this);
-                return *this;
-            }
-
-            ResourcePtr& operator= (ResourcePtr&& other) noexcept
-            {
-                ResourcePtr{ std::move(other) }.swap(*this);
-                return *this;
-            }
-
-            const ResourceType* get() const { return pObject; }
-
-            explicit operator bool() const
-            {
-                return pObject;
-            }
-            const ResourceType& operator*() const
-            {
-                if (pObject == nullptr) throw std::runtime_error(
-                       "pObject was nullptr when trying to dereference it using the '->' operator!");
-                return *pObject;
-            }
-            const ResourceType* operator->() const
-            {
-                if (pObject == nullptr) throw std::runtime_error(
-                    "pObject was nullptr when trying to acces it using the '->' operator!");
-                return pObject;
-            }
-        private:
-            friend struct ManagedResource<ResourceType>;
-            void Notify() override { pObject = nullptr; }
-            void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
-
-            void SaveSubject(Subject<>* pSubject)
-            {
-                if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ResourcePtr Observer."));
-                else m_pSubject = pSubject;
-            }
-            void swap(ResourcePtr& other) noexcept
-            {
-                std::swap(pObject, other.pObject);
-
-                other.m_pSubject->RemoveObserver(&other);
-                m_pSubject->RemoveObserver(this);
-                std::swap(m_pSubject, other.m_pSubject);
-                other.m_pSubject->AddObserver(&other);
-                m_pSubject->AddObserver(this);
-            }
-
-            const ResourceType* pObject = nullptr;
-            Subject<>* m_pSubject{};
-        };
-        //-----------------------------------------------------------------------------------------------------------------
 
     private:
 
         template<typename ResourceType>
-        using ResourceMap = std::unordered_map<tstring, ManagedResource<ResourceType>>;
+        using ResourceMap = std::unordered_map<tstring, ObjectObserved<ResourceType>>;
         //------------------------------------------------------
         // RESOURCES
         ResourceMap<Texture>            m_MapTextures{};
@@ -320,9 +192,6 @@ namespace jela
 
         static ResourceManager* GetResourceManager();
     };
-
-    template <typename ResourceType>
-    using ResourcePtr = ResourceManager::ResourcePtr<ResourceType>;
     //---------------------------------------------------------------
 
 }

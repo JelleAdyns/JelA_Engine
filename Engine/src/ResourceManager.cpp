@@ -374,7 +374,7 @@ namespace jela
         try
         {
             m_MapTextures.try_emplace(file, file);
-            m_MapTextures.at(file).HandleObserver(resourcePtr);
+            resourcePtr = ResourcePtr{ m_MapTextures.at(file) };
         }
         catch (const FileException& e)
         {
@@ -410,7 +410,7 @@ namespace jela
         try
         {
             m_MapFonts.try_emplace(fontName, fontName, fromFile);
-            m_MapFonts.at(fontName).HandleObserver(resourcePtr);
+            resourcePtr = ResourcePtr{m_MapFonts.at(fontName)};
         }
         catch (const FileException& e)
         {
