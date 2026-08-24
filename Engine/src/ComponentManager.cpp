@@ -8,7 +8,7 @@ namespace jela
     {
         if (m_pComponent)
         {
-            m_pComponent->~Component();
+            std::destroy_at(m_pComponent);
             operator delete(m_pComponent, m_Alloc);
         }
     }

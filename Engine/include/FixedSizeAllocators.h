@@ -110,11 +110,10 @@ namespace jela
     class TypeAllocator final : public FixedSizeAllocator
     {
     public:
+        static_assert(N > 0, "Amount of objects must be greater than 0");
         explicit TypeAllocator():
             FixedSizeAllocator{std::type_identity<T>{}, N}
-        {
-            static_assert(N > 0, "Amount of objects must be greater than 0");
-        }
+        {}
     };
     template <typename T>
     class TypeAllocator<T, 0> final : public FixedSizeAllocator
