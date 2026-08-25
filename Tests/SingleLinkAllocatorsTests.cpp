@@ -218,7 +218,7 @@ namespace jela
 
     // -------------------------------------------------------------------------------------------------------
     // SingleLinkAllocator
-    TEST(single_link_allocator_test, Single_Allocation)
+    TEST(SingleLinkAllocatorTests, SingleAllocation)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestSingleAllocation(allocLarge);
@@ -226,7 +226,7 @@ namespace jela
         TestSingleAllocation(allocSmall);
     }
 
-    TEST(single_link_allocator_test, Invalid_Release)
+    TEST(SingleLinkAllocatorTests, InvalidRelease)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestInvalidRelease(allocLarge);
@@ -234,7 +234,7 @@ namespace jela
         TestInvalidRelease(allocSmall);
     }
 
-    TEST(single_link_allocator_test, Two_Allocations)
+    TEST(SingleLinkAllocatorTests, TwoAllocations)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestTwoAllocations(allocLarge);
@@ -242,7 +242,7 @@ namespace jela
         TestTwoAllocations(allocSmall);
     }
 
-    TEST(single_link_allocator_test, Fill_Allocator)
+    TEST(SingleLinkAllocatorTests, FillAllocator)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestFillAllocator(allocLarge);
@@ -250,7 +250,7 @@ namespace jela
         TestFillAllocator(allocSmall);
     }
 
-    TEST(single_link_allocator_test, Overflow)
+    TEST(SingleLinkAllocatorTests, Overflow)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestOverflow(allocLarge);
@@ -258,7 +258,7 @@ namespace jela
         TestOverflow(allocSmall);
     }
 
-    TEST(single_link_allocator_test, Release_In_Middle)
+    TEST(SingleLinkAllocatorTests, ReleaseInMiddle)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestReleaseInMiddle(allocLarge);
@@ -266,7 +266,7 @@ namespace jela
         TestReleaseInMiddle(allocSmall);
     }
 
-    TEST(single_link_allocator_test, New_And_Delete_Operator)
+    TEST(SingleLinkAllocatorTests, NewAndDeleteOperator)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestNewAndDeleteOperators(allocLarge);
@@ -274,7 +274,7 @@ namespace jela
         TestNewAndDeleteOperators(allocSmalll);
     }
 
-    TEST(single_link_allocator_test, New_And_Delete)
+    TEST(SingleLinkAllocatorTests, NewAndDelete)
     {
         SingleLinkAllocator allocLarge{BUFFER_SIZE};
         TestNewAndDelete(allocLarge);
@@ -282,7 +282,7 @@ namespace jela
         TestNewAndDelete(allocSmall);
     }
 
-    TEST(single_link_allocator_test, Complete_Buffer_Size)
+    TEST(SingleLinkAllocatorTests, CompleteBufferSize)
     {
         SingleLinkAllocator alloc1{BUFFER_SIZE, true};
         TestGetters(alloc1, true);
@@ -305,7 +305,7 @@ namespace jela
 
     // -------------------------------------------------------------------------------------------------------
     // BufferAllocator
-    TEST(buffer_allocator_test, Single_Allocation)
+    TEST(BufferAllocatorTests, SingleAllocation)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestSingleAllocation(allocLarge);
@@ -313,7 +313,7 @@ namespace jela
         TestSingleAllocation(allocSmall);
     }
 
-    TEST(buffer_allocator_test, Invalid_Release)
+    TEST(BufferAllocatorTests, InvalidRelease)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestInvalidRelease(allocLarge);
@@ -321,7 +321,7 @@ namespace jela
         TestInvalidRelease(allocSmall);
     }
 
-    TEST(buffer_allocator_test, Two_Allocations)
+    TEST(BufferAllocatorTests, TwoAllocations)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestTwoAllocations(allocLarge);
@@ -329,7 +329,7 @@ namespace jela
         TestTwoAllocations(allocSmall);
     }
 
-    TEST(buffer_allocator_test, Fill_Allocator)
+    TEST(BufferAllocatorTests, FillAllocator)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestFillAllocator(allocLarge);
@@ -337,7 +337,7 @@ namespace jela
         TestFillAllocator(allocSmall);
     }
 
-    TEST(buffer_allocator_test, Overflow)
+    TEST(BufferAllocatorTests, Overflow)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestOverflow(allocLarge);
@@ -345,7 +345,7 @@ namespace jela
         TestOverflow(allocSmall);
     }
 
-    TEST(buffer_allocator_test, Release_In_Middle)
+    TEST(BufferAllocatorTests, ReleaseInMiddle)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestReleaseInMiddle(allocLarge);
@@ -353,7 +353,7 @@ namespace jela
         TestReleaseInMiddle(allocSmall);
     }
 
-    TEST(buffer_allocator_test, New_And_Delete_Operator)
+    TEST(BufferAllocatorTests, NewAndDeleteOperator)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestNewAndDeleteOperators(allocLarge);
@@ -361,7 +361,7 @@ namespace jela
         TestNewAndDeleteOperators(allocSmall);
     }
 
-    TEST(buffer_allocator_test, New_And_Delete)
+    TEST(BufferAllocatorTests, NewAndDelete)
     {
         BufferAllocator<BUFFER_SIZE> allocLarge{};
         TestNewAndDelete(allocLarge);
@@ -369,7 +369,7 @@ namespace jela
         TestNewAndDelete(allocSmall);
     }
 
-    TEST(buffer_allocator_test, Complete_Buffer_Size)
+    TEST(BufferAllocatorTests, CompleteBufferSize)
     {
         BufferAllocator<BUFFER_SIZE, true> alloc1{};
         TestGetters(alloc1, true);

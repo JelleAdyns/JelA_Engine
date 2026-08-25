@@ -223,58 +223,58 @@ namespace jela
 
     // -------------------------------------------------------------------------------------------------------
     // FixedSizeAllocator
-    TEST(fixed_size_allocator_test, Single_Allocation)
+    TEST(FixedSizeAllocatorTests, SingleAllocation)
     {
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestSingleAllocation(alloc);
     }
 
-    TEST(fixed_size_allocator_test, Invalid_Release)
+    TEST(FixedSizeAllocatorTests, InvalidRelease)
     {
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestInvalidRelease(alloc);
     }
 
-    TEST(fixed_size_allocator_test, Two_Allocations)
+    TEST(FixedSizeAllocatorTests, TwoAllocations)
     {
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestTwoAllocations(alloc);
     }
 
-    TEST(fixed_size_allocator_test, Fill_Allocator)
+    TEST(FixedSizeAllocatorTests, FillAllocator)
     {
         void* pointers[BUFFER_SIZE]{};
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestFillAllocator(alloc, pointers);
     }
 
-    TEST(fixed_size_allocator_test, Overflow)
+    TEST(FixedSizeAllocatorTests, Overflow)
     {
         void* pointers[BUFFER_SIZE + AMOUNT_OF_OVERFLOW_ALLOCATIONS]{};
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestOverflow(alloc, pointers);
     }
 
-    TEST(fixed_size_allocator_test, Release_In_Middle)
+    TEST(FixedSizeAllocatorTests, ReleaseInMiddle)
     {
         void* pointers[BUFFER_SIZE]{};
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestReleaseInMiddle(alloc, pointers);
     }
 
-    TEST(fixed_size_allocator_test, New_And_Delete_Operator)
+    TEST(FixedSizeAllocatorTests, NewAndDeleteOperator)
     {
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestNewAndDeleteOperators(alloc);
     }
 
-    TEST(fixed_size_allocator_test, New_And_Delete)
+    TEST(FixedSizeAllocatorTests, NewAndDelete)
     {
         FixedSizeAllocator alloc{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestNewAndDelete(alloc);
     }
 
-    TEST(fixed_size_allocator_test, Complete_Buffer_Size)
+    TEST(FixedSizeAllocatorTests, CompleteBufferSize)
     {
         const FixedSizeAllocator alloc1{std::type_identity<DerivedCompA>{}, BUFFER_SIZE};
         TestCompleteBufferSize(alloc1);
@@ -294,58 +294,58 @@ namespace jela
 
     // -------------------------------------------------------------------------------------------------------
     // TypeAllocator
-    TEST(type_allocator_test, Single_Allocation)
+    TEST(TypeAllocatorTests, SingleAllocation)
     {
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestSingleAllocation(alloc);
     }
 
-    TEST(type_allocator_test, Invalid_Release)
+    TEST(TypeAllocatorTests, InvalidRelease)
     {
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestInvalidRelease(alloc);
     }
 
-    TEST(type_allocator_test, Two_Allocations)
+    TEST(TypeAllocatorTests, TwoAllocations)
     {
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestTwoAllocations(alloc);
     }
 
-    TEST(type_allocator_test, Fill_Allocator)
+    TEST(TypeAllocatorTests, FillAllocator)
     {
         void* pointers[BUFFER_SIZE]{};
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestFillAllocator(alloc, pointers);
     }
 
-    TEST(type_allocator_test, Overflow)
+    TEST(TypeAllocatorTests, Overflow)
     {
         void* pointers[BUFFER_SIZE + AMOUNT_OF_OVERFLOW_ALLOCATIONS]{};
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestOverflow(alloc, pointers);
     }
 
-    TEST(type_allocator_test, Release_In_Middle)
+    TEST(TypeAllocatorTests, ReleaseInMiddle)
     {
         void* pointers[BUFFER_SIZE]{};
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestReleaseInMiddle(alloc, pointers);
     }
 
-    TEST(type_allocator_test, New_And_Delete_Operator)
+    TEST(TypeAllocatorTests, NewAndDeleteOperator)
     {
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestNewAndDeleteOperators(alloc);
     }
 
-    TEST(type_allocator_test, New_And_Delete)
+    TEST(TypeAllocatorTests, NewAndDelete)
     {
         TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc{};
         TestNewAndDelete(alloc);
     }
 
-    TEST(type_allocator_test, Complete_Buffer_Size)
+    TEST(TypeAllocatorTests, CompleteBufferSize)
     {
         const TypeAllocator<DerivedCompA, BUFFER_SIZE> alloc1{};
         TestCompleteBufferSize(alloc1);
@@ -365,25 +365,25 @@ namespace jela
 
     // -------------------------------------------------------------------------------------------------------
     // ComponentAllocator
-    TEST(component_allocator_test, Single_Allocation)
+    TEST(ComponentAllocatorTests, SingleAllocation)
     {
         ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestSingleAllocation(alloc);
     }
 
-    TEST(component_allocator_test, Invalid_Release)
+    TEST(ComponentAllocatorTests, InvalidRelease)
     {
         ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestInvalidRelease(alloc);
     }
 
-    TEST(component_allocator_test, Two_Allocations)
+    TEST(ComponentAllocatorTests, TwoAllocations)
     {
         ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestTwoAllocations(alloc);
     }
 
-    TEST(component_allocator_test, Fill_Allocator)
+    TEST(ComponentAllocatorTests, FillAllocator)
     {
         constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedCompA>() };
         void* pointers[amountOfAllocs]{};
@@ -392,7 +392,7 @@ namespace jela
         TestFillAllocator(alloc, pointers);
     }
 
-    TEST(component_allocator_test, Overflow)
+    TEST(ComponentAllocatorTests, Overflow)
     {
         constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedCompA>() + AMOUNT_OF_OVERFLOW_ALLOCATIONS };
         void* pointers[amountOfAllocs]{};
@@ -401,7 +401,7 @@ namespace jela
         TestOverflow(alloc, pointers);
     }
 
-    TEST(component_allocator_test, Release_In_Middle)
+    TEST(ComponentAllocatorTests, ReleaseInMiddle)
     {
         constexpr size_t amountOfAllocs{ Component::GetMaxAmount<DerivedCompA>() };
         void* pointers[amountOfAllocs]{};
@@ -410,19 +410,19 @@ namespace jela
         TestReleaseInMiddle(alloc, pointers);
     }
 
-    TEST(component_allocator_test, New_And_Delete_Operator)
+    TEST(ComponentAllocatorTests, NewAndDeleteOperator)
     {
         ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestNewAndDeleteOperators(alloc);
     }
 
-    TEST(component_allocator_test, New_And_Delete)
+    TEST(ComponentAllocatorTests, NewAndDelete)
     {
         ComponentAllocator alloc{std::type_identity<DerivedCompA>{}};
         TestNewAndDelete(alloc);
     }
 
-    TEST(component_allocator_test, Complete_Buffer_Size)
+    TEST(ComponentAllocatorTests, CompleteBufferSize)
     {
         const ComponentAllocator alloc1{std::type_identity<DerivedCompA>{}};
         TestCompleteBufferSize(alloc1);
