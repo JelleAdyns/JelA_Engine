@@ -6,10 +6,13 @@
 #include <unordered_map>
 
 #include "Component.h"
+#include "Observer.h"
+#include "ObservingObjects.h"
 #include "SingleLinkAllocators.h"
 
 namespace jela
 {
+    struct CompsChangedInfo;
     class ComponentManager final
     {
     private:
@@ -39,6 +42,12 @@ namespace jela
             std::reference_wrapper<ComponentAllocator> m_Alloc;
         };
     public:
+        struct ChangedIndex
+        {
+            std::size_t prevIndex{};
+            std::size_t newIndex{};
+        };
+
         ComponentManager() = default;
         ~ComponentManager() { Clear(); }
         ComponentManager(const ComponentManager& other) = delete;
@@ -46,9 +55,9 @@ namespace jela
         ComponentManager& operator=(const ComponentManager& other) = delete;
         ComponentManager& operator=(ComponentManager&& other) noexcept = delete;
 
-        template <cDerivedComponent T, typename ...Args> size_t AddComponent(Args ...args);
-        void RemoveComponent(size_t vecIndex);
-        template <cDerivedComponent T> T* GetComponent(size_t vecIndex);
+        template <cDerivedComponent T, typename ...Args> ComponentIndex AddComponent(Args ...args);
+        void RemoveComponent(const ComponentIndex& vecIndex);
+        template <cDerivedComponent T> T* GetComponent(const ComponentIndex& vecIndex);
 
         void Clear();
 
@@ -58,8 +67,14 @@ namespace jela
         BufferAllocator<POOL_SIZE> m_ComponentAllocatorPool{};
         std::vector<AnyComponent> m_Components{};
         std::unordered_map<std::type_index, ComponentAllocator> m_Allocs{};
+        Subject<const CompsChangedInfo&> m_OnCompsChanged{};
     };
 
+    struct CompsChangedInfo
+    {
+        std::optional<ComponentManager::ChangedIndex> changedIndexInfo{};
+        std::size_t removedComp{};
+    };
 // ---------------------------------------------------------------------------------------------------------------
 // TEMPLATED DEFINITONS
 
@@ -85,7 +100,7 @@ namespace jela
 
     // ComponentHandler
     template <cDerivedComponent T, typename ... Args>
-    size_t ComponentManager::AddComponent(Args... args)
+    ComponentIndex ComponentManager::AddComponent(Args... args)
     {
         const auto& typeID = typeid(T);
         if (!m_Allocs.contains(typeID))
@@ -95,12 +110,13 @@ namespace jela
         }
 
         m_Components.emplace_back(AnyComponent::make_component<T>(m_Allocs.at(typeID), args...));
-        return m_Components.size() - 1;
+        return std::move(ComponentIndex{&m_OnCompsChanged, m_Components.size() - 1});
     }
     template <cDerivedComponent T>
-    T* ComponentManager::GetComponent(size_t vecIndex)
+    T* ComponentManager::GetComponent(const ComponentIndex& vecIndex)
     {
-        return m_Components.at(vecIndex).Get<T>();
+        if (!vecIndex.HasValue()) return nullptr;
+        return m_Components.at(vecIndex.Get()).Get<T>();
     }
 // ---------------------------------------------------------------------------------------------------------------
 }

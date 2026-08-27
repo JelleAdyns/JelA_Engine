@@ -97,6 +97,24 @@ namespace jela
 
     };
 
+    struct CompsChangedInfo;
+
+    struct ComponentIndex final : public ObservingObject<std::optional<std::size_t>, const CompsChangedInfo&>
+    {
+        ComponentIndex() = default;
+        ComponentIndex(Subject<const CompsChangedInfo&>* pSubject, std::size_t index):
+            ObservingObject{pSubject, index}
+        {}
+
+        bool HasValue() const {return GetValue().has_value();}
+        std::size_t Get() const { return GetValue().value();}
+
+        void UnbindObserver() { RemoveFromSubject(); }
+    protected:
+
+        void Notify(const CompsChangedInfo& changeInfo) override;
+    };
+
     //----------------------------------------------------------------------------------------------------------------------
     // ObservingObject
     template <cInterchangeable ObjectType, typename ...SubjectArgs>

@@ -9,7 +9,10 @@ namespace jela
     }
     GameObject::~GameObject()
     {
-        auto mngr = ENGINE.ComponentMngr();
+        const auto mngr = ENGINE.ComponentMngr();
+
+        for (auto& index : m_Components | std::views::values)
+            index.UnbindObserver();
         for (const auto& index : m_Components | std::views::values)
             mngr->RemoveComponent(index);
 

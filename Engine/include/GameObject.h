@@ -29,7 +29,7 @@ namespace jela
             if (const auto& typeID = typeid(T);
                 !HasComponent(typeID))
             {
-                m_Components[typeID] = ENGINE.ComponentMngr()->AddComponent<T>(args...);
+                m_Components[typeID] = std::move(ENGINE.ComponentMngr()->AddComponent<T>(args...));
             }
             else throw std::runtime_error("Object already owns a reference to an instance of the passed component type." );
         }
@@ -70,7 +70,7 @@ namespace jela
     private:
 
         TransformComponent* m_Transform{nullptr};
-        std::unordered_map<std::type_index, size_t> m_Components{};
+        std::unordered_map<std::type_index, ComponentIndex> m_Components{};
     };
 }
 

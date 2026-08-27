@@ -126,10 +126,10 @@ namespace jela
     class BufferAllocator final : public SingleLinkAllocator
     {
     public:
+        static_assert(BUFFER_SIZE > 0, "Buffer size must be greater than 0.");
         BufferAllocator():
             SingleLinkAllocator{BUFFER_SIZE, ALLOW_LARGER}
         {
-            static_assert(BUFFER_SIZE > 0, "Buffer size must be greater than 0.");
             if constexpr (!ALLOW_LARGER)
                 static_assert(BUFFER_SIZE >= MINIMUM_SIZE, "Buffer size must be greater than or equal to the minimum size.");
         }
