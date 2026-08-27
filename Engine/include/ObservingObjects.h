@@ -1,5 +1,6 @@
 #ifndef OBSERVINGOBJECT_H
 #define OBSERVINGOBJECT_H
+
 #include "Observer.h"
 
 namespace jela
@@ -30,8 +31,8 @@ namespace jela
     template <typename T>
         concept cInterchangeable = std::is_move_constructible_v<T> && std::is_copy_constructible_v<T> && std::is_swappable_v<T>;
 
-    template <cInterchangeable T>
-    struct ObservingObject : public Observer<>
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    struct ObservingObject : public Observer<SubjectArgs...>
     {
         ~ObservingObject() override { RemoveFromSubject(); }
 
@@ -43,36 +44,39 @@ namespace jela
         void swap(ObservingObject& other) noexcept;
         friend void swap(ObservingObject& a, ObservingObject& b) noexcept { a.swap(b); }
     protected:
+
         ObservingObject() = default;
+        explicit ObservingObject(Subject<SubjectArgs...>* pSubject, const ObjectType& value);
+        explicit ObservingObject(Subject<SubjectArgs...>* pSubject, ObjectType&& value);
         template <typename U>
-        explicit ObservingObject(const ObjectObserved<U>& observedObject, const T& value);
+        explicit ObservingObject(const ObjectObserved<U>& observedObject, const ObjectType& value);
         template <typename U>
-        explicit ObservingObject(const ObjectObserved<U>& observedObject, T&& value);
+        explicit ObservingObject(const ObjectObserved<U>& observedObject, ObjectType&& value);
 
-        void Notify() override {};
-        void OnSubjectDestroy(Subject<>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
 
-        void SetValue(const T& newValue) { m_ValueObservingTheObject = newValue; }
-        void ResetValue() { m_ValueObservingTheObject = T{}; }
-        const T& GetValue() const {return m_ValueObservingTheObject;}
+        void Notify(SubjectArgs...) override {};
+        void OnSubjectDestroy(Subject<SubjectArgs...>* pSubject) override { if (pSubject == m_pSubject) m_pSubject = nullptr; }
 
-        void SaveSubject(Subject<>* pSubject);
+        void SetValue(const ObjectType& newValue) { m_ValueObservingTheObject = newValue; }
+        void ResetValue() { m_ValueObservingTheObject = ObjectType{}; }
+        const ObjectType& GetValue() const {return m_ValueObservingTheObject;}
+
+        void SaveSubject(Subject<SubjectArgs...>* pSubject);
 
         void AddToSubject() { if (m_pSubject) m_pSubject->AddObserver(this); }
         void RemoveFromSubject() { if (m_pSubject) m_pSubject->RemoveObserver(this); }
 
     private:
 
-        T m_ValueObservingTheObject{};
-        Subject<>* m_pSubject{};
+        ObjectType m_ValueObservingTheObject{};
+        Subject<SubjectArgs...>* m_pSubject{};
     };
 
     template <typename ResourceType>
-    struct ResourcePtr final : ObservingObject<const ResourceType*>
+    struct ResourcePtr final : public ObservingObject<const ResourceType*>
     {
+
         using ObservingType = const ResourceType*;
-        using ObservingObject<ObservingType>::GetValue;
-        using ObservingObject<ObservingType>::ResetValue;
 
         ResourcePtr() = default;
         explicit ResourcePtr(const ObjectObserved<ResourceType>& observerdObject):
@@ -86,41 +90,44 @@ namespace jela
         ObservingType operator->() const;
 
     protected:
+        using ObservingObject<ObservingType>::GetValue;
+        using ObservingObject<ObservingType>::ResetValue;
+
         void Notify() override { ResetValue(); }
 
     };
 
     //----------------------------------------------------------------------------------------------------------------------
     // ObservingObject
-    template <cInterchangeable T>
-    ObservingObject<T>::ObservingObject(const ObservingObject& other):
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    ObservingObject<ObjectType, SubjectArgs...>::ObservingObject(const ObservingObject& other):
         m_ValueObservingTheObject{other.m_ValueObservingTheObject},
         m_pSubject{other.m_pSubject}
     {
         AddToSubject();
     }
-    template <cInterchangeable T>
-    ObservingObject<T>::ObservingObject(ObservingObject&& other) noexcept:
-        m_ValueObservingTheObject{std::move(other.m_ValueObservingTheObject)},
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    ObservingObject<ObjectType, SubjectArgs...>::ObservingObject(ObservingObject&& other) noexcept:
+        m_ValueObservingTheObject{std::exchange(other.m_ValueObservingTheObject, {})},
         m_pSubject{std::exchange(other.m_pSubject, nullptr)}
     {
         if (m_pSubject) m_pSubject->RemoveObserver(&other);
         AddToSubject();
     }
-    template <cInterchangeable T>
-    ObservingObject<T>& ObservingObject<T>::operator=(const ObservingObject& other)
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    ObservingObject<ObjectType, SubjectArgs...>& ObservingObject<ObjectType, SubjectArgs...>::operator=(const ObservingObject& other)
     {
         ObservingObject{ other }.swap(*this);
         return *this;
     }
-    template <cInterchangeable T>
-    ObservingObject<T>& ObservingObject<T>::operator=(ObservingObject&& other) noexcept
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    ObservingObject<ObjectType, SubjectArgs...>& ObservingObject<ObjectType, SubjectArgs...>::operator=(ObservingObject&& other) noexcept
     {
         ObservingObject{ std::move(other) }.swap(*this);
         return *this;
     }
-    template <cInterchangeable T>
-    void ObservingObject<T>::swap(ObservingObject& other) noexcept
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    void ObservingObject<ObjectType, SubjectArgs...>::swap(ObservingObject& other) noexcept
     {
         other.RemoveFromSubject();
         RemoveFromSubject();
@@ -131,25 +138,34 @@ namespace jela
         other.AddToSubject();
         AddToSubject();
     }
-
-    template <cInterchangeable T>
-    template <typename U>
-    ObservingObject<T>::ObservingObject(const ObjectObserved<U>& observedObject, const T& value):
+    template <cInterchangeable ObjectType, typename ... SubjectArgs>
+    ObservingObject<ObjectType, SubjectArgs...>::ObservingObject(Subject<SubjectArgs...>* pSubject, const ObjectType& value):
         m_ValueObservingTheObject{value},
-        m_pSubject{observedObject.GetSubject()}
+        m_pSubject{pSubject}
     {
         AddToSubject();
     }
-    template <cInterchangeable T>
-    template <typename U>
-    ObservingObject<T>::ObservingObject(const ObjectObserved<U>& observedObject, T&& value):
+    template <cInterchangeable ObjectType, typename ... SubjectArgs>
+    ObservingObject<ObjectType, SubjectArgs...>::ObservingObject(Subject<SubjectArgs...>* pSubject, ObjectType&& value):
         m_ValueObservingTheObject{std::move(value)},
-        m_pSubject{observedObject.GetSubject()}
+        m_pSubject{pSubject}
     {
         AddToSubject();
     }
-    template <cInterchangeable T>
-    void ObservingObject<T>::SaveSubject(Subject<>* pSubject)
+
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    template <typename U>
+    ObservingObject<ObjectType, SubjectArgs...>::ObservingObject(const ObjectObserved<U>& observedObject, const ObjectType& value):
+        ObservingObject{observedObject.GetSubject(), std::forward<ObjectType>(value)}
+    {}
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    template <typename U>
+    ObservingObject<ObjectType, SubjectArgs...>::ObservingObject(const ObjectObserved<U>& observedObject, ObjectType&& value):
+        ObservingObject{observedObject.GetSubject(), std::forward<ObjectType>(value)}
+    {}
+
+    template <cInterchangeable ObjectType, typename ...SubjectArgs>
+    void ObservingObject<ObjectType, SubjectArgs...>::SaveSubject(Subject<SubjectArgs...>* pSubject)
     {
         if (!pSubject) OutputDebugString(_T("Subject was nullptr when trying to save it to the ObservingObject Observer."));
         else m_pSubject = pSubject;
