@@ -17,15 +17,37 @@ namespace jela
         ~Subject()
         {
             for (Observer< Args... >* pObserver : m_pVecObservers)
-            {
                 pObserver->OnSubjectDestroy(this);
-            }
         }
 
-        Subject(const Subject&) = default;
-        Subject(Subject&&) noexcept = default;
-        Subject& operator= (const Subject&) = default;
-        Subject& operator= (Subject&&) noexcept = default;
+        Subject(const Subject& other):
+            m_pVecObservers{other.m_pVecObservers}
+        {
+            for (Observer<Args... >* pObserver : m_pVecObservers)
+                pObserver->OnSubjectCopied(&other, this);
+        }
+        Subject(Subject&& other) noexcept:
+            m_pVecObservers{std::exchange(other.m_pVecObservers, {})}
+        {
+            for (Observer<Args... >* pObserver : m_pVecObservers)
+                pObserver->OnSubjectMoved(&other, this);
+        }
+        Subject& operator= (const Subject& other)
+        {
+            if (&other == this) return *this;
+            m_pVecObservers = other.m_pVecObservers;
+            for (Observer<Args... >* pObserver : m_pVecObservers)
+                pObserver->OnSubjectCopied(&other, this);
+            return *this;
+        }
+        Subject& operator= (Subject&& other) noexcept
+        {
+            if (&other == this) return *this;
+            m_pVecObservers = std::exchange(other.m_pVecObservers, {});
+            for (Observer<Args... >* pObserver : m_pVecObservers)
+                pObserver->OnSubjectCopied(&other, this);
+            return *this;
+        }
 
         void AddObserver(Observer<Args... >* pObserver)
         {
@@ -55,6 +77,11 @@ namespace jela
                 pObserver->Notify(args...);
             }
         }
+
+        void Swap(Subject& other)
+        {
+            std::swap(m_pVecObservers, other.m_pVecObservers);
+        }
     private:
         std::vector<Observer<Args... >*> m_pVecObservers;
 
@@ -76,6 +103,8 @@ namespace jela
 
         virtual void Notify(Args...  args) = 0;
         virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
+        virtual void OnSubjectCopied(Subject<Args...>* pCopiedSubject, Subject<Args...>* pOverwrittenSubject) = 0;
+        virtual void OnSubjectMoved(Subject<Args...>* pPrevSubject, Subject<Args...>* pNewSubject) = 0;
 
     protected:
         Observer() = default;
