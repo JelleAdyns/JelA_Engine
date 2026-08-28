@@ -97,10 +97,41 @@ namespace jela
                             filePath.string())
             };
     }
+    Texture::Texture(const Texture& other):
+        m_pDBitmap{other.m_pDBitmap},
+        m_TextureWidth{other.m_TextureWidth},
+        m_TextureHeight{other.m_TextureHeight},
+        m_FileName{other.m_FileName}
+    {
+        if (m_pDBitmap) m_pDBitmap->AddRef();
+    }
+    Texture::Texture(Texture&& other) noexcept:
+        m_pDBitmap{std::exchange(other.m_pDBitmap, nullptr)},
+        m_TextureWidth{std::exchange(other.m_TextureWidth, 0.f)},
+        m_TextureHeight{std::exchange(other.m_TextureHeight, 0.f)},
+        m_FileName{std::exchange(other.m_FileName, {})}
+    {}
+    Texture& Texture::operator=(const Texture& other)
+    {
+        Texture{other}.Swap(*this);
+        return *this;
+    }
+    Texture& Texture::operator=(Texture&& other) noexcept
+    {
+        Texture{std::move(other)}.Swap(*this);
+        return *this;
+    }
 
     Texture::~Texture()
     {
         SafeRelease(&m_pDBitmap);
+    }
+    void Texture::Swap(Texture& other) noexcept
+    {
+        std::swap(other.m_FileName, m_FileName);
+        std::swap(other.m_pDBitmap, m_pDBitmap);
+        std::swap(other.m_TextureWidth, m_TextureWidth);
+        std::swap(other.m_TextureHeight, m_TextureHeight);
     }
 
     void Texture::InitFactory()
@@ -172,6 +203,26 @@ namespace jela
             m_FontName = to_wstring(fontName);
         }
     }
+    Font::Font(const Font& other):
+        m_pFontCollection{other.m_pFontCollection},
+        m_FontName{other.m_FontName}
+    {
+        if (m_pFontCollection) m_pFontCollection->AddRef();
+    }
+    Font::Font(Font&& other) noexcept:
+        m_pFontCollection{std::exchange(other.m_pFontCollection, nullptr)},
+        m_FontName{std::exchange(other.m_FontName, {})}
+    {}
+    Font& Font::operator=(const Font& other)
+    {
+        Font{other}.Swap(*this);
+        return *this;
+    }
+    Font& Font::operator=(Font&& other) noexcept
+    {
+        Font{std::move(other)}.Swap(*this);
+        return *this;
+    }
 
     Font::~Font()
     {
@@ -182,6 +233,11 @@ namespace jela
         }
 
         SafeRelease(&m_pFontCollection);
+    }
+    void Font::Swap(Font& other) noexcept
+    {
+        std::swap(m_pFontCollection, other.m_pFontCollection);
+        std::swap(m_FontName, other.m_FontName);
     }
 
     HResultHandler Font::Initialize(const std::wstring& fontName)
@@ -269,7 +325,26 @@ namespace jela
         SetHorizontalAllignment(horAllign);
         SetVerticalAllignment(vertAllign);
     }
-
+    TextFormat::TextFormat(const TextFormat& other):
+        m_pTextFormat{other.m_pTextFormat},
+        m_Size{other.m_Size}
+    {
+        if (m_pTextFormat) m_pTextFormat->AddRef();
+    }
+    TextFormat::TextFormat(TextFormat&& other) noexcept:
+        m_pTextFormat{std::exchange(other.m_pTextFormat, nullptr)},
+        m_Size{std::exchange(other.m_Size, 0.f)}
+    {}
+    TextFormat& TextFormat::operator=(const TextFormat& other)
+    {
+        TextFormat{other}.Swap(*this);
+        return *this;
+    }
+    TextFormat& TextFormat::operator=(TextFormat&& other) noexcept
+    {
+        TextFormat{std::move(other)}.Swap(*this);
+        return *this;
+    }
     TextFormat::~TextFormat()
     {
         if (!ENGINE.IsQuitting())
@@ -279,6 +354,11 @@ namespace jela
         }
 
         SafeRelease(&m_pTextFormat);
+    }
+    void TextFormat::Swap(TextFormat& other)
+    {
+        std::swap(m_pTextFormat, other.m_pTextFormat);
+        std::swap(m_Size, other.m_Size);
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst

@@ -14,12 +14,15 @@ namespace jela
     public:
         explicit Texture(const tstring& filename);
 
-        Texture(const Texture& other) = delete;
-        Texture(Texture&& other) noexcept = delete;
-        Texture& operator=(const Texture& other) = delete;
-        Texture& operator=(Texture&& other) noexcept = delete;
+        Texture(const Texture& other);;
+        Texture(Texture&& other) noexcept;;
+        Texture& operator=(const Texture& other);
+        Texture& operator=(Texture&& other) noexcept;;
 
         ~Texture();
+
+        void Swap(Texture& other) noexcept;
+        friend void Swap(Texture& first, Texture& second) noexcept {first.Swap(second);}
 
         ID2D1Bitmap* GetBitmap() const { return m_pDBitmap; }
         float GetWidth() const { return m_TextureWidth; }
@@ -49,12 +52,15 @@ namespace jela
     public:
         explicit Font(const tstring& fontname, bool fromFile = false);
 
-        Font(const Font& other) = delete;
-        Font(Font&& other) noexcept = delete;
-        Font& operator=(const Font& other) = delete;
-        Font& operator=(Font&& other) noexcept = delete;
+        Font(const Font& other);
+        Font(Font&& other) noexcept;
+        Font& operator=(const Font& other);
+        Font& operator=(Font&& other) noexcept;
 
         ~Font();
+
+        void Swap(Font& other) noexcept;
+        friend void Swap(Font& first, Font& second) noexcept {first.Swap(second);}
 
         static void InitFactory();
         static void DestroyFactory();
@@ -92,27 +98,33 @@ namespace jela
 
         explicit TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign);
 
-        TextFormat(const TextFormat& other) = delete;
-        TextFormat(TextFormat&& other) noexcept = delete;
-        TextFormat& operator=(const TextFormat& other) = delete;
-        TextFormat& operator=(TextFormat&& other) noexcept = delete;
+        TextFormat(const TextFormat& other);
+        TextFormat(TextFormat&& other) noexcept;
+        TextFormat& operator=(const TextFormat& other);
+        TextFormat& operator=(TextFormat&& other) noexcept;
 
         ~TextFormat() override;
+
+        void Swap(TextFormat& other);
+        friend void swap(TextFormat& first, TextFormat& second) noexcept { first.Swap(second); }
 
         float GetFontSize() const { return m_Size; }
         IDWriteTextFormat* GetTextFormat() const { return m_pTextFormat; }
     private:
-        void Notify(const Font* pFont) override
+
+        using ObserverArg = const Font*;
+        using Subject = Subject<ObserverArg>;
+        void Notify(ObserverArg pFont) override
         {
             if(pFont) SetFont(pFont);
         }
-        void OnSubjectDestroy(Subject<const Font*>*) override
-        {
-        }
+        void OnSubjectDestroy(Subject*) override {}
+        void OnSubjectCopied(Subject*, Subject*) override {}
+        void OnSubjectMoved(Subject*, Subject*) override {}
 
         HResultHandler SetHorizontalAllignment(HorAllignment allignment);
         HResultHandler SetVerticalAllignment(VertAllignment allignment);
-        HResultHandler SetFont(const Font* pFont);
+        HResultHandler SetFont(const Font* const pFont);
 
         IDWriteTextFormat* m_pTextFormat{ nullptr };
         float m_Size;
