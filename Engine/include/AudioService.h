@@ -5,46 +5,25 @@
 #include <memory>
 #include "Observer.h"
 #include "Defines.h"
+#include "ObservingObjects.h"
 
 namespace jela
 {
 
 	using SoundID = unsigned int;
-	struct SoundInstanceID final : public Observer<uint8_t, std::vector<SoundInstanceID*>&>
+	struct SoundInstanceID final : public ObservingObject<std::optional<uint8_t>, uint8_t>
 	{
-        std::optional<uint8_t> GetID() const { return m_Id; }
+		std::optional<uint8_t> GetID() const { return GetValue(); }
 
         SoundInstanceID() = default;
+		SoundInstanceID(Subject<uint8_t>* pSubject, std::uint8_t index):
+		   ObservingObject{pSubject, index}
+		{}
 
-        //--------------------------------------------------------------
-        // IMPLEMENTED
-
-        ~SoundInstanceID() override;
-		SoundInstanceID(const SoundInstanceID& other);
-		SoundInstanceID(SoundInstanceID&& other) noexcept;
-		SoundInstanceID& operator= (const SoundInstanceID& other);
-		SoundInstanceID& operator= (SoundInstanceID&& other) noexcept;
-		//--------------------------------------------------------------
-
-		void Init(uint8_t index);
-		void SaveSubject(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject);
 	private:
 
-		void Notify(uint8_t index, std::vector<SoundInstanceID*>& vecThisObservers) override;
-		void OnSubjectDestroy(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject) override;
-		void swap(SoundInstanceID& other) noexcept
-		{
-			std::swap(m_Id, other.m_Id);
-
-			other.m_pSubject->RemoveObserver(&other);
-			m_pSubject->RemoveObserver(this);
-			std::swap(m_pSubject, other.m_pSubject);
-			other.m_pSubject->AddObserver(&other);
-			m_pSubject->AddObserver(this);
-		}
-        std::optional<uint8_t> m_Id{};
-
-		Subject<uint8_t, std::vector<SoundInstanceID*>&>* m_pSubject{};
+		void Notify(uint8_t index) override;
+		void OnSubjectDestroy(Subject<uint8_t>* pSubject) override;
 	};
 
 	class AudioService

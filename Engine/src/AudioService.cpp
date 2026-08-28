@@ -12,59 +12,20 @@ namespace jela
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// SoundInstanceID
-	SoundInstanceID::~SoundInstanceID() { if (m_pSubject) m_pSubject->RemoveObserver(this); }
 
-	SoundInstanceID::SoundInstanceID(const SoundInstanceID& other)
-        : m_Id{other.m_Id}
-          , m_pSubject{other.m_pSubject}
+	void SoundInstanceID::Notify(uint8_t index)
     {
-        if (m_pSubject) m_pSubject->AddObserver(this);
-    }
-	SoundInstanceID::SoundInstanceID(SoundInstanceID&& other) noexcept
-        : m_Id{std::exchange(other.m_Id, std::nullopt)}
-		, m_pSubject{std::exchange(other.m_pSubject, nullptr) }
-	{
-		if (m_pSubject)
+        if (GetValue().has_value() && GetValue().value() == index)
 		{
-			m_pSubject->RemoveObserver(&other);
-			m_pSubject->AddObserver(this);
+			ResetValue();
+			RemoveFromSubject();
+			ResetSubject();
 		}
 	}
-	SoundInstanceID& SoundInstanceID::operator= (const SoundInstanceID& other)
+	void SoundInstanceID::OnSubjectDestroy(Subject<uint8_t>* pSubject)
 	{
-		SoundInstanceID{other}.swap(*this);
-		return *this;
-	}
-	SoundInstanceID& SoundInstanceID::operator= (SoundInstanceID&& other) noexcept
-	{
-		SoundInstanceID{ std::move(other)}.swap(*this);
-		return *this;
-    }
-
-    void SoundInstanceID::Init(uint8_t index)
-	{
-		if (!m_Id.has_value()) m_Id = index;
-		else OutputDebugString(_T("SoundInstanceID was already initialized when trying to initialize."));
-	}
-	void SoundInstanceID::SaveSubject(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject)
-	{
-		if (pSubject) m_pSubject = pSubject;
-		else OutputDebugString(_T("Subject was nullptr when trying to save it to a SoundInstanceID Observer."));
-	}
-
-	void SoundInstanceID::Notify(uint8_t index, std::vector<SoundInstanceID*>& vecThisObservers)
-    {
-        if (m_Id.has_value() && m_Id.value() == index)
-		{
-			m_Id = std::nullopt;
-			m_pSubject = nullptr;
-			vecThisObservers.emplace_back(this);
-		}
-	}
-	void SoundInstanceID::OnSubjectDestroy(Subject<uint8_t, std::vector<SoundInstanceID*>&>* pSubject)
-	{
-		if (pSubject == m_pSubject) m_Id = std::nullopt;
-		m_pSubject = nullptr;
+		if (pSubject == GetSubject()) ResetValue();
+		ObservingObject::OnSubjectDestroy(pSubject);
 	}
 	//------------------------------------------------------------------------------------------------------------------------------
 

@@ -434,10 +434,7 @@ namespace jela
                     if (pCurrChannel == pChannel)
                     {
                         pCurrChannel = nullptr;
-                        std::vector<SoundInstanceID*> instanceIDs{};
-                        m_pOnChannelRelease->NotifyObservers(static_cast<uint8_t>(index), instanceIDs);
-                        for (const auto& id : instanceIDs)
-                            m_pOnChannelRelease->RemoveObserver(id);
+                        m_pOnChannelRelease->NotifyObservers(static_cast<uint8_t>(index));
                         return;
                     }
                 }
@@ -451,12 +448,8 @@ namespace jela
                     auto& pCurrChannel = m_ActiveChannelPtrs.at(index);
                     if (!pCurrChannel)
                     {
-                        if (!m_pOnChannelRelease->HasObserver(&instanceId))
-                            m_pOnChannelRelease->AddObserver(&instanceId);
-
-                        instanceId.SaveSubject(m_pOnChannelRelease.get());
+                        instanceId = SoundInstanceID{m_pOnChannelRelease.get(), static_cast<uint8_t>(index)};
                         pCurrChannel = pChannel;
-                        instanceId.Init(static_cast<uint8_t>(index));
                         return;
                     }
                 }
@@ -469,7 +462,7 @@ namespace jela
             const WAVEFORMATEX* m_pFormat{};
             AudioImpl* const m_pAudioSystem{};
 
-            std::unique_ptr<Subject<uint8_t, std::vector<SoundInstanceID*>&>> m_pOnChannelRelease{ std::make_unique<Subject<uint8_t, std::vector<SoundInstanceID*>&>>() };
+            std::unique_ptr<Subject<uint8_t>> m_pOnChannelRelease{ std::make_unique<Subject<uint8_t>>() };
             bool m_Exists{ false };
         };
 
