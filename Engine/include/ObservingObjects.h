@@ -127,7 +127,7 @@ namespace jela
         bool HasValue() const {return GetValue().has_value();}
         std::size_t Get() const { return GetValue().value();}
 
-        void UnbindObserver() { RemoveFromSubject(); }
+        void UnbindObserver() { RemoveFromSubject(); ResetSubject(); }
     protected:
 
         void Notify(const CompsChangedInfo& changeInfo) override;
