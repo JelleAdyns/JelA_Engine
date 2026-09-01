@@ -6,11 +6,11 @@
 #include <unordered_map>
 #include "Component.h"
 #include "Engine.h"
-#include "TransformComponent.h"
 
 namespace jela
 {
     class Scene;
+    class TransformComponent;
     class GameObject final
     {
     public:
