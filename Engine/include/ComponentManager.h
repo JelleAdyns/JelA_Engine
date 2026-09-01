@@ -24,6 +24,7 @@ namespace jela
             static AnyComponent make_component(ComponentAllocator& alloc, Args... args);
 
             template <cDerivedComponent T> T* Get() const;
+            Component* GetBasePointer() const;
 
             ~AnyComponent();
 
@@ -55,9 +56,11 @@ namespace jela
         ComponentManager& operator=(const ComponentManager& other) = delete;
         ComponentManager& operator=(ComponentManager&& other) noexcept = delete;
 
-        template <cDerivedComponent T, typename ...Args> ComponentIndex AddComponent(Args ...args);
-        void RemoveComponent(const ComponentIndex& vecIndex);
-        template <cDerivedComponent T> T* GetComponent(const ComponentIndex& vecIndex);
+        template <cDerivedComponent T, typename ...Args> T* AddComponent(Args ...args);
+        void RemoveComponent(const Component* pCompToRemove);
+        template <template<typename> typename Container>
+        void RemoveComponents(const Container<Component*>& pCompsToRemove);
+        template <cDerivedComponent T> T* GetComponent(std::size_t vecIndex);
 
         void Clear();
 
@@ -67,7 +70,7 @@ namespace jela
         BufferAllocator<POOL_SIZE> m_ComponentAllocatorPool{};
         std::vector<AnyComponent> m_Components{};
         std::unordered_map<std::type_index, ComponentAllocator> m_Allocs{};
-        Subject<const CompsChangedInfo&> m_OnCompsChanged{};
+        //Subject<const CompsChangedInfo&> m_OnCompsChanged{};
     };
 
     struct CompsChangedInfo
@@ -100,7 +103,7 @@ namespace jela
 
     // ComponentHandler
     template <cDerivedComponent T, typename ... Args>
-    ComponentIndex ComponentManager::AddComponent(Args... args)
+    T* ComponentManager::AddComponent(Args... args)
     {
         const auto& typeID = typeid(T);
         if (!m_Allocs.contains(typeID))
@@ -110,13 +113,44 @@ namespace jela
         }
 
         m_Components.emplace_back(AnyComponent::make_component<T>(m_Allocs.at(typeID), args...));
-        return std::move(ComponentIndex{&m_OnCompsChanged, m_Components.size() - 1});
+        auto typeComp = m_Components.back().Get<T>();
+        typeComp->SetBufferIndex(BufferOwnerKey{}, m_Components.size() - 1);
+        return typeComp;
+    }
+    template <template <typename> class Container>
+    void ComponentManager::RemoveComponents(const Container<Component*>& pCompsToRemove)
+    {
+        if (pCompsToRemove.empty()) return;
+
+        std::size_t firstRemovedIndex{std::numeric_limits<std::size_t>::max()};
+        std::erase_if(m_Components, [&pCompsToRemove, &firstRemovedIndex](const AnyComponent& anyComp)
+        {
+            const bool remove = std::ranges::any_of(pCompsToRemove,
+                [&anyComp](const Component* pCompToRemove)
+                {
+                    return anyComp.GetBasePointer() == pCompToRemove;
+                });
+
+            if (remove)
+            {
+                if (const auto curIndex = anyComp.GetBasePointer()->GetBufferIndex(); curIndex < firstRemovedIndex)
+                    firstRemovedIndex = curIndex;
+            }
+
+            return remove;
+        });
+
+        std::ranges::for_each(m_Components | std::views::drop(firstRemovedIndex),
+            [i = firstRemovedIndex](const AnyComponent& anyComp) mutable
+            {
+                anyComp.GetBasePointer()->SetBufferIndex(BufferOwnerKey{}, i);
+                ++i;
+            });
     }
     template <cDerivedComponent T>
-    T* ComponentManager::GetComponent(const ComponentIndex& vecIndex)
+    T* ComponentManager::GetComponent(std::size_t vecIndex)
     {
-        if (!vecIndex.HasValue()) return nullptr;
-        return m_Components.at(vecIndex.Get()).Get<T>();
+        return m_Components.at(vecIndex).Get<T>();
     }
 // ---------------------------------------------------------------------------------------------------------------
 }

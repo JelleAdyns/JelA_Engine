@@ -1,21 +1,22 @@
 #include "GameObject.h"
 
+#include "Scene.h"
+
 namespace jela
 {
+    GameObject& GameObject::Create(Scene& scene)
+    {
+        return scene.ConsumeGameObject(std::move(GameObject{}));
+    }
     GameObject::GameObject()
     {
-        AddComponent<TransformComponent>();
-        m_Transform = GetComponent<TransformComponent>();
+        m_Transform = AddComponent<TransformComponent>();
     }
     GameObject::~GameObject()
     {
         const auto mngr = ENGINE.ComponentMngr();
 
-        for (auto& index : m_Components | std::views::values)
-            index.UnbindObserver();
-        for (const auto& index : m_Components | std::views::values)
-            mngr->RemoveComponent(index);
-
+        mngr->RemoveComponents<std::vector>(m_Components | std::views::values | std::ranges::to<std::vector>());
         m_Components.clear();
     }
     GameObject::GameObject(GameObject&& other) noexcept:

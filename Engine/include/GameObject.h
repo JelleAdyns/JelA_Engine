@@ -1,5 +1,6 @@
 #ifndef GAMEOBJECT_H
 #define GAMEOBJECT_H
+#include <complex>
 #include <stdexcept>
 #include <typeindex>
 #include <unordered_map>
@@ -9,11 +10,12 @@
 
 namespace jela
 {
+    class Scene;
     class GameObject final
     {
     public:
 
-        explicit GameObject();
+        static GameObject& Create(Scene& scene);
 
         ~GameObject();
         // disable copying because it would mean creating new components
@@ -24,14 +26,19 @@ namespace jela
         GameObject& operator=(GameObject&& other) noexcept = delete;
 
         template <cDerivedComponent T, typename ...Args>
-        void AddComponent(Args&&... args)
+        T* AddComponent(Args&&... args)
         {
             if (const auto& typeID = typeid(T);
                 !HasComponent(typeID))
             {
-                m_Components[typeID] = std::move(ENGINE.ComponentMngr()->AddComponent<T>(args...));
+                T* pComp = ENGINE.ComponentMngr()->AddComponent<T>(args...);
+                pComp->SetOwner(ComponentOwnerKey{}, this);
+                m_Components[typeID] = pComp;
+
+                return pComp;
             }
-            else throw std::runtime_error("Object already owns a reference to an instance of the passed component type." );
+
+            throw std::runtime_error("Object already owns a reference to an instance of the passed component type." );
         }
 
         template <cDerivedComponent T>
@@ -57,7 +64,10 @@ namespace jela
             if (const auto& typeID = typeid(T);
                 HasComponent(typeID))
             {
-                return ENGINE.ComponentMngr()->GetComponent<T>(m_Components.at(typeID));
+                if (auto p = dynamic_cast<T*>(m_Components.at(typeID)); p != nullptr)
+                    return p;
+
+                throw std::bad_typeid();
             }
 
             throw std::runtime_error("Object doesn't own a reference to an instance of the passed component type.");
@@ -68,9 +78,10 @@ namespace jela
         bool HasComponent(const std::type_index& typeID) const { return m_Components.contains(typeID); }
 
     private:
+        explicit GameObject();
 
         TransformComponent* m_Transform{nullptr};
-        std::unordered_map<std::type_index, ComponentIndex> m_Components{};
+        std::unordered_map<std::type_index, Component*> m_Components{};
     };
 }
 

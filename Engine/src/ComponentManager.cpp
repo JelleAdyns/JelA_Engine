@@ -4,6 +4,10 @@
 
 namespace jela
 {
+    Component* ComponentManager::AnyComponent::GetBasePointer() const
+    {
+        return m_pComponent;
+    }
     ComponentManager::AnyComponent::~AnyComponent()
     {
         if (m_pComponent)
@@ -26,27 +30,17 @@ namespace jela
         std::swap(m_pComponent, other.m_pComponent);
         std::swap(m_Alloc, other.m_Alloc);
     }
-    void ComponentManager::RemoveComponent(const ComponentIndex& vecIndex)
+    void ComponentManager::RemoveComponent(const Component* pCompToRemove)
     {
-        if (!vecIndex.HasValue())
-        {
-            OutputDebugString(_T("Trying to remove a component be the index was std::nullopt. Continnuing..."));
-            return;
-        }
-
-        const auto index = vecIndex.Get();
+        const auto index = pCompToRemove->GetBufferIndex();
         utils::SwapEraseOnVector(m_Components, index);
-        m_OnCompsChanged.NotifyObservers(
-            CompsChangedInfo{ChangedIndex{.prevIndex = m_Components.size(), .newIndex = index}, index});
+        if (m_Components.empty()) return;
+        m_Components.at(index).GetBasePointer()->SetBufferIndex(BufferOwnerKey{}, index);
     }
     void ComponentManager::Clear()
     {
         // First destroy the components, then the allocators.
-        const auto size = m_Components.size();
         m_Components.clear();
-        for (std::size_t i = 0; i < size; ++i)
-            m_OnCompsChanged.NotifyObservers(CompsChangedInfo{.removedComp = i});
-
         m_Allocs.clear();
     }
 

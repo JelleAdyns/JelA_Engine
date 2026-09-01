@@ -8,11 +8,25 @@
 namespace jela
 {
     class Component;
+    class ComponentManager;
+    class GameObject;
 
     template <typename DerivedType>
     concept cDerivedComponent =
         std::is_base_of_v<Component, DerivedType> &&
             (!std::is_same_v<DerivedType,Component>);
+
+
+    class BufferOwnerKey final
+    {
+        friend class ComponentManager;
+        BufferOwnerKey(){}
+    };
+    class ComponentOwnerKey final
+    {
+        friend class GameObject;
+        ComponentOwnerKey(){}
+    };
 
     class Component
     {
@@ -45,11 +59,18 @@ namespace jela
             BASE_MAX_AMOUNT = maxAmount;
         }
 
+        void SetOwner(ComponentOwnerKey, GameObject* pObject)
+        {
+            if (!pObject) throw std::invalid_argument{"pObject is nullptr!"};
+            m_pOwner = pObject;
+        }
+        void SetBufferIndex(BufferOwnerKey, std::size_t index) { m_BufferIndex = index; }
+        std::size_t GetBufferIndex() const { return m_BufferIndex; }
         virtual ~Component()
         {
             OutputDebugString(_T("Component Destructor!\n"));
         }
-        Component()
+        explicit Component()
         {
             OutputDebugString(_T("Component Constructor!\n"));
         };
@@ -65,6 +86,9 @@ namespace jela
             static constexpr bool value = std::is_same_v<decltype(test<T>(0)), std::true_type>;
         };
         static inline std::optional<std::size_t> BASE_MAX_AMOUNT {};
+
+        GameObject* m_pOwner{};
+        std::size_t m_BufferIndex{};
 
     };
 
