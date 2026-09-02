@@ -65,8 +65,9 @@ namespace jela
 
             m_VecSupportedFormats.clear();
 
-            SafeRelease(&m_pAudioEngine);
+            m_pMasteringVoice->DestroyVoice();
             m_pMasteringVoice = nullptr;
+            SafeRelease(&m_pAudioEngine);
         }
 
         AudioImpl(const AudioImpl&) = delete;

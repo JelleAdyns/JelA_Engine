@@ -135,9 +135,9 @@ namespace jela
             m_pGame->Cleanup();
             m_pGame = nullptr;
         }
-        m_pComponentManager = nullptr;
-
         AudioLocator::RegisterAudioService(nullptr);
+
+        m_pComponentManager = nullptr;
         m_pResourceManager = nullptr;
         m_pDXHandler = nullptr;
 
