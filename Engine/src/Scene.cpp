@@ -1,8 +1,17 @@
 #include "Scene.h"
 #include "GameObject.h"
+#include "TransformComponent.h"
 
 namespace jela
 {
+    void Scene::Draw() const
+    {
+        for (const auto & obj : m_GameObjectHandler.GameObjects())
+        {
+            auto pos = obj->Transform()->WorldPosition();
+            ENGINE.DrawEllipse(Point2f{pos.x, pos.y}, 10.f, 20.f);
+        }
+    }
     GameObject& Scene::AddGameObject()
     {
         return GameObject::Create(*this);

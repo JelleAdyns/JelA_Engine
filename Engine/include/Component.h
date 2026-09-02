@@ -41,7 +41,7 @@ namespace jela
                 static_assert(std::is_same_v<const std::size_t, decltype(T::MAX_AMOUNT)>);
                 return T::MAX_AMOUNT;
             }
-            else if (std::is_constant_evaluated())
+            else if consteval
             {
                 return DEFAULT_MAX_AMOUNT;
             }
@@ -66,14 +66,23 @@ namespace jela
         }
         void SetBufferIndex(BufferOwnerKey, std::size_t index) { m_BufferIndex = index; }
         std::size_t GetBufferIndex() const { return m_BufferIndex; }
+
         virtual ~Component()
         {
             OutputDebugString(_T("Component Destructor!\n"));
         }
+    protected:
         explicit Component()
         {
             OutputDebugString(_T("Component Constructor!\n"));
         };
+
+        GameObject* GetOwner() const
+        {
+            if (m_pOwner) return m_pOwner;
+            throw std::runtime_error{"Owner GameObject is nullptr!"};
+        }
+
     private:
         template<typename T> class ComponentHasMaxAmount
         {

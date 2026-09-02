@@ -23,6 +23,7 @@ namespace jela
             void Clear();
 
             static constexpr std::size_t MAX_GAME_OBJECTS = 100;
+            const std::vector<GameObject*>& GameObjects() const {return m_pGameObjects;}
         private:
 
             TypeAllocator<GameObject, MAX_GAME_OBJECTS> m_GameObjectAlloc{};
@@ -32,6 +33,7 @@ namespace jela
 
         static constexpr std::size_t GetMaxObjects() { return GameObjectHandler::MAX_GAME_OBJECTS; };
 
+        void Draw() const;
         GameObject& AddGameObject();
         GameObject& ConsumeGameObject(GameObject&& gameObject);
 

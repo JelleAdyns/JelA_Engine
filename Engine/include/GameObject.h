@@ -58,7 +58,7 @@ namespace jela
         {
             if constexpr (std::is_same_v<T, TransformComponent>)
             {
-                if (m_Transform) return m_Transform;
+                if (m_pTransform) return m_pTransform;
             }
 
             if (const auto& typeID = typeid(T);
@@ -77,10 +77,23 @@ namespace jela
         bool HasComponent() const { return HasComponent(typeid(T)); }
         bool HasComponent(const std::type_index& typeID) const { return m_Components.contains(typeID); }
 
+        const std::vector<GameObject*>& Children() const { return m_pChildren; }
+        TransformComponent* Transform() const { return m_pTransform; }
+        GameObject* Parent() const { return m_pParent; }
+
+        void SetParent(GameObject& pParent, bool keepWorldPosition);
+        void SetParent(GameObject* pParent, bool keepWorldPosition);
+        bool IsChild(const GameObject& pGameObject) const;
+        bool IsChild(const GameObject* pGameObject) const;
     private:
         explicit GameObject();
 
-        TransformComponent* m_Transform{nullptr};
+        // Tree
+        GameObject* m_pParent{};
+        std::vector<GameObject*> m_pChildren{};
+
+        // Components
+        TransformComponent* m_pTransform{nullptr};
         std::unordered_map<std::type_index, Component*> m_Components{};
     };
 }
