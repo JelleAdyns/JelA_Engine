@@ -8,7 +8,7 @@
 namespace jela
 {
     class Component;
-    class ComponentManager;
+    class Scene;
     class GameObject;
 
     template <typename DerivedType>
@@ -19,7 +19,7 @@ namespace jela
 
     class BufferOwnerKey final
     {
-        friend class ComponentManager;
+        friend class Scene;
         BufferOwnerKey(){}
     };
     class ComponentOwnerKey final
@@ -67,15 +67,14 @@ namespace jela
         void SetBufferIndex(BufferOwnerKey, std::size_t index) { m_BufferIndex = index; }
         std::size_t GetBufferIndex() const { return m_BufferIndex; }
 
-        virtual ~Component()
-        {
-            OutputDebugString(_T("Component Destructor!\n"));
-        }
+        virtual ~Component();
+        Component(const Component& other) = default;
+        Component(Component&& other) noexcept = default;
+        Component& operator=(const Component& other) = default;
+        Component& operator=(Component&& other) noexcept = default;
+
     protected:
-        explicit Component()
-        {
-            OutputDebugString(_T("Component Constructor!\n"));
-        };
+        Component() = default;
 
         GameObject* GetOwner() const
         {
