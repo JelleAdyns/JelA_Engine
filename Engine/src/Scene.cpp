@@ -1,16 +1,26 @@
 #include "Scene.h"
 #include "GameObject.h"
 #include "TransformComponent.h"
+#include "Utils.h"
 
 namespace jela
 {
+    void Scene::Start()
+    {
+        for (const auto & obj : m_GameObjectHandler.GameObjects())
+            obj->Start();
+    }
     void Scene::Draw() const
     {
         for (const auto & obj : m_GameObjectHandler.GameObjects())
-        {
-            auto pos = obj->Transform()->WorldPosition();
-            ENGINE.DrawEllipse(Point2f{pos.x, pos.y}, 10.f, 20.f);
-        }
+            obj->Draw();
+    }
+    void Scene::Update()
+    {
+        for (const auto & obj : m_GameObjectHandler.GameObjects())
+            obj->Update();
+
+        m_GameObjectHandler.RemoveDead();
     }
     GameObject& Scene::AddGameObject()
     {
@@ -18,6 +28,7 @@ namespace jela
     }
     GameObject& Scene::ConsumeGameObject(GameObject&& gameObject)
     {
+        if (gameObject.IsPartOfScene()) throw std::runtime_error("Cannot consume game object, bacause its already part of a scene!");
         return std::forward<GameObject&>(m_GameObjectHandler.ConsumeGameObject(std::move(gameObject)));
     }
     void Scene::RemoveComponent(ComponentOwnerKey, const Component* pCompToRemove)
@@ -33,6 +44,17 @@ namespace jela
         auto* p = static_cast<GameObject*>(m_GameObjectAlloc.Acquire(sizeof(GameObject)));
         p = new (p) GameObject{std::move(gameObject)};
         return *(m_pGameObjects.emplace_back(p));
+    }
+    void Scene::GameObjectHandler::RemoveDead()
+    {
+        auto rangeToRemove = std::ranges::remove_if(m_pGameObjects, [](const GameObject* pGameObject)
+        {
+            return pGameObject->IsDead();
+        });
+
+        std::ranges::for_each(rangeToRemove, [this](GameObject* pGameObject){DestroyGameObject(pGameObject);});
+        m_pGameObjects.erase(rangeToRemove.begin(), rangeToRemove.end());
+
     }
     void Scene::GameObjectHandler::Clear()
     {

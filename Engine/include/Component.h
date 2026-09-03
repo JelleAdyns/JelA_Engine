@@ -59,6 +59,9 @@ namespace jela
             BASE_MAX_AMOUNT = maxAmount;
         }
 
+        virtual void Start() = 0;
+        virtual void Update() = 0;
+
         void SetOwner(ComponentOwnerKey, GameObject* pObject)
         {
             if (!pObject) throw std::invalid_argument{"pObject is nullptr!"};

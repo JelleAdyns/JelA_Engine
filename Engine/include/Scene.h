@@ -1,10 +1,17 @@
 #ifndef SCENE_H
 #define SCENE_H
+#include <typeindex>
 
-#include "GameObject.h"
+#include "FixedSizeAllocators.h"
+#include "SingleLinkAllocators.h"
+
+#include "Component.h"
+#include "Observer.h"
 
 namespace jela
 {
+    class GameObject;
+
     class Scene final
     {
     private:
@@ -19,6 +26,7 @@ namespace jela
             GameObjectHandler& operator=(GameObjectHandler&& other) noexcept = delete;
 
             GameObject& ConsumeGameObject(GameObject&& gameObject);
+            void RemoveDead();
             void Clear();
 
             static constexpr std::size_t MAX_GAME_OBJECTS = 100;
@@ -86,7 +94,24 @@ namespace jela
 
         static constexpr std::size_t GetMaxObjects() { return GameObjectHandler::MAX_GAME_OBJECTS; };
 
+        Scene() = default;
+        ~Scene()
+        {
+            m_IsBeingDestroyed = true;
+            m_GameObjectHandler.Clear();
+            m_ComponentHandler.Clear();
+        }
+        Scene(const Scene&) = delete;
+        Scene(Scene&&) noexcept = delete;
+        Scene& operator=(const Scene&) = delete;
+        Scene& operator=(Scene&&) noexcept = delete;
+
+
+        void Start();
         void Draw() const;
+        void Update();
+
+
         GameObject& AddGameObject();
         GameObject& ConsumeGameObject(GameObject&& gameObject);
 

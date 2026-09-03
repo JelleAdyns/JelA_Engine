@@ -63,7 +63,7 @@ namespace jela
 
         m_pResourceManager->Start();
 
-        m_pComponentManager = std::make_unique<ComponentManager>();
+        m_pSceneManager = std::make_unique<SceneManager>();
 
         return true;
     }
@@ -137,7 +137,7 @@ namespace jela
         }
         AudioLocator::RegisterAudioService(nullptr);
 
-        m_pComponentManager = nullptr;
+        m_pSceneManager = nullptr;
         m_pResourceManager = nullptr;
         m_pDXHandler = nullptr;
 
@@ -965,10 +965,6 @@ namespace jela
     {
         m_SecondsPerFrame = 1.f / FPS;
     }
-    ComponentManager* Engine::ComponentMngr() const
-    {
-        return m_pComponentManager.get();
-    }
 
     void Engine::Translate(float xTranslation, float yTranslation) const
     {
@@ -1133,6 +1129,10 @@ namespace jela
     ResourceManager* Engine::ResourceMngr() const
     {
         return m_pResourceManager.get();
+    }
+    SceneManager* Engine::SceneMngr() const
+    {
+        return m_pSceneManager.get();
     }
 
     const Font* Engine::GetCurrentFont() const

@@ -11,8 +11,8 @@
 #include <vector>
 #include <strsafe.h>
 
-#include "ComponentManager.h"
 #include "DirectXObjects.h"
+#include "SceneManager.h"
 
 
 namespace jela
@@ -188,8 +188,8 @@ namespace jela
 
         // Getters
 
-        ComponentManager* ComponentMngr() const;
         ResourceManager* ResourceMngr() const;
+        SceneManager* SceneMngr() const;
         const Font* GetCurrentFont() const;
         Vector2f GetGameSize() const;
         Point2f GetViewportPos() const;
@@ -249,10 +249,6 @@ namespace jela
         //BaseGame
         std::unique_ptr<BaseGame>       m_pGame{};
 
-        //Transform
-        std::vector<D2D1::Matrix3x2F>   m_VecTransformMatrices{};
-        mutable bool                    m_TransformChanged{};
-
         //General datamembers
         tstring                         m_Title{};
 
@@ -284,7 +280,7 @@ namespace jela
         std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 
         std::unique_ptr<ResourceManager> m_pResourceManager{};
-        std::unique_ptr<ComponentManager> m_pComponentManager{};
+        std::unique_ptr<SceneManager> m_pSceneManager{};
     };
 }
 

@@ -25,6 +25,8 @@ namespace jela
         TransformComponent(float positionX, float positionY, Vector2f scale);
         TransformComponent(float rotation, Vector2f scale);
 
+        void Start() override {};
+        void Update() override {};
 
         Vector2f Position() const { return m_LocalTransform.position; };
         float Rotation() const { return m_LocalTransform.rotation; };

@@ -5,11 +5,12 @@
 #include <typeindex>
 #include <unordered_map>
 #include "Component.h"
+#include "Scene.h"
 #include "Engine.h"
 
 namespace jela
 {
-    class Scene;
+    class RenderComponent;
     class TransformComponent;
     class GameObject final
     {
@@ -18,6 +19,7 @@ namespace jela
         static GameObject& Create(Scene& scene);
 
         ~GameObject();
+
         // disable copying because it would mean creating new components
         GameObject(const GameObject& other) = delete;
         GameObject& operator=(const GameObject& other) = delete;
@@ -31,9 +33,12 @@ namespace jela
             if (const auto& typeID = typeid(T);
                 !HasComponent(typeID))
             {
-                T* pComp = ENGINE.ComponentMngr()->AddComponent<T>(args...);
+                T* pComp = m_pScene->AddComponent<T>(ComponentOwnerKey{}, args...);
                 pComp->SetOwner(ComponentOwnerKey{}, this);
                 m_Components[typeID] = pComp;
+
+                if constexpr (std::is_base_of_v<RenderComponent, T>)
+                    m_pRenderComp = pComp;
 
                 return pComp;
             }
@@ -47,8 +52,8 @@ namespace jela
             if (const auto& typeID = typeid(T);
                 HasComponent(typeID))
             {
-                const auto index = m_Components.at(typeID);
-                ENGINE.ComponentMngr()->RemoveComponent(index);
+                const auto pComp = m_Components.at(typeID);
+                m_pScene->RemoveComponent(ComponentOwnerKey{}, pComp);
                 m_Components.erase(typeID);
             }
         }
@@ -77,6 +82,13 @@ namespace jela
         bool HasComponent() const { return HasComponent(typeid(T)); }
         bool HasComponent(const std::type_index& typeID) const { return m_Components.contains(typeID); }
 
+        void Start();
+        void Draw() const;
+        void Update();
+
+        void MarkDead() { m_IsDead = true; }
+        bool IsDead() const { return m_IsDead; }
+
         const std::vector<GameObject*>& Children() const { return m_pChildren; }
         TransformComponent* Transform() const { return m_pTransform; }
         GameObject* Parent() const { return m_pParent; }
@@ -85,16 +97,25 @@ namespace jela
         void SetParent(GameObject* pParent, bool keepWorldPosition);
         bool IsChild(const GameObject& pGameObject) const;
         bool IsChild(const GameObject* pGameObject) const;
+
+        bool IsPartOfScene() const { return m_IsPartOfScene; }
+        const Scene* OwnerScene() const { return m_pScene; }
     private:
-        explicit GameObject();
+        explicit GameObject(Scene& scene);
+
+        bool m_IsPartOfScene{false};
+        bool m_IsDead{false};
+        Scene* m_pScene;
 
         // Tree
         GameObject* m_pParent{};
         std::vector<GameObject*> m_pChildren{};
 
         // Components
-        TransformComponent* m_pTransform{nullptr};
         std::unordered_map<std::type_index, Component*> m_Components{};
+        TransformComponent* m_pTransform;
+        RenderComponent* m_pRenderComp{nullptr};
+
     };
 }
 
