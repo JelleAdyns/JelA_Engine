@@ -9,6 +9,8 @@
 
 namespace jela
 {
+	struct Vector2f;
+
 	template <typename T>
 	concept cArithmetic = std::is_arithmetic_v<T>;
 
@@ -16,6 +18,7 @@ namespace jela
 	{
 		Point2f() = default;
 		explicit Point2f(float x, float y);
+		explicit Point2f(Vector2f pos);
 		float x{};
 		float y{};
 
@@ -32,12 +35,12 @@ namespace jela
 		explicit Rectf(const Point2f& bottomLeft, float width, float height);
 		explicit Rectf(const Point2f& bottomLeft, const Point2f& topRight);
 
-		float Right() { return left + width; }
-		float Top() { return bottom + height; }
-		Point2f BottomLeft() { return Point2f{left, bottom}; }
-		Point2f BottomRight() { return Point2f{Right(), bottom}; }
-		Point2f TopLeft() { return Point2f{left, Top()}; }
-		Point2f TopRight() { return Point2f{Right(), Top()}; }
+		float Right() const { return left + width; }
+		float Top() const { return bottom + height; }
+		Point2f BottomLeft() const { return Point2f{left, bottom}; }
+		Point2f BottomRight() const { return Point2f{Right(), bottom}; }
+		Point2f TopLeft() const { return Point2f{left, Top()}; }
+		Point2f TopRight() const { return Point2f{Right(), Top()}; }
 
 		float left{};
 		float bottom{};
@@ -53,12 +56,12 @@ namespace jela
 		explicit Rectf(const Point2f& topLeft, float width, float height);
 		explicit Rectf(const Point2f& topLeft, const Point2f& bottomRight);
 
-		float Right() { return left + width; }
-		float Bottom() { return top + height; }
-		Point2f BottomLeft() { return Point2f{left, Bottom()}; }
-		Point2f BottomRight() { return Point2f{Right(), Bottom()}; }
-		Point2f TopLeft() { return Point2f{left, top}; }
-		Point2f TopRight() { return Point2f{Right(), top}; }
+		float Right() const { return left + width; }
+		float Bottom() const { return top + height; }
+		Point2f BottomLeft() const { return Point2f{left, Bottom()}; }
+		Point2f BottomRight() const { return Point2f{Right(), Bottom()}; }
+		Point2f TopLeft() const { return Point2f{left, top}; }
+		Point2f TopRight() const { return Point2f{Right(), top}; }
 
 		float left{};
 		float top{};
@@ -103,6 +106,9 @@ namespace jela
 
         Vector2f& operator+=(const Vector2f& rhs);
 		Vector2f& operator-=(const Vector2f& rhs);
+
+		Vector2f operator*(const Vector2f& rhs) const;
+		Vector2f operator/(const Vector2f& rhs) const;
 
 		Vector2f operator*(cArithmetic auto rhs) const
 		{

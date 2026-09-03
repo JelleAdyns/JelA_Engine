@@ -8,6 +8,9 @@ namespace jela
 		x{ x },
 		y{ y }
 	{}
+	Point2f::Point2f(Vector2f pos):
+		Point2f{pos.x, pos.y}
+	{}
 	bool Point2f::operator==(const Point2f& rhs) const
 	{
 		return (abs(x - rhs.x) < FLT_EPSILON) && (abs(y - rhs.y) < FLT_EPSILON);
@@ -190,8 +193,19 @@ namespace jela
 		y -= rhs.y;
 		return *this;
 	}
+    Vector2f Vector2f::operator*(const Vector2f& rhs) const
+    {
+		return { x * rhs.x, y * rhs.y };
+    }
+    Vector2f Vector2f::operator/(const Vector2f& rhs) const
+    {
+		return {
+			(rhs.x < FLT_EPSILON ? 0.f : x / rhs.x),
+			(rhs.y < FLT_EPSILON ? 0.f : y / rhs.y)
+		};
+    }
 
-	bool Vector2f::operator==(const Vector2f& rhs) const
+    bool Vector2f::operator==(const Vector2f& rhs) const
 	{
 		return (abs(x - rhs.x) < FLT_EPSILON) && (abs(y - rhs.y) < FLT_EPSILON);
 	}
