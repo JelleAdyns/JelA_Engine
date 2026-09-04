@@ -18,7 +18,7 @@ namespace jela
 	{
 		Point2f() = default;
 		explicit Point2f(float x, float y);
-		explicit Point2f(Vector2f pos);
+		Point2f(const Vector2f& pos);
 		float x{};
 		float y{};
 

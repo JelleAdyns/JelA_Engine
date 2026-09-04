@@ -40,6 +40,8 @@ namespace jela
                 if constexpr (std::is_base_of_v<RenderComponent, T>)
                     m_pRenderComp = pComp;
 
+                pComp->Init();
+
                 return pComp;
             }
 

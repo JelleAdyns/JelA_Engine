@@ -2,25 +2,21 @@
 
 namespace jela
 {
-    Scene& SceneManager::CreateScene(const std::wstring& sceneName)
-    {
-        if (m_pScenes.contains(sceneName)) throw std::runtime_error("Scene already exists!");
-        m_pScenes[sceneName] = std::make_unique<Scene>();
-        return *m_pScenes[sceneName];
-    }
-    void SceneManager::Start()
-    {
-        for (const auto & pScene : m_pScenes | std::views::values)
-            pScene->Start();
-    }
     void SceneManager::Draw() const
     {
-        for (const auto & pScene : m_pScenes | std::views::values)
-            pScene->Draw();
+        for (const auto& [render, pScene] : m_Scenes)
+            if(render) pScene->Draw();
     }
     void SceneManager::Update()
     {
-        for (const auto & pScene : m_pScenes | std::views::values)
-            pScene->Update();
+        if (Scene* pTopScene = m_Scenes.back().pScene.get();
+            m_pActiveScene != pTopScene)
+        {
+            m_pActiveScene = pTopScene;
+            if (m_pActiveScene) m_pActiveScene->Start();
+        }
+
+        if (m_pActiveScene) m_pActiveScene->Update();
+
     }
 }

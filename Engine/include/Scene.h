@@ -12,7 +12,7 @@ namespace jela
 {
     class GameObject;
 
-    class Scene final
+    class Scene
     {
     private:
         class GameObjectHandler final
@@ -106,6 +106,10 @@ namespace jela
         Scene& operator=(const Scene&) = delete;
         Scene& operator=(Scene&&) noexcept = delete;
 
+        virtual void OnEnter() {};
+        virtual void OnExit() {};
+        virtual void OnSuspend() {};
+        virtual void OnResume() {};
 
         void Start();
         void Draw() const;

@@ -8,7 +8,7 @@ namespace jela
 		x{ x },
 		y{ y }
 	{}
-	Point2f::Point2f(Vector2f pos):
+	Point2f::Point2f(const Vector2f& pos):
 		Point2f{pos.x, pos.y}
 	{}
 	bool Point2f::operator==(const Point2f& rhs) const

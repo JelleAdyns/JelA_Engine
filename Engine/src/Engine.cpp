@@ -118,6 +118,7 @@ namespace jela
                     m_pGame->HandleControllerInput();
 
                 m_pGame->Tick();
+                m_pSceneManager->Update();
                 InvalidateRect(m_hWindow, nullptr, FALSE);
                 //Paint();
 
@@ -394,7 +395,11 @@ namespace jela
     {
         HResultHandler hr{S_OK, _T("ENGINE::OnRender")};
 
-        hr = m_pDXHandler->dDeviceContext2D.Draw([pGame = m_pGame.get()] { pGame->Draw(); });
+        hr = m_pDXHandler->dDeviceContext2D.Draw([pGame = m_pGame.get(), pEngine = this]
+        {
+            pGame->Draw();
+            pEngine->SceneMngr()->Draw();
+        });
         hr = m_pDXHandler->dSwapChain.Present();
 
         return hr;
@@ -871,6 +876,7 @@ namespace jela
     void Engine::SetWindowScale(float scale)
     {
         m_WindowScale = scale;
+        SetWindowPosition(false,true);
     }
     void Engine::SetWindowPosition(bool setPos, bool setSize)
     {
