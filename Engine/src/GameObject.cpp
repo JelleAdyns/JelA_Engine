@@ -26,6 +26,16 @@ namespace jela
         for (Component* pComp : m_Components | std::views::values)
             pComp->Update();
     }
+    void GameObject::MarkDead()
+    {
+        m_IsDead = true;
+        if(m_pParent != nullptr) SetParent(nullptr, true);
+
+        std::ranges::for_each(m_pChildren, [&](GameObject* pChild)
+            {
+                pChild->MarkDead();
+            });
+    }
     void GameObject::SetParent(GameObject& pParent, bool keepWorldPosition)
     {
         SetParent(&pParent, keepWorldPosition);

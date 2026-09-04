@@ -86,7 +86,7 @@ namespace jela
         void Draw() const;
         void Update();
 
-        void MarkDead() { m_IsDead = true; }
+        void MarkDead();
         bool IsDead() const { return m_IsDead; }
 
         const std::vector<GameObject*>& Children() const { return m_pChildren; }
