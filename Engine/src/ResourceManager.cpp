@@ -68,7 +68,7 @@ namespace jela
 
             if (creationResult.Succeeded())
             {
-                creationResult = ENGINE.Get2DDeviceContext().CreateBitmapFromWicBitmap(pConverter,m_pDBitmap);
+                creationResult = ENGINE.RenderMngr()->Get2DDeviceContext().CreateBitmapFromWicBitmap(pConverter,m_pDBitmap);
 
                 if (creationResult.Succeeded())
                 {

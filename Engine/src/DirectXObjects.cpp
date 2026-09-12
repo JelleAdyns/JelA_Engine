@@ -139,8 +139,8 @@ namespace jela::DX
     {
         if (!m_pD3DDeviceContext) return;
 
-        const auto& vSize = ENGINE.GetViewportSize();
-        const auto& vPos = ENGINE.GetViewportPos();
+        const auto& vSize = ENGINE.Window()->GetViewportSize();
+        const auto& vPos = ENGINE.Window()->GetViewportPos();
         D3D11_VIEWPORT vp{};
         vp.Width = vSize.x;
         vp.Height = vSize.y;
@@ -170,7 +170,7 @@ namespace jela::DX
         HResultHandler& hr{StartHResult(_T("jela::DX::Device3D QueryGIDevice"))};
         hr = pGIFactory->CreateSwapChainForHwnd(
                 get(),
-                ENGINE.GetWindow(),
+                ENGINE.Window()->GetWindow(),
                 &swapChainDesc,
                 &fullscreenDesc,
                 nullptr,    // allow on all displays
@@ -266,8 +266,8 @@ namespace jela::DX
         if (m_pDGameBitmap)
         {
             SetTransform();
-            const auto& viewportSize = ENGINE.GetViewportSize();
-            const auto& viewportPos = ENGINE.GetViewportPos();
+            const auto& viewportSize = ENGINE.Window()->GetViewportSize();
+            const auto& viewportPos = ENGINE.Window()->GetViewportPos();
             pContext->DrawBitmap(
                 m_pDGameBitmap,
                 D2D1::RectF(
@@ -458,7 +458,7 @@ namespace jela::DX
 
         const auto gameBitmapProperties = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET, pixelFormat);
         SafeRelease(&m_pDGameBitmap);
-        const auto& gameSize = ENGINE.GetGameSize();
+        const auto& gameSize = ENGINE.Window()->GetGameSize();
         hr = pContext->CreateBitmap(
             D2D1::SizeU(
                 static_cast<UINT32>(gameSize.x),
@@ -494,7 +494,7 @@ namespace jela::DX
         if (hr.Succeeded() && dxgiFactory)
         {
             // Allocate a descriptor.
-            const auto& windowRect = ENGINE.GetWindowSize();
+            const auto& windowRect = ENGINE.Window()->GetGameSize();
             m_CurrentWidth = static_cast<UINT>(windowRect.x);
             m_CurrentHeight = static_cast<UINT>(windowRect.y);
             DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -517,7 +517,7 @@ namespace jela::DX
             fullscreenDesc.Windowed = true;
             hr = device3D.CreateSwapChain(dxgiFactory, swapChainDesc, fullscreenDesc, pSwapChain);
             Init(pSwapChain);
-            hr = dxgiFactory->MakeWindowAssociation(ENGINE.GetWindow(), DXGI_MWA_NO_ALT_ENTER);
+            hr = dxgiFactory->MakeWindowAssociation(ENGINE.Window()->GetWindow(), DXGI_MWA_NO_ALT_ENTER);
         }
         SafeRelease(&dxgiFactory);
         SafeRelease(&dxgiAdapter);
