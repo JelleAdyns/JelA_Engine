@@ -59,6 +59,7 @@ namespace jela
             BASE_MAX_AMOUNT = maxAmount;
         }
 
+        virtual void Init() = 0;
         virtual void Start() = 0;
         virtual void Update() = 0;
 
@@ -70,7 +71,7 @@ namespace jela
         void SetBufferIndex(BufferOwnerKey, std::size_t index) { m_BufferIndex = index; }
         std::size_t GetBufferIndex() const { return m_BufferIndex; }
 
-        virtual ~Component();
+        virtual ~Component() = default;
         Component(const Component& other) = default;
         Component(Component&& other) noexcept = default;
         Component& operator=(const Component& other) = default;
@@ -135,7 +136,10 @@ namespace jela
         derived()
         {
             OutputDebugString(_T("derived Constructor!\n"));
-        };
+        }
+        void Init() override{};
+        void Start() override{};
+        void Update() override{};
         int kaas{};
     };
     class derived2: public Component
@@ -149,6 +153,9 @@ namespace jela
         {
             OutputDebugString(_T("derived2 Constructor!\n"));
         };
+        void Init() override{};
+        void Start() override{};
+        void Update() override{};
         static constexpr std::size_t MAX_AMOUNT { 30 };
     };
 
