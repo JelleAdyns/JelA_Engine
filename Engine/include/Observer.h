@@ -94,20 +94,14 @@ namespace jela
     {
     public:
 
-        virtual ~Observer() = default;
-
-        Observer(const Observer&) = default;
-        Observer(Observer&&) noexcept = default;
-        Observer& operator= (const Observer&) = default;
-        Observer& operator= (Observer&&) noexcept = default;
-
         virtual void Notify(Args...  args) = 0;
         virtual void OnSubjectDestroy(Subject<Args...>* pSubject) = 0;
         virtual void OnSubjectCopied(Subject<Args...>* pCopiedSubject, Subject<Args...>* pOverwrittenSubject) = 0;
         virtual void OnSubjectMoved(Subject<Args...>* pPrevSubject, Subject<Args...>* pNewSubject) = 0;
 
     protected:
-        Observer() = default;
+        ~Observer() = default;
+
     };
 
 

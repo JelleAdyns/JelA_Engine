@@ -103,7 +103,7 @@ namespace jela
         TextFormat& operator=(const TextFormat& other);
         TextFormat& operator=(TextFormat&& other) noexcept;
 
-        ~TextFormat() override;
+        ~TextFormat();
 
         void Swap(TextFormat& other);
         friend void swap(TextFormat& first, TextFormat& second) noexcept { first.Swap(second); }

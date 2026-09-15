@@ -8,19 +8,15 @@ namespace jela
     class Command
     {
     public:
-        Command() = default;
-        virtual ~Command() = default;
-        Command(const Command&) = default;
-        Command(Command&&) noexcept = default;
-        Command& operator= (const Command&) = default;
-        Command& operator= (Command&&) noexcept = default;
         virtual void Execute() const = 0;
+    protected:
+        ~Command() = default;
     };
 
     class GameObjectCommand : public Command
     {
     public:
-        ~GameObjectCommand() override = default;
+        virtual ~GameObjectCommand() = default;
 
         GameObjectCommand(const GameObjectCommand&) = default;
         GameObjectCommand(GameObjectCommand&&) noexcept = default;

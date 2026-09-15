@@ -37,7 +37,7 @@ namespace jela
     template <cEasyConstruct ObjectType, typename ...SubjectArgs>
     struct ObservingObject : public Observer<SubjectArgs...>
     {
-        ~ObservingObject() override { RemoveFromSubject(); }
+        virtual ~ObservingObject() { RemoveFromSubject(); }
 
         ObservingObject(const ObservingObject& other);
         ObservingObject(ObservingObject&& other) noexcept;
