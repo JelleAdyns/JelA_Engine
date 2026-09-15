@@ -33,6 +33,8 @@ namespace jela
         float Rotation() const { return m_LocalTransform.rotation; };
         Vector2f Scale() const { return m_LocalTransform.scale; };
 
+        void SetWorldPos(float x, float y);
+        void SetWorldPos(Vector2f newWorldPos);
         void SetLocalPos(float x, float y);
         void SetLocalPos(Vector2f newLocalPos);
         void SetPosDirty();

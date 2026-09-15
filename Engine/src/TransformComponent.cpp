@@ -1,4 +1,5 @@
-#include "../include/TransformComponent.h"
+#include "TransformComponent.h"
+#include "GameObject.h"
 
 namespace jela
 {
@@ -38,6 +39,15 @@ namespace jela
     TransformComponent::TransformComponent(float rotation, Vector2f scale):
         TransformComponent{{}, rotation, scale}
     {}
+    void TransformComponent::SetWorldPos(float x, float y)
+    {
+        SetWorldPos({x,y});
+    }
+    void TransformComponent::SetWorldPos(Vector2f newWorldPos)
+    {
+        m_LocalTransform.position = newWorldPos - (WorldPosition() - Position());
+        SetTransformDirty();
+    }
     void TransformComponent::SetLocalPos(float x, float y)
     {
         SetLocalPos({x,y});
