@@ -32,7 +32,7 @@ namespace jela
             if (const auto& typeID = typeid(T);
                 !HasComponent(typeID))
             {
-                T* pComp = m_pScene->AddComponent<T>(ComponentOwnerKey{}, args...);
+                T* pComp = Scene::GameObjectDoor::AddComponent<T>(m_pScene, args...);
                 pComp->SetOwner(ComponentOwnerKey{}, this);
                 m_Components[typeID] = pComp;
 
@@ -54,7 +54,7 @@ namespace jela
                 HasComponent(typeID))
             {
                 const auto pComp = m_Components.at(typeID);
-                m_pScene->RemoveComponent(ComponentOwnerKey{}, pComp);
+                Scene::GameObjectDoor::RemoveComponent(m_pScene, pComp);
                 m_Components.erase(typeID);
             }
         }

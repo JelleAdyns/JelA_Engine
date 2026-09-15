@@ -31,7 +31,7 @@ namespace jela
         if (gameObject.IsPartOfScene()) throw std::runtime_error("Cannot consume game object, bacause its already part of a scene!");
         return std::forward<GameObject&>(m_GameObjectHandler.ConsumeGameObject(std::move(gameObject)));
     }
-    void Scene::RemoveComponent(ComponentOwnerKey, const Component* pCompToRemove)
+    void Scene::RemoveComponent(const Component* pCompToRemove)
     {
         m_ComponentHandler.RemoveComponent(pCompToRemove);
     }

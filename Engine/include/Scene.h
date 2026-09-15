@@ -92,7 +92,7 @@ namespace jela
         static constexpr std::size_t GetMaxObjects() { return GameObjectHandler::MAX_GAME_OBJECTS; };
 
         Scene() = default;
-        ~Scene()
+        virtual ~Scene()
         {
             m_IsBeingDestroyed = true;
             m_GameObjectHandler.Clear();
@@ -116,19 +116,40 @@ namespace jela
         GameObject& AddGameObject();
         GameObject& ConsumeGameObject(GameObject&& gameObject);
 
-        template <cDerivedComponent T, typename ...Args> T* AddComponent(ComponentOwnerKey, Args ...args)
+
+        bool IsBeingDestroyed() const { return m_IsBeingDestroyed; }
+
+        class GameObjectDoor
+        {
+            friend class GameObject;
+
+            template <cDerivedComponent T, typename ...Args>
+            static T* AddComponent(Scene* pScene, Args ...args)
+            {
+                return pScene->AddComponent<T>(args...);
+            }
+            static void RemoveComponent(Scene* pScene, const Component* pCompToRemove)
+            {
+                return pScene->RemoveComponent(pCompToRemove);
+            }
+            template <template<typename> typename Container>
+            static void RemoveComponents(Scene* pScene, const Container<Component*>& pCompsToRemove)
+            {
+                pScene->RemoveComponents<Container>(pCompsToRemove);
+            }
+        };
+
+    private:
+        template <cDerivedComponent T, typename ...Args> T* AddComponent(Args ...args)
         {
             return m_ComponentHandler.AddComponent<T>(args...);
         }
-        void RemoveComponent(ComponentOwnerKey, const Component* pCompToRemove);
+        void RemoveComponent(const Component* pCompToRemove);
         template <template<typename> typename Container>
-        void RemoveComponents(ComponentOwnerKey, const Container<Component*>& pCompsToRemove)
+        void RemoveComponents(const Container<Component*>& pCompsToRemove)
         {
             m_ComponentHandler.RemoveComponents<Container>(pCompsToRemove);
         }
-
-        bool IsBeingDestroyed() const { return m_IsBeingDestroyed; }
-    private:
 
         static constexpr std::size_t POOL_SIZE = 10'000;
 
