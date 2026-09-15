@@ -20,7 +20,7 @@ namespace jela
             static constexpr std::size_t size = 32;
             static constexpr std::size_t infoSize = sizeof(Header) + sizeof(Block*);
 
-            Block* next {nullptr};
+            alignas(std::max_align_t) Block* next {nullptr};
             uint8_t data[size - infoSize]{};
 
             static_assert(infoSize <= size);
