@@ -2,7 +2,6 @@
 #define SINGLELINKALLOCATOR_H
 
 #include <cassert>
-#include <cstddef>
 #include <cstdint>
 
 #include "MemoryAllocator.h"

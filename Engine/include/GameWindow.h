@@ -2,8 +2,6 @@
 #define WINDOW_H
 #include <functional>
 
-#include "HResultHandler.h"
-#include "Observer.h"
 #include "Structs.h"
 
 namespace jela

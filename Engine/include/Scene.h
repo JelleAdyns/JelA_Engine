@@ -2,11 +2,8 @@
 #define SCENE_H
 #include <typeindex>
 
-#include "FixedSizeAllocators.h"
 #include "SingleLinkAllocators.h"
-
 #include "Component.h"
-#include "Observer.h"
 
 namespace jela
 {

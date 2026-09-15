@@ -1,6 +1,5 @@
 #ifndef HRESULTHANDLER_H
 #define HRESULTHANDLER_H
-#include <intsafe.h>
 
 #include "Defines.h"
 
