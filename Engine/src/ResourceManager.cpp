@@ -310,8 +310,8 @@ namespace jela
     {
         HResultHandler hr{};
         hr = Font::m_pDWriteFactory->CreateTextFormat(
-            ENGINE.GetCurrentFont()->m_FontName.c_str(),
-            ENGINE.GetCurrentFont()->m_pFontCollection,
+            ENGINE.ResourceMngr()->GetCurrentFont()->m_FontName.c_str(),
+            ENGINE.ResourceMngr()->GetCurrentFont()->m_pFontCollection,
             bold ? DWRITE_FONT_WEIGHT_EXTRA_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
             italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL,

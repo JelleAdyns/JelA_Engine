@@ -2,6 +2,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "Command.h"
 #include "Structs.h"
 
 namespace jela
@@ -9,6 +10,8 @@ namespace jela
 	class Controller final
 	{
 	public:
+
+		using ID = uint8_t;
 
 		enum class Button
 		{
@@ -27,32 +30,39 @@ namespace jela
 			X = 0x4000,
 			Y = 0x8000
 		};
+		enum class ButtonState
+		{
+			UpThisFrame,
+			DownThisFrame,
+			Pressed,
+			NotPressed
+		};
 
-		Controller(uint8_t controllerIndex);
+		Controller(ID controllerIndex);
 
 		~Controller();
 
 		Controller(const Controller&) = delete;
-		Controller(Controller&&) noexcept = delete;
 		Controller& operator= (const Controller&) = delete;
+		Controller(Controller&&) noexcept = default;
 		Controller& operator= (Controller&&) noexcept = default;
 
-		bool IsAnyButtonPressed();
+		bool IsAnyButtonPressed() const;
 		void ProcessControllerInput();
 		bool IsDownThisFrame(Button button) const;
 		bool IsUpThisFrame(Button button)  const;
 		bool IsPressed(Button button)  const;
 
-		void SetJoystickDeadzone(bool left, int percentage);
-		void SetTriggerDeadzone(bool left, int percentage);
-		/*void AddCommand(const std::shared_ptr<Command>& pCommand, ControllerButton button, KeyState keyState);
-		void RemoveCommand(ControllerButton button, KeyState keyState);
+		void SetJoystickDeadzone(bool left, uint8_t percentage);
+		void SetTriggerDeadzone(bool left, uint8_t percentage);
+		void AddCommand(const std::shared_ptr<Command>& pCommand, Button button, ButtonState buttonState);
+		void RemoveCommand(Button button, ButtonState buttonState);
 		void RemoveAllCommands();
 
 		void DeactivateAllCommands();
-		void ActivateAllCommands();*/
+		void ActivateAllCommands();
 
-		void Vibrate(int strengthPercentage) const;
+		void Vibrate(uint8_t strengthPercentage) const;
 		Vector2f GetJoystickValue(bool leftJoystick) const;
 		float GetTriggerValue(bool leftTrigger) const;
 		static int AmountOfConnectedControllers();

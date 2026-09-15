@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include "Component.h"
 #include "Scene.h"
-#include "Engine.h"
 
 namespace jela
 {

@@ -7,7 +7,6 @@
 
 namespace jela
 {
-
     Engine::Engine() :
         m_hInstance{nullptr},
         m_pGame{ nullptr },
@@ -33,7 +32,6 @@ namespace jela
 
         try
         {
-            m_pResourceManager = std::make_unique<ResourceManager>(resourcePath);
             m_pWindow = std::make_unique<GameWindow>(width, height, hInstance, m_Title, resourcePath,
                 [pEngine = this](HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
@@ -41,6 +39,7 @@ namespace jela
                 }
             );
 
+            m_pResourceManager = std::make_unique<ResourceManager>(resourcePath);
             m_pSceneManager = std::make_unique<SceneManager>();
             m_pRenderManager = std::make_unique<RenderManager>(m_pWindow.get());
             m_pInputManager = std::make_unique<InputManager>();
@@ -56,11 +55,8 @@ namespace jela
         return true;
     }
 
-    int Engine::Run(std::unique_ptr<BaseGame>&& game)
+    int Engine::Run()
     {
-        m_pGame = std::move(game);
-        m_pGame->Initialize();
-
         m_pWindow->SetWindowPosition(true, true);
 
         LARGE_INTEGER countsPersSecond;
@@ -96,14 +92,7 @@ namespace jela
                 SetDeltaTime(static_cast<float>(currentCount.QuadPart - lastCount.QuadPart) / countsPersSecond.QuadPart);
                 lastCount = currentCount;
 
-                if (IsAnyControllerButtonPressed()) m_IsKeyboardActive = false;
-
-                for (const auto& controller : m_pVecControllers)
-                    controller->ProcessControllerInput();
-
-                if (!m_IsKeyboardActive)
-                    m_pGame->HandleControllerInput();
-
+                m_pInputManager->ProcessInput();
                 m_pSceneManager->Update();
                 m_pRenderManager->Render();
 
@@ -148,21 +137,21 @@ namespace jela
         case WM_SETFOCUS:
             QueryPerformanceCounter(&m_TriggerCount);
             r = 0;
-        break;
+            break;
         case WM_SIZE:
             m_pRenderManager->ResizeBackBuffer();
             r = 0;
-        break;
+            break;
         case WM_DISPLAYCHANGE:
             m_pRenderManager->Render();
             r = 0;
-        break;
+            break;
 
         case WM_DESTROY:
             PostQuitMessage(0);
             m_IsQuitting = true;
             r = 1;
-        break;
+            break;
 
         case WM_KEYUP:
         case WM_KEYDOWN:
@@ -177,7 +166,7 @@ namespace jela
         case WM_MBUTTONUP:
         case WM_MOUSEMOVE:
         case WM_MOUSEWHEEL:
-            m_pInputManager->QueueEvent({static_cast<InputEvent>(message), wParam, lParam});
+            m_pInputManager->QueueEvent({static_cast<WindowEvent>(message), wParam, lParam});
             r = 0;
             break;
         default:
@@ -186,74 +175,6 @@ namespace jela
 
         return r;
     }
-
-    void Engine::AddController()
-    {
-        if (m_pVecControllers.size() < 4)
-        {
-            m_pVecControllers.emplace_back(std::make_unique<Controller>(static_cast<uint8_t>(m_pVecControllers.size())));
-        }
-        else OutputDebugString(_T( "Max amount of controllers already reached.\n"));
-    }
-
-    void Engine::PopController()
-    {
-        if (not m_pVecControllers.empty()) m_pVecControllers.pop_back();
-    }
-
-    void Engine::PopAllControllers()
-    {
-        m_pVecControllers.clear();
-    }
-
-    bool Engine::IsAnyControllerButtonPressed() const
-    {
-        return std::ranges::any_of(m_pVecControllers, [](const auto& pController)
-        {
-            return pController->IsAnyButtonPressed();
-        });
-    }
-
-    bool Engine::ButtonDownThisFrame(Controller::Button button, uint8_t controllerIndex) const
-    {
-        return m_pVecControllers.at(controllerIndex)->IsDownThisFrame(button);
-    }
-
-    bool Engine::ButtonUpThisFrame(Controller::Button button, uint8_t controllerIndex) const
-    {
-        return m_pVecControllers.at(controllerIndex)->IsUpThisFrame(button);
-    }
-
-    bool Engine::ButtonPressed(Controller::Button button, uint8_t controllerIndex) const
-    {
-        return m_pVecControllers.at(controllerIndex)->IsPressed(button);
-    }
-    void Engine::VibrateController(int strengthPercentage, uint8_t controllerIndex) const
-    {
-        if (controllerIndex < m_pVecControllers.size())
-        {
-            m_pVecControllers.at(controllerIndex)->Vibrate(strengthPercentage);
-        }
-        else
-            OutputDebugString(std::format(_T("Trying to vibrate controller, but controller for controllerIndex {} not found.\n"), controllerIndex).c_str());
-    }
-    Vector2f Engine::GetControllerJoystickValue(bool leftJoystick, uint8_t controllerIndex) const
-    {
-        return m_pVecControllers.at(controllerIndex)->GetJoystickValue(leftJoystick);
-    }
-    float Engine::GetControllerTriggerValue(bool leftTrigger, uint8_t controllerIndex) const
-    {
-        return m_pVecControllers.at(controllerIndex)->GetTriggerValue(leftTrigger);
-    }
-    void Engine::SetJoystickDeadzone(bool left, int percentage, uint8_t controllerIndex)
-    {
-        return m_pVecControllers.at(controllerIndex)->SetJoystickDeadzone(left, percentage);
-    }
-    void Engine::SetTriggerDeadzone(bool left, int percentage, uint8_t controllerIndex)
-    {
-        return m_pVecControllers.at(controllerIndex)->SetTriggerDeadzone(left, percentage);
-    }
-
 
     void Engine::ShowMouse(bool show) const
     {
@@ -270,10 +191,6 @@ namespace jela
     void Engine::SetTextFormat(TextFormat* const pTextFormat) const
     {
         m_pResourceManager->SetCurrentTextFormat(pTextFormat);
-    }
-    bool Engine::IsKeyPressed(int virtualKeycode) const
-    {
-        return GetKeyState(virtualKeycode) < 0 && m_pWindow->IsWindowActive();
     }
     void Engine::SetInstance(HINSTANCE hInst)
     {
@@ -323,11 +240,6 @@ namespace jela
         return m_pWindow.get();
     }
 
-    const Font* Engine::GetCurrentFont() const
-    {
-        return m_pResourceManager->GetCurrentFont();
-    }
-
     float Engine::GetDeltaTime() const
     {
         return m_DeltaTime;
@@ -336,12 +248,24 @@ namespace jela
     {
         return m_TotalTime;
     }
-    bool Engine::IsKeyBoardActive() const
-    {
-        return m_IsKeyboardActive;
-    }
     bool Engine::IsQuitting() const
     {
         return m_IsQuitting;
+    }
+    void Engine::NotifyError(HWND hWnd, const std::wstring& pszErrorMessage, HRESULT hrErr)
+    {
+        constexpr size_t MESSAGE_LEN = 512;
+        TCHAR message[MESSAGE_LEN];
+
+        if (SUCCEEDED(StringCchPrintf(message, MESSAGE_LEN, _T("%s (HRESULT = 0x%X)\n"),
+            pszErrorMessage.c_str(), hrErr)))
+        {
+            MessageBox(hWnd, message, _T("ERROR"), MB_OK | MB_ICONERROR);
+        }
+        OutputDebugString(message);
+    }
+    void Engine::NotifyException(const std::string& exceptionMessage, const std::string& title) const
+    {
+        MessageBoxA(m_pWindow->GetWindow(), exceptionMessage.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
     }
 }

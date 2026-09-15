@@ -3,6 +3,7 @@
 #include "TransformComponent.h"
 #include "RenderComponent.h"
 #include "Scene.h"
+#include "Engine.h"
 
 namespace jela
 {
