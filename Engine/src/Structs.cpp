@@ -3,104 +3,11 @@
 
 namespace jela
 {
-
-	Point2f::Point2f(float x, float y) :
-		x{ x },
-		y{ y }
-	{}
-	Point2f::Point2f(const Vector2f& pos):
-		Point2f{pos.x, pos.y}
-	{}
-	bool Point2f::operator==(const Point2f& rhs) const
-	{
-		return (abs(x - rhs.x) < FLT_EPSILON) && (abs(y - rhs.y) < FLT_EPSILON);
-	}
-	bool Point2f::operator!=(const Point2f& rhs) const
-	{
-		return !(*this == rhs);
-	}
-
-
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-	Rectf::Rectf(float left, float bottom, float width, float height) :
-		left{ left },
-		bottom{ bottom },
-		width{ width },
-		height{ height }
-	{}
-
-	Rectf::Rectf(const Point2f& bottomLeft, float width, float height) :
-		left{bottomLeft.x},
-		bottom{bottomLeft.y},
-		width{ width },
-		height{ height }
-	{}
-
-	Rectf::Rectf(const Point2f& bottomLeft, const Point2f& topRight) :
-		left{bottomLeft.x},
-		bottom{bottomLeft.y},
-		width{topRight.x - bottomLeft.x},
-		height{topRight.y - bottomLeft.y}
-	{
-		assert((topRight.x >= bottomLeft.x && topRight.y >= bottomLeft.y));
-	}
-#else
-	Rectf::Rectf(float left, float top, float width, float height) :
-		left{ left },
-		top{ top },
-		width{ width },
-		height{ height }
-	{}
-	Rectf::Rectf(const Point2f& topLeft, float width, float height) :
-		left{topLeft.x},
-		top{topLeft.y},
-		width{width },
-		height{ height }
-	{}
-	Rectf::Rectf(const Point2f& topLeft, const Point2f& bottomRight) :
-		left{topLeft.x},
-		top{topLeft.y},
-		width{bottomRight.x - topLeft.x},
-		height{bottomRight.y - topLeft.y}
-	{
-		assert((bottomRight.x >= topLeft.x && bottomRight.y >= topLeft.y));
-	}
-#endif // MATHEMATICAL_COORDINATESYSTEM
-
-
-	Ellipsef::Ellipsef(float xCenter, float yCenter, float xRadius, float yRadius) :
-		center{ xCenter,yCenter },
-		radiusX{ xRadius },
-		radiusY{ yRadius }
-	{}
-
-	Ellipsef::Ellipsef(const Point2f& center, float xRadius, float yRadius) :
-		center{ center },
-		radiusX{ xRadius },
-		radiusY{ yRadius }
-	{}
-
-
-	Circlef::Circlef(float xCenter, float yCenter, float radius) :
-		center{ xCenter, yCenter },
-		rad{ radius }
-	{
-	}
-
-	Circlef::Circlef(const Point2f& center, float radius) :
-		center{ center },
-		rad{ radius }
-	{
-	}
-
 	Vector2f::Vector2f(float x, float y) :
 		x{ x },
 		y{ y }
 	{}
-	Vector2f::Vector2f(const Point2f& endPoint) :
-		x{ endPoint.x },
-		y{ endPoint.y }
-	{}
+
 	Vector2f::Vector2f(const Point2f& startPoint, const Point2f& endPoint) :
 		x{ endPoint.x - startPoint.x },
 		y{ endPoint.y - startPoint.y }
@@ -215,35 +122,84 @@ namespace jela
 	}
 
 	// non-member
-
 	tostream& operator<< (tostream& lhs, const Vector2f& rhs)
 	{
 		lhs << rhs.ToString();
 		return lhs;
 	}
-	Point2f& operator+=(Point2f& lhs, const Vector2f& rhs)
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+	Rectf::Rectf(float left, float bottom, float width, float height) :
+		left{ left },
+		bottom{ bottom },
+		width{ width },
+		height{ height }
+	{}
+
+	Rectf::Rectf(const Point2f& bottomLeft, float width, float height) :
+		left{bottomLeft.x},
+		bottom{bottomLeft.y},
+		width{ width },
+		height{ height }
+	{}
+
+	Rectf::Rectf(const Point2f& bottomLeft, const Point2f& topRight) :
+		left{bottomLeft.x},
+		bottom{bottomLeft.y},
+		width{topRight.x - bottomLeft.x},
+		height{topRight.y - bottomLeft.y}
 	{
-		lhs.x += rhs.x;
-		lhs.y += rhs.y;
-		return lhs;
+		assert((topRight.x >= bottomLeft.x && topRight.y >= bottomLeft.y));
 	}
-	Point2f operator+(const Point2f& lhs, const Vector2f& rhs)
+#else
+	Rectf::Rectf(float left, float top, float width, float height) :
+		left{ left },
+		top{ top },
+		width{ width },
+		height{ height }
+	{}
+	Rectf::Rectf(const Point2f& topLeft, float width, float height) :
+		left{topLeft.x},
+		top{topLeft.y},
+		width{width },
+		height{ height }
+	{}
+	Rectf::Rectf(const Point2f& topLeft, const Point2f& bottomRight) :
+		left{topLeft.x},
+		top{topLeft.y},
+		width{bottomRight.x - topLeft.x},
+		height{bottomRight.y - topLeft.y}
 	{
-		return Point2f{ lhs.x + rhs.x, lhs.y + rhs.y };
+		assert((bottomRight.x >= topLeft.x && bottomRight.y >= topLeft.y));
 	}
-	Point2f& operator-=(Point2f& lhs, const Vector2f& rhs)
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+
+	Ellipsef::Ellipsef(float xCenter, float yCenter, float xRadius, float yRadius) :
+		center{ xCenter,yCenter },
+		radiusX{ xRadius },
+		radiusY{ yRadius }
+	{}
+
+	Ellipsef::Ellipsef(const Point2f& center, float xRadius, float yRadius) :
+		center{ center },
+		radiusX{ xRadius },
+		radiusY{ yRadius }
+	{}
+
+
+	Circlef::Circlef(float xCenter, float yCenter, float radius) :
+		center{ xCenter, yCenter },
+		rad{ radius }
 	{
-		lhs.x -= rhs.x;
-		lhs.y -= rhs.y;
-		return lhs;
 	}
-	Point2f operator-(const Point2f& lhs, const Vector2f& rhs)
+
+	Circlef::Circlef(const Point2f& center, float radius) :
+		center{ center },
+		rad{ radius }
 	{
-		return Point2f{ lhs.x - rhs.x, lhs.y - rhs.y };
 	}
-	Vector2f operator-(const Point2f& lhs, const Point2f& rhs)
-	{
-		return { lhs.x - rhs.x, lhs.y - rhs.y };
-	}
+
+
 
 }

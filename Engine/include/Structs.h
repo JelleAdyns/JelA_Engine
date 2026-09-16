@@ -9,94 +9,17 @@
 
 namespace jela
 {
-	struct Vector2f;
-
 	template <typename T>
 	concept cArithmetic = std::is_arithmetic_v<T>;
 
-	struct Point2f
-	{
-		Point2f() = default;
-		explicit Point2f(float x, float y);
-		Point2f(const Vector2f& pos);
-		float x{};
-		float y{};
 
-		bool operator==(const Point2f& rhs) const;
-		bool operator!=(const Point2f& rhs) const;
-	};
-
-
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-	struct Rectf
-	{
-		Rectf() = default;
-		explicit Rectf(float left, float bottom, float width, float height);
-		explicit Rectf(const Point2f& bottomLeft, float width, float height);
-		explicit Rectf(const Point2f& bottomLeft, const Point2f& topRight);
-
-		float Right() const { return left + width; }
-		float Top() const { return bottom + height; }
-		Point2f BottomLeft() const { return Point2f{left, bottom}; }
-		Point2f BottomRight() const { return Point2f{Right(), bottom}; }
-		Point2f TopLeft() const { return Point2f{left, Top()}; }
-		Point2f TopRight() const { return Point2f{Right(), Top()}; }
-
-		float left{};
-		float bottom{};
-		float width{};
-		float height{};
-	};
-#else
-	struct Rectf
-	{
-	public:
-		Rectf() = default;
-		explicit Rectf(float left, float top, float width, float height);
-		explicit Rectf(const Point2f& topLeft, float width, float height);
-		explicit Rectf(const Point2f& topLeft, const Point2f& bottomRight);
-
-		float Right() const { return left + width; }
-		float Bottom() const { return top + height; }
-		Point2f BottomLeft() const { return Point2f{left, Bottom()}; }
-		Point2f BottomRight() const { return Point2f{Right(), Bottom()}; }
-		Point2f TopLeft() const { return Point2f{left, top}; }
-		Point2f TopRight() const { return Point2f{Right(), top}; }
-
-		float left{};
-		float top{};
-		float width{};
-		float height{};
-	};
-#endif // MATHEMATICAL_COORDINATESYSTEM
-
-	struct Ellipsef
-	{
-		Ellipsef() = default;
-		explicit Ellipsef(float xCenter, float yCenter, float xRadius, float yRadius);
-		explicit Ellipsef(const Point2f& center, float xRadius, float yRadius);
-
-		Point2f center{};
-		float radiusX{};
-		float radiusY{};
-	};
-
-	struct Circlef
-	{
-		Circlef() = default;
-		explicit Circlef(float xCenter, float yCenter, float radius);
-		explicit Circlef(const Point2f& center, float radius);
-
-		Point2f center{};
-		float rad{};
-	};
-
+    struct Vector2f;
+	using Point2f = Vector2f;
 
     struct Vector2f
     {
         Vector2f() = default;
         Vector2f(float x, float y);
-        Vector2f(const Point2f& endPoint);
         Vector2f(const Point2f& startPoint, const Point2f& endPoint);
 
         Vector2f operator-() const;
@@ -162,12 +85,84 @@ namespace jela
 
 	tostream& operator<< (tostream& lhs, const Vector2f& rhs);
 
-	Point2f& operator+=(Point2f& lhs, const Vector2f& rhs);
-	Point2f operator+(const Point2f& lhs, const Vector2f& rhs);
-	Point2f& operator-=(Point2f& lhs, const Vector2f& rhs);
-	Point2f operator-(const Point2f& lhs, const Vector2f& rhs);
 
-	Vector2f operator-(const Point2f& lhs, const Point2f& rhs);
+
+	// struct Point2f
+	// {
+	// 	Point2f() = default;
+	// 	explicit Point2f(float x, float y);
+	// 	Point2f(const Vector2f& pos);
+	// 	float x{};
+	// 	float y{};
+	//
+	// 	bool operator==(const Point2f& rhs) const;
+	// 	bool operator!=(const Point2f& rhs) const;
+	// };
+
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+	struct Rectf
+	{
+		Rectf() = default;
+		explicit Rectf(float left, float bottom, float width, float height);
+		explicit Rectf(const Point2f& bottomLeft, float width, float height);
+		explicit Rectf(const Point2f& bottomLeft, const Point2f& topRight);
+
+		float Right() const { return left + width; }
+		float Top() const { return bottom + height; }
+		Point2f BottomLeft() const { return Point2f{left, bottom}; }
+		Point2f BottomRight() const { return Point2f{Right(), bottom}; }
+		Point2f TopLeft() const { return Point2f{left, Top()}; }
+		Point2f TopRight() const { return Point2f{Right(), Top()}; }
+
+		float left{};
+		float bottom{};
+		float width{};
+		float height{};
+	};
+#else
+	struct Rectf
+	{
+	public:
+		Rectf() = default;
+		explicit Rectf(float left, float top, float width, float height);
+		explicit Rectf(const Point2f& topLeft, float width, float height);
+		explicit Rectf(const Point2f& topLeft, const Point2f& bottomRight);
+
+		float Right() const { return left + width; }
+		float Bottom() const { return top + height; }
+		Point2f BottomLeft() const { return Point2f{left, Bottom()}; }
+		Point2f BottomRight() const { return Point2f{Right(), Bottom()}; }
+		Point2f TopLeft() const { return Point2f{left, top}; }
+		Point2f TopRight() const { return Point2f{Right(), top}; }
+
+		float left{};
+		float top{};
+		float width{};
+		float height{};
+	};
+#endif // MATHEMATICAL_COORDINATESYSTEM
+
+	struct Ellipsef
+	{
+		Ellipsef() = default;
+		explicit Ellipsef(float xCenter, float yCenter, float xRadius, float yRadius);
+		explicit Ellipsef(const Point2f& center, float xRadius, float yRadius);
+
+		Point2f center{};
+		float radiusX{};
+		float radiusY{};
+	};
+
+	struct Circlef
+	{
+		Circlef() = default;
+		explicit Circlef(float xCenter, float yCenter, float radius);
+		explicit Circlef(const Point2f& center, float radius);
+
+		Point2f center{};
+		float rad{};
+	};
 }
 
 #endif // !STRUCTS_H

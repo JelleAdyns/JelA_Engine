@@ -5,7 +5,6 @@
 #include <functional>
 namespace jela
 {
-    struct Point2f;
     struct Rectf;
 }
 
