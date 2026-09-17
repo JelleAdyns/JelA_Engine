@@ -86,20 +86,6 @@ namespace jela
 	tostream& operator<< (tostream& lhs, const Vector2f& rhs);
 
 
-
-	// struct Point2f
-	// {
-	// 	Point2f() = default;
-	// 	explicit Point2f(float x, float y);
-	// 	Point2f(const Vector2f& pos);
-	// 	float x{};
-	// 	float y{};
-	//
-	// 	bool operator==(const Point2f& rhs) const;
-	// 	bool operator!=(const Point2f& rhs) const;
-	// };
-
-
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 	struct Rectf
 	{

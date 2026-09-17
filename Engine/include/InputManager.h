@@ -11,7 +11,7 @@ namespace jela
 {
     namespace mouse
     {
-        enum class Actions
+        enum class Actions : uint8_t
         {
             Left,
             Right,
@@ -27,7 +27,7 @@ namespace jela
             Control = MK_CONTROL,
             Middle = MK_MBUTTON
         };
-        enum class State
+        enum class State : uint8_t
         {
             UpThisFrame,
             DownThisFrame,
@@ -43,7 +43,7 @@ namespace jela
     {
         using VirtualKey = uint16_t;
 
-        enum class State
+        enum class State : uint8_t
         {
             UpThisFrame,
             DownThisFrame,

@@ -30,7 +30,7 @@ namespace jela
 			X = 0x4000,
 			Y = 0x8000
 		};
-		enum class ButtonState
+		enum class ButtonState : uint8_t
 		{
 			UpThisFrame,
 			DownThisFrame,
