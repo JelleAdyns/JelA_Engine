@@ -3,6 +3,7 @@
 
 #include "ObservingObjects.h"
 #include "HResultHandler.h"
+#include "Structs.h"
 #include <unordered_map>
 
 namespace jela
@@ -25,6 +26,7 @@ namespace jela
         friend void Swap(Texture& first, Texture& second) noexcept {first.Swap(second);}
 
         ID2D1Bitmap* GetBitmap() const { return m_pDBitmap; }
+        Vector2f GetSize() const { return {m_TextureWidth, m_TextureHeight}; }
         float GetWidth() const { return m_TextureWidth; }
         float GetHeight() const { return m_TextureHeight; }
         const tstring& GetFileName() const { return m_FileName; }
