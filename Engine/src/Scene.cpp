@@ -1,6 +1,5 @@
 #include "Scene.h"
 #include "GameObject.h"
-#include "TransformComponent.h"
 #include "Utils.h"
 
 namespace jela

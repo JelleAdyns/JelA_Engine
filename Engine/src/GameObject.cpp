@@ -1,7 +1,7 @@
 #include "GameObject.h"
 
-#include "TransformComponent.h"
-#include "RenderComponent.h"
+#include "Transform.h"
+#include "Renderer.h"
 #include "Scene.h"
 #include "Engine.h"
 
@@ -69,7 +69,7 @@ namespace jela
     }
     GameObject::GameObject(Scene& scene):
         m_pScene{&scene},
-        m_pTransform{AddComponent<TransformComponent>()}
+        m_pTransform{AddComponent<jela::Transform>()}
     {}
     GameObject::~GameObject()
     {

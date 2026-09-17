@@ -9,8 +9,8 @@
 
 namespace jela
 {
-    class RenderComponent;
-    class TransformComponent;
+    class Renderer;
+    class Transform;
     class GameObject final
     {
     public:
@@ -36,7 +36,7 @@ namespace jela
                 pComp->SetOwner(ComponentOwnerKey{}, this);
                 m_Components[typeID] = pComp;
 
-                if constexpr (std::is_base_of_v<RenderComponent, T>)
+                if constexpr (std::is_base_of_v<Renderer, T>)
                     m_pRenderComp = pComp;
 
                 pComp->Init();
@@ -62,7 +62,7 @@ namespace jela
         template <cDerivedComponent T>
         T* GetComponent() const
         {
-            if constexpr (std::is_same_v<T, TransformComponent>)
+            if constexpr (std::is_same_v<T, jela::Transform>)
             {
                 if (m_pTransform) return m_pTransform;
             }
@@ -76,7 +76,7 @@ namespace jela
                 throw std::bad_typeid();
             }
 
-            throw std::runtime_error("Object doesn't own a reference to an instance of the passed component type.");
+            return nullptr;
         }
 
         template <cDerivedComponent T>
@@ -91,7 +91,7 @@ namespace jela
         bool IsDead() const { return m_IsDead; }
 
         const std::vector<GameObject*>& Children() const { return m_pChildren; }
-        TransformComponent* Transform() const { return m_pTransform; }
+        Transform* Transform() const { return m_pTransform; }
         GameObject* Parent() const { return m_pParent; }
 
         void SetParent(GameObject& pParent, bool keepWorldPosition);
@@ -114,8 +114,8 @@ namespace jela
 
         // Components
         std::unordered_map<std::type_index, Component*> m_Components{};
-        TransformComponent* m_pTransform;
-        RenderComponent* m_pRenderComp{nullptr};
+        jela::Transform* m_pTransform;
+        Renderer* m_pRenderComp{nullptr};
 
     };
 }

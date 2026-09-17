@@ -14,7 +14,7 @@ namespace jela
         Command(Command&&) noexcept = default;
         Command& operator= (const Command&) = default;
         Command& operator= (Command&&) noexcept = default;
-        virtual void Execute() const = 0;
+        virtual void Execute() = 0;
     };
 
     class GameObjectCommand : public Command
