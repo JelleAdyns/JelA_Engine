@@ -64,35 +64,35 @@ namespace jela
 			return *this;
 		}
 
-		constexpr bool operator==(const Vector2f& rhs) const { return (abs(x - rhs.x) < FLT_EPSILON) && (abs(y - rhs.y) < FLT_EPSILON); }
-		constexpr bool operator!=(const Vector2f& rhs) const { return !(*this == rhs); }
+    	bool operator==(const Vector2f& rhs) const { return (abs(x - rhs.x) < FLT_EPSILON) && (abs(y - rhs.y) < FLT_EPSILON); }
+		bool operator!=(const Vector2f& rhs) const { return !(*this == rhs); }
 
 		constexpr static float Dot(const Vector2f& first, const Vector2f& second) { return first.x * second.x + first.y * second.y; }
 		constexpr static float Cross(const Vector2f& first, const Vector2f& second) { return first.x * second.y - first.y * second.x; }
-		constexpr static float AngleBetween(const Vector2f& first, const Vector2f& second)
+		static float AngleBetween(const Vector2f& first, const Vector2f& second)
     	{
     		return atan2(first.x * second.y - second.x * first.y, first.x * second.x + first.y * second.y) * 180 / std::numbers::pi_v<float>;
     	}
-		constexpr static Vector2f Reflect(const Vector2f& vector, const Vector2f& surfaceNormal)
+		static Vector2f Reflect(const Vector2f& vector, const Vector2f& surfaceNormal)
     	{
     		const auto n = surfaceNormal.Normalized();
     		return vector - (n * 2.f * Dot(vector, n));
     	}
 
-		constexpr tstring ToString(uint8_t decimalPrecision = 1) const { return std::format(_T("( {1:.{0}f}, {2:.{0}f} )"), decimalPrecision, x, y); }
+		tstring ToString(uint8_t decimalPrecision = 1) const { return std::format(_T("( {1:.{0}f}, {2:.{0}f} )"), decimalPrecision, x, y); }
 
-		constexpr float Length() const { return sqrtf(x * x + y * y); }
+		float Length() const { return sqrtf(x * x + y * y); }
 		constexpr float SquaredLength() const { return x * x + y * y; }
 
-    	constexpr Vector2f Normalized() const
+    	Vector2f Normalized() const
     	{
     		const auto l = Length();
     		if (l < FLT_EPSILON) return {};
     		return { x / l, y / l };
     	}
-    	constexpr Vector2f& Normalize()
+    	Vector2f& Normalize()
     	{
-    		auto l = Length();
+    		const auto l = Length();
     		if (l < FLT_EPSILON) return *this;
     		*this /= l;
     		return *this;
@@ -104,7 +104,7 @@ namespace jela
     };
 
 	constexpr Vector2f operator*(cArithmetic auto lhs, Vector2f rhs) { return rhs * lhs; }
-	constexpr tostream& operator<< (tostream& lhs, const Vector2f& rhs) { lhs << rhs.ToString(); return lhs; }
+	inline tostream& operator<< (tostream& lhs, const Vector2f& rhs) { lhs << rhs.ToString(); return lhs; }
 
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
