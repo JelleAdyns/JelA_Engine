@@ -9,6 +9,8 @@ namespace jela
     }
     void SceneManager::Update()
     {
+        if (m_Scenes.empty()) return;
+
         if (Scene* pTopScene = m_Scenes.back().pScene.get();
             m_pActiveScene != pTopScene)
         {

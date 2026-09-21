@@ -1,6 +1,4 @@
 #include "Engine.h"
-#include <algorithm>
-#include <numbers>
 #include <thread>
 
 #include "AudioService.h"
@@ -9,7 +7,6 @@ namespace jela
 {
     Engine::Engine() :
         m_hInstance{nullptr},
-        m_pGame{ nullptr },
         m_Title{ _T("Standard Game")},
         m_SecondsPerFrame{1.f/60.f}
     {}
@@ -105,11 +102,6 @@ namespace jela
 
     void Engine::Shutdown()
     {
-        if (m_pGame)
-        {
-            m_pGame->Cleanup();
-            m_pGame = nullptr;
-        }
         AudioLocator::RegisterAudioService(nullptr);
 
         m_pSceneManager = nullptr;

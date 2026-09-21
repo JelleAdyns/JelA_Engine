@@ -1,11 +1,8 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "BaseGame.h"
 #include "Structs.h"
 #include "framework.h"
-#include "Controller.h"
-#include <vector>
 #include <strsafe.h>
 
 #include "ResourceManager.h"
@@ -77,9 +74,6 @@ namespace jela
         HINSTANCE                       m_hInstance;
         LARGE_INTEGER                   m_TriggerCount{};
 
-        //BaseGame
-        std::unique_ptr<BaseGame>       m_pGame{};
-
         //General datamembers
         tstring                         m_Title{};
 
@@ -89,8 +83,6 @@ namespace jela
 
         bool                            m_IsVSyncEnabled{true};
         bool                            m_IsQuitting{false};
-
-        std::vector<std::unique_ptr<Controller>> m_pVecControllers{};
 
         std::unique_ptr<GameWindow> m_pWindow{};
         std::unique_ptr<RenderManager> m_pRenderManager{};

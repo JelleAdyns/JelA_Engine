@@ -5,9 +5,7 @@ set(GUI_TYPE WIN32)
 #Setup the source files of the Game Project
 set(SOURCES 
 	"Main.cpp"
-	"Game.cpp"
-	"Game.h"	
- )
+)
 
 #Create the Game Project
 #You need to remove ${CMAKE_CURRENT_SOURCE_DIR}/Icons.rc if you don't have an Icon for the application

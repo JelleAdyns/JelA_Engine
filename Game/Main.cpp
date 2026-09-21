@@ -5,7 +5,6 @@
 #endif // _DEBUG
 
 #include "Engine.h"
-#include "Game.h"
 
 jela::Engine ENGINE{};
 
@@ -16,8 +15,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 {  
     int result{-1};
 
-    if (ENGINE.Init(hInstance, _T("Resources/"), 1200, 720))
-        result = ENGINE.Run(std::make_unique<Game>());
+    if (ENGINE.Init(hInstance, _T("Resources/"), 1920, 1080))
+    {
+        result = ENGINE.Run();
+    }
 
     ENGINE.Shutdown();
 
