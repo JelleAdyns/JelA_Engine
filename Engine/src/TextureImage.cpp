@@ -2,7 +2,7 @@
 
 #include "Engine.h"
 #include "GameObject.h"
-#include "AnchoredRect.h"
+#include "RectTransform.h"
 #include "Transform.h"
 
 namespace jela
@@ -13,7 +13,7 @@ namespace jela
     }
     void TextureImage::Start()
     {
-        m_pAnchoredRect = GetOwner()->GetComponent<AnchoredRect>();
+        m_pRectTransform = GetOwner()->GetComponent<RectTransform>();
     }
     ResourcePtr<Texture> TextureImage::GetTexture() const
     {
@@ -25,18 +25,11 @@ namespace jela
     }
     Rectf TextureImage::GetDestRect() const
     {
-        if (m_pAnchoredRect == nullptr)
-        {
-            Vector2f pos = GetOwner()->Transform()->Position();
-            Vector2f size = m_pTexture->GetSize();
-            Vector2f halfSize = size / 2;
+        if (m_pRectTransform) return m_pRectTransform->GetRect();
 
-            if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) halfSize.y = -halfSize.y;
+        const Vector2f pos = GetOwner()->Transform()->Position();
+        const Vector2f size = m_pTexture->GetSize();
 
-            return Rectf{pos.x - halfSize.x, pos.y - halfSize.y, size.x, size.y};
-        }
-
-        return m_pAnchoredRect->GetRect();
-
+        return Rectf{pos.x - size.x / 2, pos.y - size.y / 2, size.x, size.y};
     }
 } // jela

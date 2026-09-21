@@ -120,7 +120,8 @@ namespace jela
     {
         const KeyBoardState state{virtualKeycode, keyState};
 #ifndef NDEBUG
-        if (m_KeyCommands.contains(state)) std::cout << "Binding to the requested key ("<<virtualKeycode<<") already exists.Overwriting now.\n";
+        if (m_KeyCommands.contains(state))
+            OutputDebugString( std::format(_T("Binding to the requested key ({}) already exists. Overwriting now.\n"),virtualKeycode).c_str());
 #endif // !NDEBUG
         m_KeyCommands[state] = pCommand;
     }
@@ -128,7 +129,8 @@ namespace jela
     {
         const MouseState state{mouseButton, mouseState};
 #ifndef NDEBUG
-        if (m_MouseCommands.contains(state)) std::cout << "Binding to the requested key ("<< static_cast<int>(mouseButton) <<") already exists.Overwriting now.\n";
+        if (m_MouseCommands.contains(state))
+            OutputDebugString( std::format(_T("Binding to the requested mouse action ({}) already exists. Overwriting now.\n"), static_cast<int>(mouseButton)).c_str());
 #endif // !NDEBUG
         m_MouseCommands[state] = pCommand;
     }

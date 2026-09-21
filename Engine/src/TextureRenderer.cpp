@@ -3,6 +3,8 @@
 #include "Engine.h"
 #include "GameObject.h"
 #include "TextureImage.h"
+#include "Transform.h"
+#include "RectTransform.h"
 
 namespace jela
 {
@@ -12,7 +14,23 @@ namespace jela
     }
     void TextureRenderer::Draw() const
     {
-        ENGINE.RenderMngr()->DrawTexture(m_pTextureImage->GetRawTexture(),m_pTextureImage->GetDestRect(),Rectf{}, GetOpacity());
+        Rectf destRect = m_pTextureImage->GetDestRect();
+        if (const auto pParent = GetOwner()->Parent())
+        {
+            Vector2f parentWorldPos = pParent->Transform()->WorldPosition();
+            destRect.left += parentWorldPos.x;
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+            destRect.bottom += parentWorldPos.y;
+#else
+            destRect.top += parentWorldPos.y;
+#endif
+        }
+        RectTransform* pRectTranform = GetOwner()->GetComponent<RectTransform>();
+
+        ENGINE.RenderMngr()->DrawTexture(m_pTextureImage->GetRawTexture(), destRect ,Rectf{}, GetOpacity());
+        ENGINE.RenderMngr()->SetColor(RGB(0,255,0));
+        ENGINE.RenderMngr()->DrawEllipse(pRectTranform->WorldPosition() - pRectTranform->AnchoredPos(), 20,20);
+        ENGINE.RenderMngr()->SetColor(RGB(255,255,255));
     }
     void TextureRenderer::SetOpacity(uint8_t opacityPercentage)
     {

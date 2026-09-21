@@ -11,6 +11,10 @@ namespace jela
 {
     class Renderer;
     class Transform;
+
+    template <typename T>
+    concept cIsTransform = std::is_base_of_v<Transform, T> || std::is_same_v<Transform,T>;
+
     class GameObject final
     {
     public:
@@ -34,11 +38,18 @@ namespace jela
             {
                 T* pComp = Scene::GameObjectDoor::AddComponent<T>(m_pScene, args...);
                 pComp->SetOwner(ComponentOwnerKey{}, this);
+
+                if constexpr (std::is_base_of_v<Renderer, T>) m_pRenderComp = pComp;
+
+                if constexpr (cIsTransform<T>)
+                {
+                    if (m_pTransform) RemoveComponent(m_TransformTypeID);
+
+                    m_TransformTypeID = typeid(T);
+                    m_pTransform = pComp;
+                }
+
                 m_Components[typeID] = pComp;
-
-                if constexpr (std::is_base_of_v<Renderer, T>)
-                    m_pRenderComp = pComp;
-
                 pComp->Init();
 
                 return pComp;
@@ -48,10 +59,11 @@ namespace jela
         }
 
         template <cDerivedComponent T>
-        void RemoveComponent()
+        void RemoveComponent() { RemoveComponent(typeid(T));}
+
+        void RemoveComponent(const std::type_index& typeID)
         {
-            if (const auto& typeID = typeid(T);
-                HasComponent(typeID))
+            if (HasComponent(typeID))
             {
                 const auto pComp = m_Components.at(typeID);
                 Scene::GameObjectDoor::RemoveComponent(m_pScene, pComp);
@@ -62,7 +74,7 @@ namespace jela
         template <cDerivedComponent T>
         T* GetComponent() const
         {
-            if constexpr (std::is_same_v<T, jela::Transform>)
+            if constexpr (std::is_same_v<jela::Transform,T>)
             {
                 if (m_pTransform) return m_pTransform;
             }
@@ -114,7 +126,8 @@ namespace jela
 
         // Components
         std::unordered_map<std::type_index, Component*> m_Components{};
-        jela::Transform* m_pTransform;
+        std::type_index m_TransformTypeID;
+        jela::Transform* m_pTransform{nullptr};
         Renderer* m_pRenderComp{nullptr};
 
     };

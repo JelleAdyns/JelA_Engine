@@ -6,7 +6,7 @@
 
 namespace jela
 {
-    class AnchoredRect;
+    class RectTransform;
 
     class TextureImage final : public Component
     {
@@ -22,7 +22,7 @@ namespace jela
 
     private:
         ResourcePtr<Texture> m_pTexture{};
-        AnchoredRect* m_pAnchoredRect{};
+        RectTransform* m_pRectTransform{};
     };
 
 } // jela

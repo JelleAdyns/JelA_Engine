@@ -69,8 +69,10 @@ namespace jela
     }
     GameObject::GameObject(Scene& scene):
         m_pScene{&scene},
-        m_pTransform{AddComponent<jela::Transform>()}
-    {}
+        m_TransformTypeID{typeid(jela::Transform)}
+    {
+        AddComponent<jela::Transform>();
+    }
     GameObject::~GameObject()
     {
         if (m_pParent && !m_pScene->IsBeingDestroyed())
@@ -84,6 +86,7 @@ namespace jela
         m_pParent{std::exchange(other.m_pParent, nullptr)},
         m_pChildren{std::exchange(other.m_pChildren, {})},
         m_Components{std::exchange(other.m_Components, {})},
+        m_TransformTypeID{std::exchange(other.m_TransformTypeID, typeid(jela::Transform))},
         m_pTransform{std::exchange(other.m_pTransform, nullptr)},
         m_pRenderComp{std::exchange(other.m_pRenderComp, nullptr)}
     {
