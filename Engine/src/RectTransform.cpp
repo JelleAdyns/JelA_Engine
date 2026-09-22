@@ -65,7 +65,11 @@ namespace jela
         const Vector2f prevOffset = GetAnchorOffset(m_Anchor);
         m_Anchor = mapping;
         const Vector2f newOffset = GetAnchorOffset(m_Anchor);
-        SetAnchoredPos(m_AnchoredPosition - (newOffset - prevOffset));
+        Vector2f anchorDifference = (newOffset - prevOffset);
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) anchorDifference.y = -anchorDifference.y;
+
+        SetAnchoredPos(m_AnchoredPosition - anchorDifference);
         UpdateRectPos();
     }
 
@@ -82,7 +86,10 @@ namespace jela
         const Vector2f prevMap = (m_Pivot - Vector2f{0.5,0.5}) * m_Size;
         m_Pivot = mapping;
         const Vector2f newMap = (m_Pivot - Vector2f{0.5,0.5}) * m_Size;
-        const Vector2f pivotDifference = (newMap - prevMap);
+        Vector2f pivotDifference = (newMap - prevMap);
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) pivotDifference.y = -pivotDifference.y;
+
         SetLocalPos(Position() + pivotDifference);
         for (const auto pChild : GetOwner()->Children())
         {

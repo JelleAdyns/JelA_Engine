@@ -173,19 +173,20 @@ namespace jela
             return;
         }
 
+        const Vector2f& texSize = texture->GetSize();
         D2D1_RECT_F source{};
         if (srcRect.width <= 0 || srcRect.height <= 0)
         {
-            source = D2D1::RectF(0.F,0.F,texture->GetWidth(),texture->GetHeight());
+            source = D2D1::RectF(0.F,0.F,texSize.x,texSize.y);
         }
         else
         {
             constexpr float sliceMargin{ 0.07f };
             source = D2D1::RectF(
                 srcRect.left + sliceMargin,
-                srcRect.bottom + sliceMargin,
+                texSize.y - (srcRect.bottom  + srcRect.height + sliceMargin),
                 srcRect.left + srcRect.width - sliceMargin,
-                srcRect.bottom + srcRect.height - sliceMargin);
+                texSize.y - (srcRect.bottom + sliceMargin));
         }
 
         m_DXHandler.dDeviceContext2D.DrawTexture(

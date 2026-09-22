@@ -27,7 +27,7 @@ namespace jela
         }
         RectTransform* pRectTranform = GetOwner()->GetComponent<RectTransform>();
 
-        ENGINE.RenderMngr()->DrawTexture(m_pTextureImage->GetRawTexture(), destRect ,Rectf{}, GetOpacity());
+        ENGINE.RenderMngr()->DrawTexture(m_pTextureImage->GetRawTexture(), destRect , m_pTextureImage->GetSourceRect(), GetOpacity());
         ENGINE.RenderMngr()->SetColor(RGB(0,255,0));
         ENGINE.RenderMngr()->DrawEllipse(pRectTranform->WorldPosition() - pRectTranform->AnchoredPos(), 20,20);
         ENGINE.RenderMngr()->SetColor(RGB(255,255,255));
