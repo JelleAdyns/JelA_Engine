@@ -184,9 +184,9 @@ namespace jela
             constexpr float sliceMargin{ 0.07f };
             source = D2D1::RectF(
                 srcRect.left + sliceMargin,
-                texSize.y - (srcRect.bottom  + srcRect.height + sliceMargin),
+                texSize.y - (srcRect.bottom  + srcRect.height) + sliceMargin,
                 srcRect.left + srcRect.width - sliceMargin,
-                texSize.y - (srcRect.bottom + sliceMargin));
+                texSize.y - srcRect.bottom - sliceMargin);
         }
 
         m_DXHandler.dDeviceContext2D.DrawTexture(

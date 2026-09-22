@@ -44,7 +44,7 @@ namespace jela
             public:
 
                 template <cDerivedComponent T, typename ...Args>
-                static AnyComponent make_component(ComponentAllocator& alloc, Args... args);
+                static AnyComponent make_component(ComponentAllocator& alloc, Args&& ... args);
 
                 template <cDerivedComponent T> T* Get() const;
                 Component* GetBasePointer() const;
@@ -73,7 +73,7 @@ namespace jela
             ComponentHandler& operator=(const ComponentHandler& other) = delete;
             ComponentHandler& operator=(ComponentHandler&& other) noexcept = delete;
 
-            template <cDerivedComponent T, typename ...Args> T* AddComponent(Args ...args);
+            template <cDerivedComponent T, typename ...Args> T* AddComponent(Args&& ...args);
             void RemoveComponent(const Component* pCompToRemove);
             template <template<typename> typename Container>
             void RemoveComponents(const Container<Component*>& pCompsToRemove);
@@ -124,9 +124,9 @@ namespace jela
             friend class GameObject;
 
             template <cDerivedComponent T, typename ...Args>
-            static T* AddComponent(Scene* pScene, Args ...args)
+            static T* AddComponent(Scene* pScene, Args&& ...args)
             {
-                return pScene->AddComponent<T>(args...);
+                return pScene->AddComponent<T>(std::forward<Args>(args)...);
             }
             static void RemoveComponent(Scene* pScene, const Component* pCompToRemove)
             {
@@ -140,9 +140,9 @@ namespace jela
         };
 
     private:
-        template <cDerivedComponent T, typename ...Args> T* AddComponent(Args ...args)
+        template <cDerivedComponent T, typename ...Args> T* AddComponent(Args&& ...args)
         {
-            return m_ComponentHandler.AddComponent<T>(args...);
+            return m_ComponentHandler.AddComponent<T>(std::forward<Args>(args)...);
         }
         void RemoveComponent(const Component* pCompToRemove);
         template <template<typename> typename Container>
@@ -166,9 +166,9 @@ namespace jela
 
     // AnyComponent
     template <cDerivedComponent T, typename ... Args>
-    Scene::ComponentHandler::AnyComponent Scene::ComponentHandler::AnyComponent::make_component(ComponentAllocator& alloc, Args... args)
+    Scene::ComponentHandler::AnyComponent Scene::ComponentHandler::AnyComponent::make_component(ComponentAllocator& alloc, Args&& ... args)
     {
-        return AnyComponent{new (alloc) T{args...}, alloc};
+        return AnyComponent{new (alloc) T{std::forward<Args>(args)...}, alloc};
     }
     template <cDerivedComponent T>
     T* Scene::ComponentHandler::AnyComponent::Get() const
@@ -186,7 +186,7 @@ namespace jela
 
     // ComponentHandler
     template <cDerivedComponent T, typename ... Args>
-    T* Scene::ComponentHandler::AddComponent(Args... args)
+    T* Scene::ComponentHandler::AddComponent(Args&& ... args)
     {
         const auto& typeID = typeid(T);
         if (!m_Allocs.contains(typeID))
@@ -195,7 +195,7 @@ namespace jela
             if (!succeeded) throw std::runtime_error{std::format("Couldn't add typeID '{}'.", typeID.name())};
         }
 
-        m_Components.emplace_back(AnyComponent::make_component<T>(m_Allocs.at(typeID), args...));
+        m_Components.emplace_back(AnyComponent::make_component<T>(m_Allocs.at(typeID),std::forward<Args>(args)...));
         auto typeComp = m_Components.back().Get<T>();
         typeComp->SetBufferIndex(BufferOwnerKey{}, m_Components.size() - 1);
         return typeComp;

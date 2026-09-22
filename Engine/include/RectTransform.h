@@ -42,6 +42,7 @@ namespace jela
 
         Vector2f AnchoredPos() const;
         Vector2f GetSize() const;
+        Vector2f GetRectPos();
         Rectf GetRect();
 
     private:

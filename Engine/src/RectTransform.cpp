@@ -47,9 +47,7 @@ namespace jela
     }
     void RectTransform::SetAnchoredPos(Vector2f newAnchoredPos)
     {
-        const Vector2f prevPos = m_AnchoredPosition;
         m_AnchoredPosition = newAnchoredPos;
-        //Transform::SetLocalPos(Position() + (newAnchoredPos - prevPos));
     }
 
     void RectTransform::SetAnchor(Anchor anchor)
@@ -108,7 +106,7 @@ namespace jela
     {
         m_Size.x = size.x;
         m_Size.y = size.y;
-        UpdateRectPos();
+        SetPivot(m_Pivot);
     }
     Vector2f RectTransform::AnchoredPos() const
     {
@@ -117,6 +115,11 @@ namespace jela
     Vector2f RectTransform::GetSize() const
     {
         return m_Size;
+    }
+    Vector2f RectTransform::GetRectPos()
+    {
+        UpdateRectPos();
+        return m_RectPos;
     }
     Rectf RectTransform::GetRect()
     {

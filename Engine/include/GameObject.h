@@ -36,7 +36,7 @@ namespace jela
             if (const auto& typeID = typeid(T);
                 !HasComponent(typeID))
             {
-                T* pComp = Scene::GameObjectDoor::AddComponent<T>(m_pScene, args...);
+                T* pComp = Scene::GameObjectDoor::AddComponent<T>(m_pScene, std::forward<Args>(args)...);
                 pComp->SetOwner(ComponentOwnerKey{}, this);
 
                 if constexpr (std::is_base_of_v<Renderer, T>) m_pRenderComp = pComp;

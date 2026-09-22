@@ -15,11 +15,11 @@ namespace jela
     {
         m_pRectTransform = GetOwner()->GetComponent<RectTransform>();
     }
-    ResourcePtr<Texture> TextureImage::GetTexture() const
+    const ResourcePtr<Texture>& TextureImage::GetManagedTexture() const
     {
         return m_pTexture;
     }
-    const Texture* TextureImage::GetRawTexture() const
+    const Texture* TextureImage::GetTexture() const
     {
         return m_pTexture.get();
     }
@@ -28,9 +28,7 @@ namespace jela
         if (m_pRectTransform) return m_pRectTransform->GetRect();
 
         const Vector2f pos = GetOwner()->Transform()->Position();
-        const Vector2f size = m_pTexture->GetSize();
-
-        return Rectf{pos.x - size.x / 2, pos.y - size.y / 2, size.x, size.y};
+        return Rectf{pos.x - m_DestSize.x / 2, pos.y - m_DestSize.y / 2, m_DestSize.x, m_DestSize.y};
     }
     Rectf TextureImage::GetSourceRect() const
     {
@@ -61,5 +59,16 @@ namespace jela
     void TextureImage::SetSourceRect(Rectf rect)
     {
         m_SourceRect = rect;
+    }
+    void TextureImage::UseSourceRectSize()
+    {
+        if (m_pRectTransform) m_pRectTransform->SetRectSize(m_SourceRect.width, m_SourceRect.height);
+        m_DestSize.x = m_SourceRect.width;
+        m_DestSize.y = m_SourceRect.height;
+    }
+    void TextureImage::UseTextureSize()
+    {
+        if (m_pRectTransform) m_pRectTransform->SetRectSize(m_pTexture->GetSize());
+        m_DestSize = m_pTexture->GetSize();
     }
 } // jela

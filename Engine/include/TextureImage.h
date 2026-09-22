@@ -8,15 +8,15 @@ namespace jela
 {
     class RectTransform;
 
-    class TextureImage final : public Component
+    class TextureImage : public Component
     {
     public:
 
         TextureImage(const tstring& textureName);
 
         void Start() override;
-        ResourcePtr<Texture> GetTexture() const;
-        const Texture* GetRawTexture() const;
+        const ResourcePtr<Texture>& GetManagedTexture() const;
+        const Texture* GetTexture() const;
 
         Rectf GetDestRect() const;
         Rectf GetSourceRect() const;
@@ -25,11 +25,14 @@ namespace jela
         void SetSourceRectSize(float width, float height);
         void SetSourceRectSize(Vector2f size);
         void SetSourceRect(Rectf);
+        void UseSourceRectSize();
+        void UseTextureSize();
 
     private:
         ResourcePtr<Texture> m_pTexture{};
         RectTransform* m_pRectTransform{};
         Rectf m_SourceRect{};
+        Vector2f m_DestSize{};
     };
 
 } // jela

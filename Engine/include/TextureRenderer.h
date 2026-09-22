@@ -9,7 +9,7 @@ namespace jela
     class TextureRenderer final : public Renderer
     {
     public:
-        void Init() override;
+        void Start() override;
         void Draw() const override;
 
         void SetOpacity(uint8_t opacityPercentage);
