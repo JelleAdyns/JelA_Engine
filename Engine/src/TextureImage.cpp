@@ -30,6 +30,13 @@ namespace jela
         const Vector2f pos = GetOwner()->Transform()->Position();
         return Rectf{pos.x - m_DestSize.x / 2, pos.y - m_DestSize.y / 2, m_DestSize.x, m_DestSize.y};
     }
+    Rectf TextureImage::GetWorldDestRect() const
+    {
+        if (m_pRectTransform) return m_pRectTransform->GetWorldRect();
+
+        const Vector2f pos = GetOwner()->Transform()->WorldPosition();
+        return Rectf{pos.x - m_DestSize.x / 2, pos.y - m_DestSize.y / 2, m_DestSize.x, m_DestSize.y};
+    }
     Rectf TextureImage::GetSourceRect() const
     {
         return m_SourceRect;

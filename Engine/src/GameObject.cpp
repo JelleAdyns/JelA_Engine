@@ -20,7 +20,8 @@ namespace jela
     }
     void GameObject::Draw() const
     {
-        if (m_pRenderComp) m_pRenderComp->Draw();
+        if (m_pRenderer) m_pRenderer->Draw();
+        ENGINE.RenderMngr()->DrawEllipse(m_pTransform->WorldPosition(),20.f,20.f, 2.f);
     }
     void GameObject::Update()
     {
@@ -69,7 +70,8 @@ namespace jela
     }
     GameObject::GameObject(Scene& scene):
         m_pScene{&scene},
-        m_TransformTypeID{typeid(jela::Transform)}
+        m_TransformTypeID{typeid(jela::Transform)},
+        m_RendererTypeID{typeid(Renderer)}
     {
         AddComponent<jela::Transform>();
     }
@@ -88,7 +90,8 @@ namespace jela
         m_Components{std::exchange(other.m_Components, {})},
         m_TransformTypeID{std::exchange(other.m_TransformTypeID, typeid(jela::Transform))},
         m_pTransform{std::exchange(other.m_pTransform, nullptr)},
-        m_pRenderComp{std::exchange(other.m_pRenderComp, nullptr)}
+        m_RendererTypeID{std::exchange(other.m_RendererTypeID, typeid(jela::Renderer))},
+        m_pRenderer{std::exchange(other.m_pRenderer, nullptr)}
     {
         if (m_pParent)
         {

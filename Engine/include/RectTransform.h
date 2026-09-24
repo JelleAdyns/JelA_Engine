@@ -44,6 +44,7 @@ namespace jela
         Vector2f GetSize() const;
         Vector2f GetRectPos();
         Rectf GetRect();
+        Rectf GetWorldRect();
 
     private:
         Vector2f GetAnchorOffset(Vector2f anchor) const;

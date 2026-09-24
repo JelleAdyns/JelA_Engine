@@ -83,19 +83,18 @@ namespace jela
     class TextFormat final : public Observer<const Font*>
     {
     public:
-
         enum class HorAllignment
         {
-            Left,
-            Center,
-            Right,
-            Justified
+            Left = DWRITE_TEXT_ALIGNMENT_LEADING,
+            Center = DWRITE_TEXT_ALIGNMENT_CENTER,
+            Right = DWRITE_TEXT_ALIGNMENT_TRAILING,
+            Justified = DWRITE_TEXT_ALIGNMENT_JUSTIFIED
         };
         enum class VertAllignment
         {
-            Top,
-            Center,
-            Bottom,
+            Top = DWRITE_PARAGRAPH_ALIGNMENT_NEAR,
+            Center = DWRITE_PARAGRAPH_ALIGNMENT_CENTER,
+            Bottom = DWRITE_PARAGRAPH_ALIGNMENT_FAR,
         };
 
         explicit TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign);
@@ -111,6 +110,10 @@ namespace jela
         friend void swap(TextFormat& first, TextFormat& second) noexcept { first.Swap(second); }
 
         float GetFontSize() const { return m_Size; }
+        bool IsBold() const;
+        bool IsItalic() const;
+        HorAllignment HorizontalAllignment() const;
+        VertAllignment VerticalAllignment() const;
         IDWriteTextFormat* GetTextFormat() const { return m_pTextFormat; }
     private:
 
@@ -129,6 +132,7 @@ namespace jela
         HResultHandler SetFont(const Font* const pFont);
 
         IDWriteTextFormat* m_pTextFormat{ nullptr };
+        Subject* m_pSubject{nullptr};
         float m_Size;
     };
     //---------------------------------------------------------------

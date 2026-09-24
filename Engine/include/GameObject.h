@@ -13,6 +13,8 @@ namespace jela
     class Transform;
 
     template <typename T>
+    concept cDerivedRenderer = std::is_base_of_v<Renderer, T> && !std::is_same_v<Renderer,T>;
+    template <typename T>
     concept cIsTransform = std::is_base_of_v<Transform, T> || std::is_same_v<Transform,T>;
 
     class GameObject final
@@ -39,8 +41,13 @@ namespace jela
                 T* pComp = Scene::GameObjectDoor::AddComponent<T>(m_pScene, std::forward<Args>(args)...);
                 pComp->SetOwner(ComponentOwnerKey{}, this);
 
-                if constexpr (std::is_base_of_v<Renderer, T>) m_pRenderComp = pComp;
+                if constexpr (cDerivedRenderer<T>)
+                {
+                    if (m_pRenderer) RemoveComponent(m_RendererTypeID);
 
+                    m_RendererTypeID = typeid(T);
+                    m_pRenderer = pComp;
+                }
                 if constexpr (cIsTransform<T>)
                 {
                     if (m_pTransform) RemoveComponent(m_TransformTypeID);
@@ -128,7 +135,8 @@ namespace jela
         std::unordered_map<std::type_index, Component*> m_Components{};
         std::type_index m_TransformTypeID;
         jela::Transform* m_pTransform{nullptr};
-        Renderer* m_pRenderComp{nullptr};
+        std::type_index m_RendererTypeID;
+        Renderer* m_pRenderer{nullptr};
 
     };
 }

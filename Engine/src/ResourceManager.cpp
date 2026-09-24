@@ -360,26 +360,28 @@ namespace jela
         std::swap(m_pTextFormat, other.m_pTextFormat);
         std::swap(m_Size, other.m_Size);
     }
+    bool TextFormat::IsBold() const
+    {
+        return m_pTextFormat->GetFontWeight() == DWRITE_FONT_WEIGHT_EXTRA_BOLD;
+    }
+    bool TextFormat::IsItalic() const
+    {
+        return m_pTextFormat->GetFontStyle() == DWRITE_FONT_STYLE_ITALIC;
+    }
+    TextFormat::HorAllignment TextFormat::HorizontalAllignment() const
+    {
+        return static_cast<HorAllignment>(m_pTextFormat->GetTextAlignment());
+    }
+    TextFormat::VertAllignment TextFormat::VerticalAllignment() const
+    {
+        return static_cast<VertAllignment>(m_pTextFormat->GetParagraphAlignment());
+    }
 
     // ReSharper disable once CppMemberFunctionMayBeConst
     HResultHandler TextFormat::SetHorizontalAllignment(HorAllignment allignment)
     {
         HResultHandler hr{};
-        switch (allignment)
-        {
-            case HorAllignment::Left:
-                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-                break;
-            case HorAllignment::Center:
-                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-                break;
-            case HorAllignment::Right:
-                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-                break;
-            case HorAllignment::Justified:
-                if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-                break;
-        }
+        if (m_pTextFormat) hr = m_pTextFormat->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(allignment));
         return hr;
     }
 
@@ -387,18 +389,7 @@ namespace jela
     HResultHandler TextFormat::SetVerticalAllignment(VertAllignment allignment)
     {
         HResultHandler hr{};
-        switch (allignment)
-        {
-            case VertAllignment::Top:
-                if (m_pTextFormat) hr = m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-                break;
-            case VertAllignment::Center:
-                if (m_pTextFormat) hr = m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-                break;
-            case VertAllignment::Bottom:
-                if (m_pTextFormat) hr = m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-                break;
-        }
+        if (m_pTextFormat) hr = m_pTextFormat->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(allignment));
         return hr;
     }
 

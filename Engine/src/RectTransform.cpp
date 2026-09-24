@@ -126,6 +126,16 @@ namespace jela
         UpdateRectPos();
         return Rectf{m_RectPos,m_Size.x,m_Size.y};
     }
+    Rectf RectTransform::GetWorldRect()
+    {
+        UpdateRectPos();
+        Vector2f parentWorldPos{};
+
+        if (const auto pParent = GetOwner()->Parent(); pParent)
+            parentWorldPos = pParent->Transform()->WorldPosition();
+
+        return Rectf{m_RectPos + parentWorldPos, m_Size.x, m_Size.y};
+    }
     Vector2f RectTransform::GetAnchorOffset(Vector2f anchor) const
     {
         if (const auto pParent = GetOwner()->Parent();
