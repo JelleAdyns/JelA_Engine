@@ -21,373 +21,345 @@ namespace jela
     constexpr std::size_t STRUCT_SIZE = sizeof(DataStruct);
     constexpr std::size_t BUFFER_SIZE = 500;
 
-    void TestSingleAllocation(SingleLinkAllocator& alloc)
+
+    using DefaultBufferAllocator = BufferAllocator<BUFFER_SIZE>;
+
+    enum TestableSizes
     {
-        EXPECT_THROW(alloc.Acquire(0), std::bad_alloc);
+        Default = BUFFER_SIZE,
+        Small = 1,
+        Minimum = SingleLinkAllocator::MINIMUM_BUFFER_SIZE,
+        Large = 1'000'000
+    };
+
+
+    template <typename AllocT, TestableSizes SizeVal, bool AllowLargerBufferVal>
+       requires std::is_base_of_v<SingleLinkAllocator, AllocT>
+    class AllocType
+    {
+    public:
+        using Alloc = AllocT;
+        static constexpr TestableSizes Size = SizeVal;
+        static constexpr bool AllowLargerBuffer = AllowLargerBufferVal;
+    };
+
+    template <typename T>
+    class TestSingleLinkAllocators : public testing::Test
+    {
+    public:
+        void SetUp() override
+        {
+            using Alloc = typename T::Alloc;
+            constexpr auto Size = T::Size;
+            constexpr bool AllowLargerBuffer = T::AllowLargerBuffer;
+
+            if constexpr (std::is_same_v<Alloc, SingleLinkAllocator>)
+            {
+                if constexpr (!AllowLargerBuffer && Size == Small)
+                {
+                    EXPECT_THROW(pAlloc = std::make_unique<SingleLinkAllocator>(Size, AllowLargerBuffer), std::length_error);
+                    return;
+                }
+                pAlloc = std::make_unique<SingleLinkAllocator>(Size, AllowLargerBuffer);
+            }
+
+            else if constexpr (std::is_same_v<Alloc, DefaultBufferAllocator>)
+                pAlloc = std::make_unique<BufferAllocator<Size, AllowLargerBuffer>>();
+
+
+
+            tstring debugName{};
+            if constexpr (std::is_same_v<Alloc, SingleLinkAllocator>) debugName = _T("SingleList");
+            else if constexpr (std::is_same_v<Alloc, DefaultBufferAllocator>) debugName = _T("BufferList");
+
+            OutputDebugString(std::format(_T("TEST: {} - Size {}, AllowLargerBuffer {}\n"), debugName, static_cast<int>(Size), static_cast<bool>(AllowLargerBuffer)).c_str());
+        }
+        std::unique_ptr<SingleLinkAllocator> pAlloc{nullptr};
+    };
+
+
+     using DefaultAllocatorTypes = testing::Types<
+        AllocType<SingleLinkAllocator, Default, false>,
+        AllocType<SingleLinkAllocator, Default, true>,
+        AllocType<SingleLinkAllocator, Small, false>,
+        AllocType<SingleLinkAllocator, Small, true>,
+        AllocType<SingleLinkAllocator, Minimum, false>,
+        AllocType<SingleLinkAllocator, Minimum, true>,
+        AllocType<SingleLinkAllocator, Large, false>,
+        AllocType<SingleLinkAllocator, Large, true>,
+
+        AllocType<DefaultBufferAllocator, Default, false>,
+        AllocType<DefaultBufferAllocator, Default, true>,
+        //AllocType<DefaultBufferAllocator, Small, false>, // Compile time error as intended
+        AllocType<DefaultBufferAllocator, Small, true>,
+        AllocType<DefaultBufferAllocator, Minimum, false>,
+        AllocType<DefaultBufferAllocator, Minimum, true>,
+        AllocType<DefaultBufferAllocator, Large, false>,
+        AllocType<DefaultBufferAllocator, Large, true>
+    >;
+
+    class SingleLinkTestNames {
+    public:
+        template <typename T>
+        static std::string GetName(int)
+        {
+            using Alloc = typename T::Alloc;
+            constexpr auto Size = T::Size;
+            constexpr bool AllowLargerBuffer = T::AllowLargerBuffer;
+            std::string name{};
+
+            if constexpr (AllowLargerBuffer) name += "PaddedBuffer";
+            else name += "CappedBuffer";
+
+            name += "_X_";
+
+            if constexpr (Size == Default) name += "DefaultSize";
+            else if constexpr (Size == Small) name += "SmallSize";
+            else if constexpr (Size == Minimum) name += "MinimumSize";
+            else if constexpr (Size == Large) name += "LargeSize";
+
+            name += "_X_";
+
+            if constexpr (std::is_same_v<Alloc, SingleLinkAllocator>) name += "SingleLinkAllocator";
+            else if constexpr (std::is_same_v<Alloc, DefaultBufferAllocator>) name += "BufferAllocator";
+
+            return name;
+        }
+    };
+
+    TYPED_TEST_SUITE(TestSingleLinkAllocators, DefaultAllocatorTypes, SingleLinkTestNames);
+
+    TYPED_TEST(TestSingleLinkAllocators, Getters)
+    {
+        if (!this->pAlloc) return;
+        const auto amountOfDataBlocks = this->pAlloc->AmountOfDataBlocks();
+
+        EXPECT_EQ(amountOfDataBlocks, this->pAlloc->AmountOfFreeBlocks());
+        EXPECT_EQ(this->pAlloc->AmountOfOccupiedBlocks(), 0);
+
+        const auto requestedSize = this->pAlloc->RequestedSize();
+        const auto totalSize = this->pAlloc->CompleteBufferSize();
+
+        if constexpr (TypeParam::AllowLargerBuffer) EXPECT_GE(totalSize, requestedSize);
+        else EXPECT_LE(totalSize, requestedSize);
+
+        void* p = this->pAlloc->Acquire(1);
+        EXPECT_EQ(this->pAlloc->AmountOfFreeBlocks(), amountOfDataBlocks - 1);
+
+        this->pAlloc->Release(p);
+        EXPECT_EQ(this->pAlloc->AmountOfFreeBlocks(), amountOfDataBlocks);
+
+        if (amountOfDataBlocks > 1 )
+        {
+            p = this->pAlloc->Acquire((amountOfDataBlocks - 1) * SingleLinkAllocator::BLOCK_SIZE);
+            EXPECT_EQ(this->pAlloc->AmountOfFreeBlocks(), 0);
+
+            this->pAlloc->Release(p);
+            EXPECT_EQ(this->pAlloc->AmountOfFreeBlocks(), amountOfDataBlocks);
+        }
+    }
+
+    TYPED_TEST(TestSingleLinkAllocators, SingleAllocation)
+    {
+        if (!this->pAlloc) return;
+        EXPECT_THROW(this->pAlloc->Acquire(0), std::bad_alloc);
 
         void* p{};
-        EXPECT_NO_THROW(p = alloc.Acquire(STRUCT_SIZE));
+        EXPECT_NO_THROW(p = this->pAlloc->Acquire(STRUCT_SIZE));
         EXPECT_NE(p, nullptr);
 
         std::memset(p, 1, STRUCT_SIZE);
 
-        EXPECT_NO_THROW(alloc.Release(p));
+        EXPECT_NO_THROW(this->pAlloc->Release(p));
     }
-
-    void TestInvalidRelease(SingleLinkAllocator& alloc)
+    TYPED_TEST(TestSingleLinkAllocators, InvalidRelease)
     {
+        if (!this->pAlloc) return;
         void* p{nullptr};
-        EXPECT_NO_THROW(alloc.Release(p));
+        EXPECT_NO_THROW(this->pAlloc->Release(p));
         p = new char{'e'};
 
-        EXPECT_NO_THROW(alloc.Release(p));
+        EXPECT_NO_THROW(this->pAlloc->Release(p));
         EXPECT_EQ((*static_cast<char*>(p)), 'e');
 
         delete static_cast<char*>(p);
     }
 
-    void TestTwoAllocations(SingleLinkAllocator& alloc)
+    TYPED_TEST(TestSingleLinkAllocators, TwoAllocations)
     {
+        if (!this->pAlloc) return;
         constexpr std::size_t sizeA = 34;
         constexpr std::size_t sizeB = 45;
 
         // This test requires the allocator to have at least enough room for 2 allocations
-        EXPECT_GT(alloc.RequestedSize(), sizeA + sizeB);
+        if constexpr (TypeParam::Size < sizeA + sizeB) return;
+        EXPECT_GT(this->pAlloc->RequestedSize(), sizeA + sizeB);
 
         void* p1{};
-        EXPECT_NO_THROW((p1 = alloc.Acquire(sizeA)));
+        EXPECT_NO_THROW((p1 = this->pAlloc->Acquire(sizeA)));
         EXPECT_NE(p1, nullptr);
         std::memset(p1, 1, sizeA);
 
         void* p2{};
-        EXPECT_NO_THROW((p2 = alloc.Acquire(sizeB)));
+        EXPECT_NO_THROW((p2 = this->pAlloc->Acquire(sizeB)));
         EXPECT_NE(p2, nullptr);
         std::memset(p2, 1, sizeB);
 
 
-        EXPECT_NO_THROW(alloc.Release(p1));
-        EXPECT_NO_THROW(alloc.Release(p2));
+        EXPECT_NO_THROW(this->pAlloc->Release(p1));
+        EXPECT_NO_THROW(this->pAlloc->Release(p2));
     }
 
-    void TestFillAllocator(SingleLinkAllocator& alloc)
+    TYPED_TEST(TestSingleLinkAllocators, FillAllocator)
     {
-        const size_t nbPieces = alloc.RequestedSize() / SingleLinkAllocator::BLOCK_SIZE;
-        const auto pointers = new void* [nbPieces];
-        const size_t test_size = alloc.RequestedSize() / nbPieces;
-        for (size_t i = 0; i < nbPieces ; i++)
+        if (!this->pAlloc) return;
+
+        std::vector<void*> vecPointers{};
+        constexpr std::size_t maxBlocks_variation1{ 6 };
+        constexpr std::size_t maxBlocks_variation2{ maxBlocks_variation1 / 2 };
+        while (this->pAlloc->AmountOfFreeBlocks() > 0)
         {
-            EXPECT_NO_THROW(pointers[i] = alloc.Acquire(test_size));
-            EXPECT_NE(pointers[i], nullptr);
-            std::memset(pointers[i], static_cast<int>( i ), test_size);
+            const auto freeBlocks = this->pAlloc->AmountOfFreeBlocks();
+
+            std::size_t allocSize{SingleLinkAllocator::BLOCK_SIZE};
+            if (freeBlocks >= maxBlocks_variation1) allocSize *= maxBlocks_variation1;
+            else if (freeBlocks >= maxBlocks_variation2) allocSize *= maxBlocks_variation2;
+            allocSize -= SingleLinkAllocator::BLOCK_HEADER_SIZE;
+
+            EXPECT_NO_THROW(vecPointers.emplace_back( this->pAlloc->Acquire(allocSize)));
+            EXPECT_NE(vecPointers.back(), nullptr);
+            std::memset(vecPointers.back(), static_cast<int>( vecPointers.size() - 1 ), allocSize);
+
         }
-        for (size_t i = 0; i < nbPieces ; i++)
-            EXPECT_NO_THROW(alloc.Release(pointers[i]));
-        delete [] pointers;
+        EXPECT_FALSE(this->pAlloc->IsOverflown());
+        for (const auto p : vecPointers)
+            EXPECT_NO_THROW(this->pAlloc->Release(p));
     }
 
-
-    void TestOverflow(SingleLinkAllocator& alloc)
+    TYPED_TEST(TestSingleLinkAllocators, Overflow)
     {
-        constexpr std::size_t amountOfSmallAllocs = 5;
-        void* pointers[amountOfSmallAllocs]{};
-        for (size_t i = 0; i < amountOfSmallAllocs ; i++)
-        {
-            EXPECT_NO_THROW(pointers[i] = alloc.Acquire(STRUCT_SIZE));
-            EXPECT_NE(pointers[i], nullptr);
-            std::memset(pointers[i], static_cast<int>( i ), STRUCT_SIZE);
-        }
+        if (!this->pAlloc) return;
 
-        const auto allocationSize = alloc.AmountOfFreeBlocks() * SingleLinkAllocator::BLOCK_SIZE;
+        const auto allocationSize = this->pAlloc->AmountOfFreeBlocks() * SingleLinkAllocator::BLOCK_SIZE - SingleLinkAllocator::BLOCK_HEADER_SIZE;
 
-        void* p = alloc.Acquire(allocationSize);
+        // Fill entire buffer - no overflow
+        void* p {nullptr};
+        EXPECT_NO_THROW(p = this->pAlloc->Acquire(allocationSize));
+        EXPECT_NE(p, nullptr);
+        std::memset(p, 0, allocationSize);
+        EXPECT_FALSE(this->pAlloc->IsOverflown());
 
-        EXPECT_TRUE(alloc.IsOverflown());
-        EXPECT_EQ(alloc.AmountOfOverflowAllocations(), 1);
+        // Cause first overflow
+        void* pOverflown1{nullptr};
+        EXPECT_NO_THROW(pOverflown1 = this->pAlloc->Acquire(1));
+        EXPECT_NE(pOverflown1, nullptr);
+        std::memset(pOverflown1, 1, 1);
+        EXPECT_TRUE(this->pAlloc->IsOverflown());
+        EXPECT_EQ(this->pAlloc->AmountOfOverflowAllocations(), 1);
 
-        for (auto & pointer : pointers)
-            EXPECT_NO_THROW(alloc.Release(pointer));
+        // Cause second overflow
+        void* pOverflown2{nullptr};
+        EXPECT_NO_THROW(pOverflown2 = this->pAlloc->Acquire(1));
+        EXPECT_NE(pOverflown2, nullptr);
+        std::memset(pOverflown2, 2, 1);
+        EXPECT_TRUE(this->pAlloc->IsOverflown());
+        EXPECT_EQ(this->pAlloc->AmountOfOverflowAllocations(), 2);
 
-        alloc.Release(p);
+        // Release first overflow
+        EXPECT_NO_THROW(this->pAlloc->Release(pOverflown1));
+        EXPECT_TRUE(this->pAlloc->IsOverflown());
+        EXPECT_EQ(this->pAlloc->AmountOfOverflowAllocations(), 1);
 
-        EXPECT_FALSE(alloc.IsOverflown());
+        // Release second overflow
+        EXPECT_NO_THROW(this->pAlloc->Release(pOverflown2));
+        EXPECT_FALSE(this->pAlloc->IsOverflown());
+        EXPECT_EQ(this->pAlloc->AmountOfOverflowAllocations(), 0);
+
+        // Release first allocation
+        EXPECT_NO_THROW(this->pAlloc->Release(p));
     }
 
-    void TestReleaseInMiddle(SingleLinkAllocator& alloc)
+    TYPED_TEST(TestSingleLinkAllocators, ReleaseInMiddle)
     {
-        const std::size_t allocSize = alloc.AmountOfFreeBlocks() * SingleLinkAllocator::BLOCK_SIZE / 6;
-        void* pointer1 = alloc.Acquire(allocSize);
-        void* pointer1ToRelease = alloc.Acquire(allocSize);
-        void* pointer2 = alloc.Acquire(allocSize);
-        void* pointer2ToRelease = alloc.Acquire(allocSize);
-        void* pointer3 = alloc.Acquire(allocSize);
+        if (!this->pAlloc) return;
 
-        EXPECT_NO_THROW(alloc.Release(pointer1ToRelease));
-        EXPECT_NO_THROW(alloc.Release(pointer2ToRelease));
+        constexpr std::size_t amountOfAllocations {3};
+
+        // Only able to release in middle if more than 3 usable blocks are a available
+        if (this->pAlloc->AmountOfDataBlocks() < amountOfAllocations) return;
+
+        const std::size_t allocSize = TypeParam::AllowLargerBuffer
+        ? this->pAlloc->RequestedSize() / amountOfAllocations
+        : this->pAlloc->AmountOfFreeBlocks() * SingleLinkAllocator::BLOCK_SIZE / amountOfAllocations -
+            SingleLinkAllocator::BLOCK_HEADER_SIZE * amountOfAllocations;
+
+        void* pointer1 = this->pAlloc->Acquire(allocSize);
+        void* pointer1ToRelease = this->pAlloc->Acquire(allocSize);
+        void* pointer2 = this->pAlloc->Acquire(allocSize);
+
+        EXPECT_NO_THROW(this->pAlloc->Release(pointer1ToRelease));
 
         void* p {nullptr};
-        EXPECT_NO_THROW(p = alloc.Acquire(allocSize*2));
-        EXPECT_TRUE(alloc.IsOverflown());
-        EXPECT_EQ(alloc.AmountOfOverflowAllocations(), 1);
-        EXPECT_NO_THROW(alloc.Release(p));
+        EXPECT_NO_THROW(p = this->pAlloc->Acquire(allocSize*2));
+        EXPECT_TRUE(this->pAlloc->IsOverflown());
+        EXPECT_EQ(this->pAlloc->AmountOfOverflowAllocations(), 1);
+        EXPECT_NO_THROW(this->pAlloc->Release(p));
 
-        EXPECT_NO_THROW(alloc.Release(pointer1));
-        EXPECT_NO_THROW(alloc.Release(pointer2));
-        EXPECT_NO_THROW(alloc.Release(pointer3));
+        EXPECT_NO_THROW(this->pAlloc->Release(pointer1));
+        EXPECT_NO_THROW(this->pAlloc->Release(pointer2));
 
     }
-
-    void TestNewAndDeleteOperators(SingleLinkAllocator& alloc)
+    TYPED_TEST(TestSingleLinkAllocators, NewAndDeleteOperators)
     {
-        EXPECT_THROW(operator new (0, alloc), std::bad_alloc);
+        if (!this->pAlloc) return;
+        EXPECT_THROW(operator new (0, *this->pAlloc), std::bad_alloc);
 
         void* p{};
 
-        EXPECT_NO_THROW(p = operator new (STRUCT_SIZE, alloc));
+        EXPECT_NO_THROW(p = operator new (STRUCT_SIZE, *this->pAlloc));
         EXPECT_NE(p, nullptr);
 
         std::memset(p, 1, STRUCT_SIZE);
 
-        EXPECT_NO_THROW(operator delete(p, alloc));
+        EXPECT_NO_THROW(operator delete(p, *this->pAlloc));
 
-        EXPECT_THROW(operator new [](0, alloc), std::bad_alloc);
+        EXPECT_THROW(operator new [](0, *this->pAlloc), std::bad_alloc);
 
-        EXPECT_NO_THROW(p = operator new[](STRUCT_SIZE, alloc));
+        EXPECT_NO_THROW(p = operator new[](STRUCT_SIZE, *this->pAlloc));
         EXPECT_NE(p, nullptr);
 
         std::memset(p, 1, STRUCT_SIZE);
 
-        EXPECT_NO_THROW(operator delete[](p, alloc));
+        EXPECT_NO_THROW(operator delete[](p, *this->pAlloc));
     }
 
-    void TestNewAndDelete(SingleLinkAllocator& alloc)
+    TYPED_TEST(TestSingleLinkAllocators, NewAndDelete)
     {
+        if (!this->pAlloc) return;
         DataStruct* pDS {nullptr};
-        EXPECT_NO_THROW(pDS = new (alloc) DataStruct{});
+        EXPECT_NO_THROW(pDS = new (*this->pAlloc) DataStruct{});
         EXPECT_NE(pDS, nullptr);
         EXPECT_EQ(pDS->y, 3);
 
         if (pDS) pDS->x = 1234;
 
-        EXPECT_NO_THROW(operator delete (pDS, alloc));
+        EXPECT_NO_THROW(operator delete (pDS, *this->pAlloc));
 
         pDS = nullptr;
 
-        EXPECT_NO_THROW(pDS = new (alloc) DataStruct[2]{});
+        EXPECT_NO_THROW(pDS = new (*this->pAlloc) DataStruct[2]{});
         EXPECT_NE(pDS, nullptr);
         EXPECT_EQ(pDS[0].y, 3);
         EXPECT_EQ(pDS[1].y, 3);
         EXPECT_NO_THROW(pDS[0].y = 1);
         EXPECT_NO_THROW(pDS[1].y = 2);
-        EXPECT_NO_THROW(operator delete (pDS, alloc));
+        EXPECT_NO_THROW(operator delete (pDS, *this->pAlloc));
 
-        EXPECT_NO_THROW(pDS = new (alloc) DataStruct[2]{});
+        EXPECT_NO_THROW(pDS = new (*this->pAlloc) DataStruct[2]{});
         EXPECT_NE(pDS, nullptr);
         EXPECT_NO_THROW(pDS[0].~DataStruct());
         EXPECT_NO_THROW(pDS[1].~DataStruct());
-        EXPECT_NO_THROW(operator delete [](pDS, alloc));
+        EXPECT_NO_THROW(operator delete [](pDS, *this->pAlloc));
     }
-
-    void TestGetters(SingleLinkAllocator& alloc, bool allowLargerBuffer)
-    {
-        const auto amountOfDataBlocks = alloc.AmountOfDataBlocks();
-
-        EXPECT_EQ(amountOfDataBlocks, alloc.AmountOfFreeBlocks());
-        EXPECT_EQ(alloc.AmountOfOccupiedBlocks(), 0);
-
-        const auto requestedSize = alloc.RequestedSize();
-        const auto totalSize = alloc.CompleteBufferSize();
-
-        if (allowLargerBuffer) EXPECT_GE(totalSize, requestedSize);
-        else EXPECT_LE(totalSize, requestedSize);
-
-        void* p = alloc.Acquire(1);
-        EXPECT_EQ(alloc.AmountOfFreeBlocks(), amountOfDataBlocks - 1);
-
-        alloc.Release(p);
-        EXPECT_EQ(alloc.AmountOfFreeBlocks(), amountOfDataBlocks);
-
-        if (amountOfDataBlocks > 1 )
-        {
-            p = alloc.Acquire((amountOfDataBlocks - 1) * SingleLinkAllocator::BLOCK_SIZE);
-            EXPECT_EQ(alloc.AmountOfFreeBlocks(), 0);
-
-            alloc.Release(p);
-            EXPECT_EQ(alloc.AmountOfFreeBlocks(), amountOfDataBlocks);
-        }
-    }
-
-    // -------------------------------------------------------------------------------------------------------
-    // SingleLinkAllocator
-    TEST(SingleLinkAllocatorTests, SingleAllocation)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestSingleAllocation(allocLarge);
-        SingleLinkAllocator allocSmall{BUFFER_SIZE, false};
-        TestSingleAllocation(allocSmall);
-    }
-
-    TEST(SingleLinkAllocatorTests, InvalidRelease)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestInvalidRelease(allocLarge);
-        SingleLinkAllocator allocSmall{BUFFER_SIZE, false};
-        TestInvalidRelease(allocSmall);
-    }
-
-    TEST(SingleLinkAllocatorTests, TwoAllocations)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestTwoAllocations(allocLarge);
-        SingleLinkAllocator allocSmall{BUFFER_SIZE, false};
-        TestTwoAllocations(allocSmall);
-    }
-
-    TEST(SingleLinkAllocatorTests, FillAllocator)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestFillAllocator(allocLarge);
-        SingleLinkAllocator allocSmall{BUFFER_SIZE, false};
-        TestFillAllocator(allocSmall);
-    }
-
-    TEST(SingleLinkAllocatorTests, Overflow)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestOverflow(allocLarge);
-        SingleLinkAllocator allocSmall{BUFFER_SIZE, false};
-        TestOverflow(allocSmall);
-    }
-
-    TEST(SingleLinkAllocatorTests, ReleaseInMiddle)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestReleaseInMiddle(allocLarge);
-        SingleLinkAllocator allocSmall{BUFFER_SIZE, false};
-        TestReleaseInMiddle(allocSmall);
-    }
-
-    TEST(SingleLinkAllocatorTests, NewAndDeleteOperator)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestNewAndDeleteOperators(allocLarge);
-        SingleLinkAllocator allocSmalll{BUFFER_SIZE, false};
-        TestNewAndDeleteOperators(allocSmalll);
-    }
-
-    TEST(SingleLinkAllocatorTests, NewAndDelete)
-    {
-        SingleLinkAllocator allocLarge{BUFFER_SIZE};
-        TestNewAndDelete(allocLarge);
-        SingleLinkAllocator allocSmall{BUFFER_SIZE, false};
-        TestNewAndDelete(allocSmall);
-    }
-
-    TEST(SingleLinkAllocatorTests, CompleteBufferSize)
-    {
-        SingleLinkAllocator alloc1{BUFFER_SIZE, true};
-        TestGetters(alloc1, true);
-        SingleLinkAllocator alloc2{1, true};
-        TestGetters(alloc2, true);
-        SingleLinkAllocator alloc3{1'000'000, true};
-        TestGetters(alloc3, true);
-
-        SingleLinkAllocator alloc4{BUFFER_SIZE, false};
-        TestGetters(alloc4, false);
-        SingleLinkAllocator * alloc5{nullptr};
-        EXPECT_THROW(alloc5 = new SingleLinkAllocator(1, false), std::length_error);
-        SingleLinkAllocator alloc6{SingleLinkAllocator::MINIMUM_SIZE, false};
-        TestGetters(alloc6, false);
-        SingleLinkAllocator alloc7{1'000'000, false};
-        TestGetters(alloc7, false);
-
-    }
-    // -------------------------------------------------------------------------------------------------------
-
-    // -------------------------------------------------------------------------------------------------------
-    // BufferAllocator
-    TEST(BufferAllocatorTests, SingleAllocation)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestSingleAllocation(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestSingleAllocation(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, InvalidRelease)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestInvalidRelease(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestInvalidRelease(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, TwoAllocations)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestTwoAllocations(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestTwoAllocations(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, FillAllocator)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestFillAllocator(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestFillAllocator(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, Overflow)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestOverflow(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestOverflow(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, ReleaseInMiddle)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestReleaseInMiddle(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestReleaseInMiddle(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, NewAndDeleteOperator)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestNewAndDeleteOperators(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestNewAndDeleteOperators(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, NewAndDelete)
-    {
-        BufferAllocator<BUFFER_SIZE> allocLarge{};
-        TestNewAndDelete(allocLarge);
-        BufferAllocator<BUFFER_SIZE, false> allocSmall{};
-        TestNewAndDelete(allocSmall);
-    }
-
-    TEST(BufferAllocatorTests, CompleteBufferSize)
-    {
-        BufferAllocator<BUFFER_SIZE, true> alloc1{};
-        TestGetters(alloc1, true);
-        BufferAllocator<1, true> alloc2{};
-        TestGetters(alloc2, true);
-        BufferAllocator<1'000'000, true> alloc3{};
-        TestGetters(alloc3, true);
-
-        BufferAllocator<BUFFER_SIZE, false> alloc4{};
-        TestGetters(alloc4, false);
-        // BufferAllocator<1, false> alloc5{};
-        // TestGetters(alloc5, false);
-        BufferAllocator<SingleLinkAllocator::MINIMUM_SIZE, false> alloc5{};
-        TestGetters(alloc5, false);
-        BufferAllocator<1'000'000, false> alloc6{};
-        TestGetters(alloc6, false);
-    }
-    // -------------------------------------------------------------------------------------------------------
-
 
 }

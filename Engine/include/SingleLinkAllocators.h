@@ -66,8 +66,9 @@ namespace jela
         std::size_t AmountOfFreeBlocks() const;
         std::size_t AmountOfOccupiedBlocks() const;
         static constexpr std::size_t BLOCK_SIZE = sizeof(Block);
+        static constexpr std::size_t BLOCK_HEADER_SIZE = sizeof(Header);
 
-        static constexpr std::size_t MINIMUM_SIZE = sizeof(Block) * 2;
+        static constexpr std::size_t MINIMUM_BUFFER_SIZE = sizeof(Block) * 2;
 
     private:
 
@@ -82,12 +83,12 @@ namespace jela
         {
             assert(m_pHead != nullptr);
 
-            if (!allowLargerBuffer && bufferSize < MINIMUM_SIZE)
+            if (!allowLargerBuffer && bufferSize < MINIMUM_BUFFER_SIZE)
             {
                 delete [] m_pHead;
                 throw std::length_error{std::format("Couldn't allocate the minimum required size ({}B). "
                                                     "Either allow for a larger buffer or request a larger buffersize.",
-                                                    MINIMUM_SIZE)};
+                                                    MINIMUM_BUFFER_SIZE)};
             }
 
 #ifndef NDEBUG
@@ -130,7 +131,7 @@ namespace jela
             SingleLinkAllocator{BUFFER_SIZE, ALLOW_LARGER}
         {
             if constexpr (!ALLOW_LARGER)
-                static_assert(BUFFER_SIZE >= MINIMUM_SIZE, "Buffer size must be greater than or equal to the minimum size.");
+                static_assert(BUFFER_SIZE >= MINIMUM_BUFFER_SIZE, "Buffer size must be greater than or equal to the minimum size.");
         }
     };
 }
