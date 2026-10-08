@@ -47,12 +47,13 @@ namespace jela
     class TestSingleLinkAllocators : public testing::Test
     {
     public:
+
+        using Alloc = typename T::Alloc;
+        static constexpr auto Size = T::Size;
+        static constexpr bool AllowLargerBuffer = T::AllowLargerBuffer;
+
         void SetUp() override
         {
-            using Alloc = typename T::Alloc;
-            constexpr auto Size = T::Size;
-            constexpr bool AllowLargerBuffer = T::AllowLargerBuffer;
-
             if constexpr (std::is_same_v<Alloc, SingleLinkAllocator>)
             {
                 if constexpr (!AllowLargerBuffer && Size == Small)
