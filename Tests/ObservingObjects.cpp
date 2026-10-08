@@ -6,33 +6,36 @@ namespace jela
 {
     struct MyTexture
     {
-        MyTexture(const tstring& name):
-            NAME{name}
-        {}
+        MyTexture(const tstring& name): NAME{name} {}
         tstring NAME;
     };
-    static const tstring TEST_TEXTURE_ONE_NAME {_T("Wesley.png")};
-    static const tstring TEST_TEXTURE_TWO_NAME {_T("Finn.png")};
-    static const tstring TEST_TEXTURE_THREE_NAME {_T("Bob.png")};
 
-    TEST(ResourcePtrTests, SingleResourcePtr)
+    class TestResourcePointers : public ::testing::Test
+    {
+    protected:
+        static inline const tstring TEST_TEXTURE_ONE_NAME {_T("Wesley.png")};
+        static inline const tstring TEST_TEXTURE_TWO_NAME {_T("Finn.png")};
+        std::unique_ptr<ObjectObserved<MyTexture>> pTextureOne {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_ONE_NAME)};
+        std::unique_ptr<ObjectObserved<MyTexture>> pTextureTwo {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_TWO_NAME)};
+    };
+
+    TEST_F(TestResourcePointers, SingleResourcePtr)
     {
         // init
         ResourcePtr<MyTexture> p{};
         EXPECT_EQ(p.get(), nullptr);
-        auto pTexture {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_ONE_NAME)};
 
         // binding resource
-        p = ResourcePtr{*pTexture};
+        p = ResourcePtr{*pTextureOne};
         EXPECT_NE(p.get(), nullptr);
-        EXPECT_EQ(p.get(), &pTexture->object);
+        EXPECT_EQ(p.get(), &pTextureOne->object);
         EXPECT_EQ(p->NAME, TEST_TEXTURE_ONE_NAME);
 
         // Deleting resource
-        pTexture.reset(nullptr);
+        pTextureOne.reset(nullptr);
         EXPECT_EQ(p.get(), nullptr);
     }
-    TEST(ResourcePtrTests, MultipleResourcePtrs)
+    TEST_F(TestResourcePointers, MultipleResourcePtrs)
     {
         // init
         std::vector<ResourcePtr<MyTexture>> resourcePointers(100);
@@ -40,32 +43,29 @@ namespace jela
         for (const auto& p : resourcePointers)
             EXPECT_EQ(p.get(), nullptr);
 
-        auto pTexture {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_ONE_NAME)};
-
         // binding resource
         for (auto& p : resourcePointers)
         {
-            p = ResourcePtr{*pTexture};
+            p = ResourcePtr{*pTextureOne};
             EXPECT_NE(p.get(), nullptr);
-            EXPECT_EQ(p.get(), &pTexture->object);
+            EXPECT_EQ(p.get(), &pTextureOne->object);
             EXPECT_EQ(p->NAME, TEST_TEXTURE_ONE_NAME);
         }
         for (const auto& p : resourcePointers)
         {
             EXPECT_NE(p.get(), nullptr);
-            EXPECT_EQ(p.get(), &pTexture->object);
+            EXPECT_EQ(p.get(), &pTextureOne->object);
             EXPECT_EQ(p->NAME, TEST_TEXTURE_ONE_NAME);
         }
 
         // Deleting resource
-        pTexture.reset(nullptr);
+        pTextureOne.reset(nullptr);
 
         for (auto& p : resourcePointers)
             EXPECT_EQ(p.get(), nullptr);
     }
-    TEST(ResourcePtrTests, Copy)
+    TEST_F(TestResourcePointers, Copy)
     {
-        auto pTextureOne {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_ONE_NAME)};
         ResourcePtr p1{*pTextureOne};
         EXPECT_NE(p1.get(), nullptr);
         EXPECT_EQ(p1.get(), &pTextureOne->object);
@@ -78,7 +78,6 @@ namespace jela
         EXPECT_EQ(p2->NAME, TEST_TEXTURE_ONE_NAME);
 
         //Copy operator
-        auto pTextureTwo {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_TWO_NAME)};
         ResourcePtr p3{*pTextureTwo};
         EXPECT_NE(p3.get(), nullptr);
         EXPECT_EQ(p3.get(), &pTextureTwo->object);
@@ -95,9 +94,8 @@ namespace jela
         EXPECT_EQ(p2.get(), nullptr);
         EXPECT_EQ(p3.get(), nullptr);
     }
-    TEST(ResourcePtrTests, Move)
+    TEST_F(TestResourcePointers, Move)
     {
-        auto pTextureOne {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_ONE_NAME)};
         ResourcePtr p1{*pTextureOne};
         EXPECT_NE(p1.get(), nullptr);
         EXPECT_EQ(p1.get(), &pTextureOne->object);
@@ -111,7 +109,6 @@ namespace jela
         EXPECT_EQ(p2->NAME, TEST_TEXTURE_ONE_NAME);
 
         //Move operator
-        auto pTextureTwo {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_TWO_NAME)};
         ResourcePtr p3{*pTextureTwo};
         EXPECT_NE(p3.get(), nullptr);
         EXPECT_EQ(p3.get(), &pTextureTwo->object);
@@ -129,9 +126,8 @@ namespace jela
         EXPECT_EQ(p2.get(), nullptr);
         EXPECT_EQ(p3.get(), nullptr);
     }
-    TEST(ResourcePtrTests, Operators)
+    TEST_F(TestResourcePointers, Operators)
     {
-        auto pTextureOne {std::make_unique<ObjectObserved<MyTexture>>(TEST_TEXTURE_ONE_NAME)};
         ResourcePtr p1{*pTextureOne};
         EXPECT_NO_THROW(p1.get());
         EXPECT_NE(p1.get(), nullptr);
@@ -144,4 +140,5 @@ namespace jela
         EXPECT_NO_THROW(p1->NAME);
         EXPECT_EQ(p1->NAME, TEST_TEXTURE_ONE_NAME);
     }
+
 }
