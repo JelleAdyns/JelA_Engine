@@ -1,4 +1,4 @@
-project(Tests)
+project(Unit_Tests)
 
 #set(GUI_TYPE WIN32)
 
@@ -22,6 +22,7 @@ set(SOURCES
         FixedSizeAllocatorsTests.cpp
         SingleLinkAllocatorsTests.cpp
         ObservingObjects.cpp
+        Vectors.cpp
 )
 
 add_executable(${PROJECT_NAME}  ${SOURCES})
@@ -37,4 +38,4 @@ AddVLD()
 
 enable_testing()
 include(GoogleTest)
-gtest_discover_tests(Tests)
+gtest_discover_tests(Unit_Tests)
