@@ -56,6 +56,8 @@ namespace jela
         std::size_t GetCapacity() const;
         std::size_t GetBlockSize() const;
         std::size_t GetBlockAlignment() const;
+        std::size_t AmountOfFreeBlocks() const;
+        std::size_t AmountOfUsedBlocks() const;
     private:
 
         template <typename T>

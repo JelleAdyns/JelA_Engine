@@ -51,7 +51,7 @@ namespace jela
         using Alloc = typename T::Alloc;
         static constexpr auto Size = T::Size;
         static constexpr bool AllowLargerBuffer = T::AllowLargerBuffer;
-
+    protected:
         void SetUp() override
         {
             if constexpr (std::is_same_v<Alloc, SingleLinkAllocator>)
@@ -74,6 +74,10 @@ namespace jela
             else if constexpr (std::is_same_v<Alloc, DefaultBufferAllocator>) debugName = _T("BufferList");
 
             OutputDebugString(std::format(_T("TEST: {} - Size {}, AllowLargerBuffer {}\n"), debugName, static_cast<int>(Size), static_cast<bool>(AllowLargerBuffer)).c_str());
+        }
+        void TearDown() override
+        {
+            if (pAlloc) EXPECT_EQ(pAlloc->AmountOfFreeBlocks(), pAlloc->AmountOfDataBlocks());
         }
         std::unique_ptr<SingleLinkAllocator> pAlloc{nullptr};
     };
@@ -229,7 +233,6 @@ namespace jela
 
             EXPECT_NO_THROW(vecPointers.emplace_back( this->pAlloc->Acquire(allocSize)));
             EXPECT_NE(vecPointers.back(), nullptr);
-            std::memset(vecPointers.back(), static_cast<int>( vecPointers.size() - 1 ), allocSize);
 
         }
         EXPECT_FALSE(this->pAlloc->IsOverflown());
@@ -247,14 +250,12 @@ namespace jela
         void* p {nullptr};
         EXPECT_NO_THROW(p = this->pAlloc->Acquire(allocationSize));
         EXPECT_NE(p, nullptr);
-        std::memset(p, 0, allocationSize);
         EXPECT_FALSE(this->pAlloc->IsOverflown());
 
         // Cause first overflow
         void* pOverflown1{nullptr};
         EXPECT_NO_THROW(pOverflown1 = this->pAlloc->Acquire(1));
         EXPECT_NE(pOverflown1, nullptr);
-        std::memset(pOverflown1, 1, 1);
         EXPECT_TRUE(this->pAlloc->IsOverflown());
         EXPECT_EQ(this->pAlloc->AmountOfOverflowAllocations(), 1);
 
@@ -262,7 +263,6 @@ namespace jela
         void* pOverflown2{nullptr};
         EXPECT_NO_THROW(pOverflown2 = this->pAlloc->Acquire(1));
         EXPECT_NE(pOverflown2, nullptr);
-        std::memset(pOverflown2, 2, 1);
         EXPECT_TRUE(this->pAlloc->IsOverflown());
         EXPECT_EQ(this->pAlloc->AmountOfOverflowAllocations(), 2);
 

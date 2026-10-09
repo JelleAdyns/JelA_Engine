@@ -104,6 +104,19 @@ namespace jela
     {
         return m_BlockAlignment;
     }
+    std::size_t FixedSizeAllocator::AmountOfFreeBlocks() const
+    {
+        return m_Capacity - AmountOfUsedBlocks();
+    }
+    std::size_t FixedSizeAllocator::AmountOfUsedBlocks() const
+    {
+        std::size_t amountOfUsedBlocks = 0;
+
+        for (std::size_t index = 0; index < m_Capacity; index++)
+            if (IsInUse(static_cast<std::uint32_t>(index))) amountOfUsedBlocks++;
+
+        return amountOfUsedBlocks;
+    }
     void* FixedSizeAllocator::GetAddressFromIndex(std::size_t index) const
     {
         return m_pBegin + index * m_BlockSize;
