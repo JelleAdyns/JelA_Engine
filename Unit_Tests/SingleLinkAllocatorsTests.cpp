@@ -56,17 +56,13 @@ namespace jela
         {
             if constexpr (std::is_same_v<Alloc, SingleLinkAllocator>)
             {
-                if constexpr (!AllowLargerBuffer && Size == Small)
-                {
-                    EXPECT_THROW(pAlloc = std::make_unique<SingleLinkAllocator>(Size, AllowLargerBuffer), std::length_error);
-                    return;
-                }
-                pAlloc = std::make_unique<SingleLinkAllocator>(Size, AllowLargerBuffer);
+                auto create = [this](){pAlloc = std::make_unique<SingleLinkAllocator>(Size, AllowLargerBuffer);};
+                if constexpr (!AllowLargerBuffer && Size == Small) EXPECT_THROW(create(), std::length_error);
+                else create();
             }
 
             else if constexpr (std::is_same_v<Alloc, DefaultBufferAllocator>)
                 pAlloc = std::make_unique<BufferAllocator<Size, AllowLargerBuffer>>();
-
 
 
             tstring debugName{};
@@ -145,7 +141,7 @@ namespace jela
         const auto requestedSize = this->pAlloc->RequestedSize();
         const auto totalSize = this->pAlloc->CompleteBufferSize();
 
-        if constexpr (TypeParam::AllowLargerBuffer) EXPECT_GE(totalSize, requestedSize);
+        if constexpr (TestFixture::AllowLargerBuffer) EXPECT_GE(totalSize, requestedSize);
         else EXPECT_LE(totalSize, requestedSize);
 
         void* p = this->pAlloc->Acquire(1);
@@ -197,7 +193,7 @@ namespace jela
         constexpr std::size_t sizeB = 45;
 
         // This test requires the allocator to have at least enough room for 2 allocations
-        if constexpr (TypeParam::Size < sizeA + sizeB) return;
+        if constexpr (TestFixture::Size < sizeA + sizeB) return;
         EXPECT_GT(this->pAlloc->RequestedSize(), sizeA + sizeB);
 
         void* p1{};
@@ -289,7 +285,7 @@ namespace jela
         // Only able to release in middle if more than 3 usable blocks are a available
         if (this->pAlloc->AmountOfDataBlocks() < amountOfAllocations) return;
 
-        const std::size_t allocSize = TypeParam::AllowLargerBuffer
+        const std::size_t allocSize = TestFixture::AllowLargerBuffer
         ? this->pAlloc->RequestedSize() / amountOfAllocations
         : this->pAlloc->AmountOfFreeBlocks() * SingleLinkAllocator::BLOCK_SIZE / amountOfAllocations -
             SingleLinkAllocator::BLOCK_HEADER_SIZE * amountOfAllocations;

@@ -193,7 +193,7 @@ namespace jela
         auto& alloc = *this->pAlloc;
 
         const auto blockSize = alloc.GetBlockSize();
-        EXPECT_EQ(blockSize, sizeof(typename TestFixedSizeAllocators<TypeParam>::StoredType));
+        EXPECT_EQ(blockSize, sizeof(typename TestFixture::StoredType));
 
         const auto bufferSize = alloc.GetCapacity();
         const auto completeSize = alloc.CompleteBufferSize();
@@ -277,7 +277,7 @@ namespace jela
     {
         auto& alloc = *this->pAlloc;
 
-        constexpr std::size_t bufferSize{static_cast<std::size_t>(this->Size)};
+        constexpr std::size_t bufferSize{static_cast<std::size_t>(TestFixture::Size)};
 
         std::vector<void*> pointers(bufferSize);
 
@@ -302,7 +302,7 @@ namespace jela
     {
         auto& alloc = *this->pAlloc;
 
-        constexpr std::size_t bufferSize{ static_cast<std::size_t>(this->Size) + AMOUNT_OF_OVERFLOW_ALLOCATIONS };
+        constexpr std::size_t bufferSize{ static_cast<std::size_t>(TestFixture::Size) + AMOUNT_OF_OVERFLOW_ALLOCATIONS };
 
         std::vector<void*> pointers(bufferSize);
 
@@ -339,7 +339,7 @@ namespace jela
     {
         auto& alloc = *this->pAlloc;
 
-        constexpr std::size_t bufferSize{static_cast<std::size_t>(this->Size)};
+        constexpr std::size_t bufferSize{static_cast<std::size_t>(TestFixture::Size)};
 
         std::vector<void*> pointers(bufferSize);
 
@@ -388,7 +388,7 @@ namespace jela
 
     TYPED_TEST(TestFixedSizeAllocators, NewAndDelete)
     {
-        using StoredType = TestFixedSizeAllocators<TypeParam>::StoredType;
+        using StoredType = TestFixture::StoredType;
         auto& alloc = *this->pAlloc;
 
         StoredType* pObject {nullptr};
