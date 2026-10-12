@@ -24,6 +24,8 @@ namespace jela
 	struct Vector3f;
 	using Point3f = Vector3f;
 
+	constexpr Vector2f operator*(cFloatArithmetic auto lhs, const Vector2f& rhs);
+
     struct Vector2f
     {
         constexpr Vector2f() = default;
@@ -33,6 +35,10 @@ namespace jela
 			x{ endPoint.x - startPoint.x },
 			y{ endPoint.y - startPoint.y }
     	{}
+
+    	friend tostream& operator<<(tostream& lhs, const Vector2f& rhs) { return (lhs << rhs.ToTString()); }
+    	//Used in Unit Tests
+    	friend void PrintTo(const Vector2f& vec, std::ostream* os) { (*os << vec.ToString(20)); }
 
     	constexpr float& operator[](int index) { assert(index == 0 || index == 1);  return (index == 0) ? x : y; };
     	constexpr float operator[](int index) const { assert(index == 0 || index == 1);  return (index == 0) ? x : y;};
@@ -76,13 +82,15 @@ namespace jela
     		const auto n = surfaceNormal.Normalized(); return vector - (n * 2.f * Dot(vector, n));
     	}
 
-		tstring ToString(uint8_t decimalPrecision = 1) const { return std::format(_T("( {1:.{0}f}, {2:.{0}f} )"), decimalPrecision, x, y); }
+    	tstring ToTString(uint8_t decimalPrecision = 1) const { return std::format(_T("( {1:.{0}f}, {2:.{0}f} )"), decimalPrecision, x, y); }
+    	std::string ToString(uint8_t decimalPrecision = 1) const { return std::format("( {1:.{0}f}, {2:.{0}f} )", decimalPrecision, x, y); }
+    	std::wstring ToWString(uint8_t decimalPrecision = 1) const { return std::format(L"( {1:.{0}f}, {2:.{0}f} )", decimalPrecision, x, y); }
 
 		float Length() const { return std::sqrtf(x * x + y * y); }
 		constexpr float SquaredLength() const { return x * x + y * y; }
 
-    	Vector2f Normalized() const { const auto l = Length(); if (l < FLT_EPS) return {}; return { x / l, y / l }; }
-    	Vector2f& Normalize() { const auto l = Length(); if (l < FLT_EPS) return *this; return *this /= l; }
+    	Vector2f Normalized() const { const auto l = Length(); if (l <= FLT_EPS) return {}; return { x / l, y / l }; }
+    	Vector2f& Normalize() { const auto l = Length(); if (l <= FLT_EPS) return *this; return *this /= l; }
     	constexpr Vector2f Orthogonal() const { return { -y,x }; }
 
         float x{};
@@ -114,6 +122,9 @@ namespace jela
 			z{ endPoint.z - startPoint.z }
     	{}
 
+		friend tostream& operator<<(tostream& lhs, const Vector3f& rhs) { return (lhs << rhs.ToTString()); }
+		//Used in Unit Tests
+		friend void PrintTo(const Vector3f& vec, std::ostream* os) { (*os << vec.ToString(20)); }
 
 		constexpr float& operator[](int index) { assert(index >= 0 && index <= 2); if (index == 0) return x; if ( index == 1) return y; return z; }
 		constexpr float operator[](int index) const { assert(index >= 0 && index <= 2); if (index == 0) return x; if ( index == 1) return y; return z; }
@@ -173,7 +184,9 @@ namespace jela
     		return vector - (n * 2.f * Dot(vector, n));
     	}
 
-		tstring ToString(uint8_t decimalPrecision = 1) const { return std::format(_T("( {1:.{0}f}, {2:.{0}f}, {3:.{0}f} )"), decimalPrecision, x, y, z); }
+		tstring ToTString(uint8_t decimalPrecision = 1) const { return std::format(_T("( {1:.{0}f}, {2:.{0}f}, {3:.{0}f} )"), decimalPrecision, x, y, z); }
+		std::string ToString(uint8_t decimalPrecision = 1) const { return std::format("( {1:.{0}f}, {2:.{0}f}, {3:.{0}f} )", decimalPrecision, x, y, z); }
+		std::wstring ToWString(uint8_t decimalPrecision = 1) const { return std::format(L"( {1:.{0}f}, {2:.{0}f}, {3:.{0}f} )", decimalPrecision, x, y, z); }
 
 		float Length() const { return std::sqrtf(x * x + y * y + z * z); }
 		constexpr float SquaredLength() const { return x * x + y * y + z * z; }
