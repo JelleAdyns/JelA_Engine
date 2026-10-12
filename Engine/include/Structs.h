@@ -60,7 +60,7 @@ namespace jela
 			assert((std::abs(static_cast<float>(rhs)) > FLT_EPS)); x = x / rhs; y = y / rhs; return *this;
 		}
 
-    	bool operator==(const Vector2f& rhs) const { return (std::abs(x - rhs.x) < FLT_EPS) && (std::abs(y - rhs.y) < FLT_EPS); }
+    	bool operator==(const Vector2f& rhs) const { return (std::abs(x - rhs.x) <= FLT_EPS) && (std::abs(y - rhs.y) <= FLT_EPS); }
 		bool operator!=(const Vector2f& rhs) const { return !(*this == rhs); }
 
 		constexpr static float Dot(const Vector2f& first, const Vector2f& second) { return first.x * second.x + first.y * second.y; }
@@ -142,7 +142,7 @@ namespace jela
 			assert((std::abs(static_cast<float>(rhs)) > FLT_EPS)); x = x / rhs; y = y / rhs; z = z / rhs; return *this;
 		}
 
-    	bool operator==(const Vector3f& rhs) const { return (std::abs(x - rhs.x) < FLT_EPS) && (std::abs(y - rhs.y) < FLT_EPS) && (std::abs(z - rhs.z) < FLT_EPS); }
+    	bool operator==(const Vector3f& rhs) const { return (std::abs(x - rhs.x) <= FLT_EPS) && (std::abs(y - rhs.y) <= FLT_EPS) && (std::abs(z - rhs.z) <= FLT_EPS); }
 		bool operator!=(const Vector3f& rhs) const { return !(*this == rhs); }
 
 		constexpr static float Dot(const Vector3f& first, const Vector3f& second) { return first.x * second.x + first.y * second.y + first.z * second.z; }
@@ -158,10 +158,10 @@ namespace jela
 		static float AngleBetween(const Vector3f& first, const Vector3f& second, bool inDegrees = true)
     	{
     		const float firstLength = first.Length();
-    		if (firstLength < FLT_EPS) return 0.f;
+    		if (firstLength <= FLT_EPS) return 0.f;
 
     		const float secondLength = second.Length();
-    		if (secondLength < FLT_EPS) return 0.f;
+    		if (secondLength <= FLT_EPS) return 0.f;
 
     		const float angle = std::acos(Dot(first, second) / (firstLength * secondLength));
     		if (inDegrees) return angle * 180 / std::numbers::pi_v<float>;
@@ -180,16 +180,13 @@ namespace jela
 
     	Vector3f Normalized() const
     	{
-    		const auto l = Length();
-    		if (l < FLT_EPS) return {};
+    		const auto l = Length(); if (l <= FLT_EPS) return {};
     		return { x / l, y / l , z / l };
     	}
     	Vector3f& Normalize()
     	{
-    		const auto l = Length();
-    		if (l < FLT_EPS) return *this;
-    		*this /= l;
-    		return *this;
+    		const auto l = Length(); if (l <= FLT_EPS) return *this;
+    		return *this /= l;
     	}
 
         float x{};
