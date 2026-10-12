@@ -7,7 +7,6 @@
 #include <numbers>
 
 
-
 namespace jela
 {
 	template <typename T>
@@ -79,7 +78,8 @@ namespace jela
     	}
 		static Vector2f Reflect(const Vector2f& vector, const Vector2f& surfaceNormal)
     	{
-    		const auto n = surfaceNormal.Normalized(); return vector - (n * 2.f * Dot(vector, n));
+    		const auto n = surfaceNormal.Normalized();
+        	return vector - (2.f * Dot(vector, n) * n);
     	}
 
     	tstring ToTString(uint8_t decimalPrecision = 1) const { return std::format(_T("( {1:.{0}f}, {2:.{0}f} )"), decimalPrecision, x, y); }
@@ -109,7 +109,7 @@ namespace jela
 	inline constexpr Vector2f Vector2f::Zero{0,0};
 
 	constexpr Vector2f operator*(cFloatArithmetic auto lhs, const Vector2f& rhs) { return rhs * lhs; }
-	inline tostream& operator<< (tostream& lhs, const Vector2f& rhs) { lhs << rhs.ToString(); return lhs; }
+
 
 	struct Vector3f
     {
@@ -166,7 +166,7 @@ namespace jela
     			first.x * second.y - first.y * second.x
     		};
     	}
-		static float AngleBetween(const Vector3f& first, const Vector3f& second, bool inDegrees = true)
+		static float AbsoluteAngleBetween(const Vector3f& first, const Vector3f& second, bool inDegrees = true)
     	{
     		const float firstLength = first.Length();
     		if (firstLength <= FLT_EPS) return 0.f;
@@ -174,7 +174,19 @@ namespace jela
     		const float secondLength = second.Length();
     		if (secondLength <= FLT_EPS) return 0.f;
 
-    		const float angle = std::acos(Dot(first, second) / (firstLength * secondLength));
+    		const float cos = Dot(first, second) / (firstLength * secondLength);
+    		const float angle = std::acos(std::clamp(cos, -1.f, 1.f));
+    		if (inDegrees) return angle * 180 / std::numbers::pi_v<float>;
+    		return angle;
+    	}
+		static float AngleBetween(const Vector3f& first, const Vector3f& second, const Vector3f& planeNormal = Vector3f::UnitZ, bool inDegrees = true)
+    	{
+    		const Vector3f cross = Cross(first, second);
+    		const float projection = Dot(cross, planeNormal);
+
+    		const float y = (std::signbit(projection) ? -1 : 1) * cross.Length();
+    		const float dot = Dot(first, second);
+    		const float angle = std::atan2(y, dot);
     		if (inDegrees) return angle * 180 / std::numbers::pi_v<float>;
     		return angle;
     	}
@@ -220,7 +232,6 @@ namespace jela
 	inline constexpr Vector3f Vector3f::Zero{ 0, 0, 0 };
 
 	constexpr Vector3f operator*(cFloatArithmetic auto lhs, const Vector3f& rhs) { return rhs * lhs; }
-	inline tostream& operator<< (tostream& lhs, const Vector3f& rhs) { lhs << rhs.ToString(); return lhs; }
 
 
 	struct Matrix3X3
