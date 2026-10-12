@@ -1,10 +1,14 @@
-#include <complex>
 #include <gtest/gtest.h>
+#include <complex>
 
 #include "Structs.h"
 
-namespace jela
+namespace jela::vec2f
 {
+	static constexpr inline float F_EPS = std::numeric_limits<float>::epsilon();
+	static constexpr inline float F_LOW = std::numeric_limits<float>::lowest();
+	static constexpr inline float F_MIN = std::numeric_limits<float>::min();
+	static constexpr inline float F_MAX = std::numeric_limits<float>::max();
 
 	static inline const std::map<std::string, Vector2f> INPUT_MAP
 	{
@@ -14,8 +18,8 @@ namespace jela
 		{"Negatives", Vector2f{-45,-78}},
 		{"PositiveNegative", Vector2f{12, -75}},
 		{"NegativePositive", Vector2f{-83, 92}},
-		{"Max", Vector2f{std::numeric_limits<float>::max(), std::numeric_limits<float>::max()}},
-		{"Min", Vector2f{std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()}},
+		{"Max", Vector2f{F_MAX, F_MAX}},
+		{"Min", Vector2f{F_LOW, F_LOW}},
 	};
 
 	static inline const std::string TEST_CONCATENATION{"_X_"};
@@ -27,7 +31,7 @@ namespace jela
 		std::variant<Vector2f, float> op2{};
 	};
 
-	TEST(ConstructorTest, Constructors)
+	TEST(ConstructorTest2f, Constructors)
 	{
 		constexpr Vector2f vec{};
 		EXPECT_FLOAT_EQ(vec.x, 0);
@@ -43,14 +47,14 @@ namespace jela
 		EXPECT_FLOAT_EQ(vec3.y, -8);
 	}
 
-	TEST(TestIndices, WrongIndices)
+	TEST(TestIndices2f, WrongIndices)
 	{
 		constexpr Vector2f vec{5,12};
 
 		EXPECT_DEBUG_DEATH(vec[-1], ".*");
 		EXPECT_DEBUG_DEATH(vec[2], ".*");
 	}
-	TEST(TestIndices, RightIndices)
+	TEST(TestIndices2f, RightIndices)
 	{
 		constexpr Vector2f vec{5,12};
 
@@ -58,7 +62,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(vec[1], 12);
 	}
 
-	class TestUnaryOperators : public ::testing::TestWithParam<std::pair<const std::string, Vector2f>>
+	class TestUnaryOperators2f : public ::testing::TestWithParam<std::pair<const std::string, Vector2f>>
 	{
 	protected:
 		void SetUp() override
@@ -69,53 +73,53 @@ namespace jela
 		Vector2f vec{};
 	};
 
-	TEST_P(TestUnaryOperators, Plus)
+	TEST_P(TestUnaryOperators2f, Plus)
 	{
 		const auto result = +vec; // tested operator
 
 		EXPECT_FLOAT_EQ(result.x, +vec.x);
 		EXPECT_FLOAT_EQ(result.y, +vec.y);
 	}
-	TEST_P(TestUnaryOperators, Minus)
+	TEST_P(TestUnaryOperators2f, Minus)
 	{
 		const auto result = -vec; // tested operator
 
 		EXPECT_FLOAT_EQ(result.x, -vec.x);
 		EXPECT_FLOAT_EQ(result.y, -vec.y);
 	}
-	TEST_P(TestUnaryOperators, NormalizeVSNormalized)
+	TEST_P(TestUnaryOperators2f, NormalizeVSNormalized)
 	{
 		const auto result = vec.Normalized(); // tested operator
 		vec.Normalize();
 		EXPECT_FLOAT_EQ(result.x, vec.x);
 		EXPECT_FLOAT_EQ(result.y, vec.y);
 	}
-	TEST_P(TestUnaryOperators, LengthOfNormalizedVector)
+	TEST_P(TestUnaryOperators2f, LengthOfNormalizedVector)
 	{
 		const auto result = vec.Normalized(); // tested operator
 
-		if ((std::abs(vec.x) < std::numeric_limits<float>::epsilon() && std::abs(vec.y) < std::numeric_limits<float>::epsilon()) ||
-			vec.x == std::numeric_limits<float>::max() || vec.y == std::numeric_limits<float>::max() ||
-			vec.x == std::numeric_limits<float>::lowest() || vec.y == std::numeric_limits<float>::lowest())
+		if ((std::abs(vec.x) < F_EPS && std::abs(vec.y) < F_EPS) ||
+			vec.x == F_MAX || vec.y == F_MAX ||
+			vec.x == F_LOW || vec.y == F_LOW)
 			EXPECT_FLOAT_EQ(0, result.Length());
 		else EXPECT_FLOAT_EQ(1, result.Length());
 	}
-	TEST_P(TestUnaryOperators, DerictionOfNormalizedVector)
+	TEST_P(TestUnaryOperators2f, DerictionOfNormalizedVector)
 	{
 		const auto result = vec.Normalized(); // tested operator
 		EXPECT_LT(std::abs(result.AngleBetween(vec,result)), std::numeric_limits<float>::round_error());
 	}
 
-	TEST_P(TestUnaryOperators, Orthogonal)
+	TEST_P(TestUnaryOperators2f, Orthogonal)
 	{
 		const auto result = vec.Orthogonal(); // tested operator
-		if (vec.x == std::numeric_limits<float>::max() || vec.y == std::numeric_limits<float>::max() ||
-			vec.x == std::numeric_limits<float>::lowest() || vec.y == std::numeric_limits<float>::lowest())
+		if (vec.x == F_MAX || vec.y == F_MAX ||
+			vec.x == F_LOW || vec.y == F_LOW)
 			EXPECT_TRUE(std::isnan(result.Dot(vec,result) ));
 		else EXPECT_FLOAT_EQ(0, result.Dot(vec,result));
 	}
 
-	class TestBinaryOperators : public ::testing::TestWithParam<OperationInfo>
+	class TestBinaryOperators2f : public ::testing::TestWithParam<OperationInfo>
 	{
 	public:
 
@@ -137,8 +141,8 @@ namespace jela
 			{"Negatives", Vector2f{-412,-67}},
 			{"PositiveNegative", Vector2f{21, -16}},
 			{"NegativePositive", Vector2f{-79, 53}},
-			{"Max", Vector2f{std::numeric_limits<float>::max(), std::numeric_limits<float>::max()}},
-			{"Min", Vector2f{std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()}},
+			{"Max", Vector2f{F_MAX, F_MAX}},
+			{"Min", Vector2f{F_LOW, F_LOW}},
 		};
 	protected:
 		void SetUp() override
@@ -150,21 +154,21 @@ namespace jela
 		Vector2f op1{};
 		Vector2f op2{};
 	};
-	TEST_P(TestBinaryOperators, Addition)
+	TEST_P(TestBinaryOperators2f, Addition)
 	{
 		const auto result = op1 + op2; // tested operator
 
 		EXPECT_FLOAT_EQ(result.x, op1.x + op2.x);
 		EXPECT_FLOAT_EQ(result.y, op1.y + op2.y);
 	}
-	TEST_P(TestBinaryOperators, Subtraction)
+	TEST_P(TestBinaryOperators2f, Subtraction)
 	{
 		const auto result = op1 - op2; // tested operator
 
 		EXPECT_FLOAT_EQ(result.x, op1.x - op2.x);
 		EXPECT_FLOAT_EQ(result.y, op1.y - op2.y);
 	}
-	TEST_P(TestBinaryOperators, AdditionAssignment)
+	TEST_P(TestBinaryOperators2f, AdditionAssignment)
 	{
 		auto result = op1;
 		result += op2; // tested operator
@@ -172,7 +176,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(result.x, op1.x + op2.x);
 		EXPECT_FLOAT_EQ(result.y, op1.y + op2.y);
 	}
-	TEST_P(TestBinaryOperators, SubtractionAssignment)
+	TEST_P(TestBinaryOperators2f, SubtractionAssignment)
 	{
 		auto result = op1;
 		result -= op2; // tested operator
@@ -180,7 +184,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(result.x, op1.x - op2.x);
 		EXPECT_FLOAT_EQ(result.y, op1.y - op2.y);
 	}
-	TEST_P(TestBinaryOperators, Scale)
+	TEST_P(TestBinaryOperators2f, Scale)
 	{
 		auto result1 = op1; result1.Scale(op2);
 
@@ -203,7 +207,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(result4.y, op1.y * op2.y);
 	}
 
-	TEST_P(TestBinaryOperators, DotCommunitativity)
+	TEST_P(TestBinaryOperators2f, DotCommunitativity)
 	{
 		const float result1 = Vector2f::Dot(op1,op2);
 		const float result2 = Vector2f::Dot(op2,op1);
@@ -212,7 +216,7 @@ namespace jela
 			EXPECT_EQ(std::isnan(result1), std::isnan(result2));
 		else EXPECT_FLOAT_EQ(result1, result2);
 	}
-	TEST_P(TestBinaryOperators, CrossAnticommunitativity)
+	TEST_P(TestBinaryOperators2f, CrossAnticommunitativity)
 	{
 		const float result1 = Vector2f::Cross(op1,op2);
 		const float result2 = Vector2f::Cross(op2,op1);
@@ -222,7 +226,7 @@ namespace jela
 		else EXPECT_FLOAT_EQ(result1, -result2);
 	}
 
-	class TestComparison : public TestBinaryOperators
+	class TestComparison2f : public TestBinaryOperators2f
 	{
 	public:
 		static std::vector<OperationInfo> GetOperations()
@@ -236,7 +240,7 @@ namespace jela
 			return result;
 		}
 	};
-	TEST_P(TestComparison, Comparison)
+	TEST_P(TestComparison2f, Comparison)
 	{
 		const auto& name = GetParam().name;
 
@@ -257,22 +261,22 @@ namespace jela
 			EXPECT_TRUE(op1 != op2);
 		}
 	}
-	TEST(TestLowComparison, LowComparison)
+	TEST(TestLowComparison2f, LowComparison)
 	{
 		constexpr Vector2f zero{};
-		constexpr Vector2f min{std::numeric_limits<float>::min(), std::numeric_limits<float>::min()};
+		constexpr Vector2f min{F_MIN, F_MIN};
 
 		EXPECT_TRUE(zero == min);
 		EXPECT_FALSE(zero != min);
 
-		constexpr Vector2f epsilon{std::numeric_limits<float>::epsilon(), std::numeric_limits<float>::lowest()};
+		constexpr Vector2f epsilon{F_EPS, F_LOW};
 
 		EXPECT_FALSE(zero == epsilon);
 		EXPECT_TRUE(zero != epsilon);
 
 	}
 
-	class TestScalarOperations : public ::testing::TestWithParam<OperationInfo>
+	class TestScalarOperations2f : public ::testing::TestWithParam<OperationInfo>
 	{
 	public:
 		static std::vector<OperationInfo> GetOperations()
@@ -291,8 +295,8 @@ namespace jela
 			{"One", 1.f},
 			{"Positive", 734.f},
 			{"Negative", -412.f},
-			{"Max", std::numeric_limits<float>::max()},
-			{"Min", std::numeric_limits<float>::lowest()},
+			{"Max", F_MAX},
+			{"Min", F_LOW},
 		};
 	protected:
 		void SetUp() override
@@ -305,7 +309,7 @@ namespace jela
 		float op2{};
 	};
 
-	TEST_P(TestScalarOperations, Multiplication)
+	TEST_P(TestScalarOperations2f, Multiplication)
 	{
 		const auto result1 = op1 * op2; // tested operator
 
@@ -317,9 +321,9 @@ namespace jela
 		EXPECT_FLOAT_EQ(result2.x, op1.x * op2);
 		EXPECT_FLOAT_EQ(result2.y, op1.y * op2);
 	}
-	TEST_P(TestScalarOperations, Division)
+	TEST_P(TestScalarOperations2f, Division)
 	{
-		if (std::abs(op2) <= std::numeric_limits<float>::epsilon())
+		if (std::abs(op2) <= F_EPS)
 		{
 			EXPECT_DEBUG_DEATH(op1 / op2, ".*"); // tested operator
 			return;
@@ -329,7 +333,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(result.y, op1.y / op2);
 
 	}
-	TEST_P(TestScalarOperations, MultiplicationAssignment)
+	TEST_P(TestScalarOperations2f, MultiplicationAssignment)
 	{
 		auto result1 = op1;
 		result1 *= op2; // tested operator
@@ -337,11 +341,11 @@ namespace jela
 		EXPECT_FLOAT_EQ(result1.x, op1.x * op2);
 		EXPECT_FLOAT_EQ(result1.y, op1.y * op2);
 	}
-	TEST_P(TestScalarOperations, DivisionAssignment)
+	TEST_P(TestScalarOperations2f, DivisionAssignment)
 	{
 		auto result = op1;
 
-		if (std::abs(op2) <= std::numeric_limits<float>::epsilon())
+		if (std::abs(op2) <= F_EPS)
 		{
 			EXPECT_DEBUG_DEATH(result /= op2, ".*"); // tested operator
 			return;
@@ -352,9 +356,9 @@ namespace jela
 		EXPECT_FLOAT_EQ(result.y, op1.y / op2);
 	}
 
-	class TestDotProduct : public testing::Test{};
+	class TestDotProduct2f : public testing::Test{};
 
-	TEST_F(TestDotProduct, Positves)
+	TEST_F(TestDotProduct2f, Positives)
 	{
 		constexpr Vector2f val1{4,7};
 		constexpr Vector2f val2{5,6};
@@ -363,7 +367,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(expected, Vector2f::Dot(val1,val2));
 	}
 
-	TEST_F(TestDotProduct, Negatives)
+	TEST_F(TestDotProduct2f, Negatives)
 	{
 		constexpr Vector2f val1{-12,-7};
 		constexpr Vector2f val2{-5,-2};
@@ -371,7 +375,7 @@ namespace jela
 
 		EXPECT_FLOAT_EQ(expected, Vector2f::Dot(val1,val2));
 	}
-	TEST_F(TestDotProduct, MixedSigns)
+	TEST_F(TestDotProduct2f, MixedSigns)
 	{
 		constexpr Vector2f val1{-6,7};
 		constexpr Vector2f val2{-5,-2};
@@ -379,7 +383,7 @@ namespace jela
 
 		EXPECT_FLOAT_EQ(expected, Vector2f::Dot(val1,val2));
 	}
-	TEST_F(TestDotProduct, Zero)
+	TEST_F(TestDotProduct2f, Zero)
 	{
 		constexpr float expected{0};
 
@@ -387,7 +391,7 @@ namespace jela
 		constexpr Vector2f val2{23,45};
 		EXPECT_FLOAT_EQ(expected, Vector2f::Dot(val1,val2));
 	}
-	TEST_F(TestDotProduct, Orthogonality)
+	TEST_F(TestDotProduct2f, Orthogonality)
 	{
 		constexpr float expected{0};
 
@@ -408,9 +412,9 @@ namespace jela
 		EXPECT_FLOAT_EQ(expected, Vector2f::Dot(val1,val2));
 	}
 
-	class TestCrossProduct : public testing::Test{};
+	class TestCrossProduct2f : public testing::Test{};
 
-	TEST_F(TestCrossProduct, Positves)
+	TEST_F(TestCrossProduct2f, Positives)
 	{
 		constexpr Vector2f val1{4,7};
 		constexpr Vector2f val2{5,6};
@@ -420,7 +424,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(1, Vector2f::Cross(Vector2f::UnitX,Vector2f::UnitY));
 	}
 
-	TEST_F(TestCrossProduct, Negatives)
+	TEST_F(TestCrossProduct2f, Negatives)
 	{
 		constexpr Vector2f val1{-12,-7};
 		constexpr Vector2f val2{-5,-3};
@@ -428,7 +432,7 @@ namespace jela
 
 		EXPECT_FLOAT_EQ(expected, Vector2f::Cross(val1,val2));
 	}
-	TEST_F(TestCrossProduct, MixedSigns)
+	TEST_F(TestCrossProduct2f, MixedSigns)
 	{
 		constexpr Vector2f val1{-6,7};
 		constexpr Vector2f val2{-5,-2};
@@ -436,7 +440,7 @@ namespace jela
 
 		EXPECT_FLOAT_EQ(expected, Vector2f::Cross(val1,val2));
 	}
-	TEST_F(TestCrossProduct, Zero)
+	TEST_F(TestCrossProduct2f, Zero)
 	{
 		constexpr float expected{0};
 
@@ -444,7 +448,7 @@ namespace jela
 		constexpr Vector2f val2{23,45};
 		EXPECT_FLOAT_EQ(expected, Vector2f::Cross(val1,val2));
 	}
-	TEST_F(TestCrossProduct, SameDirection)
+	TEST_F(TestCrossProduct2f, SameDirection)
 	{
 		constexpr float expected{0};
 
@@ -461,7 +465,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(expected, Vector2f::Cross(val1,val2));
 
 	}
-	TEST_F(TestCrossProduct, OpositeDirection)
+	TEST_F(TestCrossProduct2f, OpositeDirection)
 	{
 		constexpr float expected{0};
 
@@ -479,9 +483,9 @@ namespace jela
 
 	}
 
-	class TestAngleBetween : public testing::Test{};
+	class TestAngleBetween2f : public testing::Test{};
 
-	TEST_F(TestAngleBetween, PositiveRightAngle)
+	TEST_F(TestAngleBetween2f, PositiveRightAngle)
 	{
 		constexpr float expectedDegrees{90};
 		constexpr float expectedRadians{std::numbers::pi_v<float> / 2};
@@ -507,7 +511,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(expectedRadians, Vector2f::AngleBetween(val1,val2,false));
 	}
 
-	TEST_F(TestAngleBetween, StraightAngle)
+	TEST_F(TestAngleBetween2f, StraightAngle)
 	{
 		constexpr float expectedDegrees{180};
 		constexpr float expectedRadians{std::numbers::pi_v<float>};
@@ -532,7 +536,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(expectedDegrees, std::abs(Vector2f::AngleBetween(val1,val2)));
 		EXPECT_FLOAT_EQ(expectedRadians, std::abs(Vector2f::AngleBetween(val1,val2,false)));
 	}
-	TEST_F(TestAngleBetween, NegativeRightAngle)
+	TEST_F(TestAngleBetween2f, NegativeRightAngle)
 	{
 		constexpr float expectedDegrees{-90};
 		constexpr float expectedRadians{-std::numbers::pi_v<float> / 2};
@@ -557,7 +561,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(expectedDegrees, Vector2f::AngleBetween(val1,val2));
 		EXPECT_FLOAT_EQ(expectedRadians, Vector2f::AngleBetween(val1,val2,false));
 	}
-	TEST_F(TestAngleBetween, FortyFiveAngle)
+	TEST_F(TestAngleBetween2f, FortyFiveAngle)
 	{
 		constexpr float expectedDegrees{45};
 		constexpr float expectedRadians{std::numbers::pi_v<float> / 4};
@@ -582,7 +586,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(expectedDegrees, Vector2f::AngleBetween(val1,val2));
 		EXPECT_FLOAT_EQ(expectedRadians, Vector2f::AngleBetween(val1,val2,false));
 	}
-	TEST_F(TestAngleBetween, Zero)
+	TEST_F(TestAngleBetween2f, Zero)
 	{
 		constexpr float expectedDegrees{0};
 		constexpr float expectedRadians{0};
@@ -598,7 +602,7 @@ namespace jela
 		EXPECT_FLOAT_EQ(expectedDegrees, Vector2f::AngleBetween(val2,val2));
 		EXPECT_FLOAT_EQ(expectedRadians, Vector2f::AngleBetween(val2,val2,false));
 	}
-	TEST_F(TestAngleBetween, SmallAngle)
+	TEST_F(TestAngleBetween2f, SmallAngle)
 	{
 		constexpr float expectedDegrees{0.057295760414501f};
 		constexpr float expectedRadians{expectedDegrees * std::numbers::pi_v<float> / 180};
@@ -612,54 +616,50 @@ namespace jela
 		EXPECT_FLOAT_EQ(-expectedRadians, Vector2f::AngleBetween(val2,val1,false));
 	}
 
-	class TestReflecting : public testing::Test{};
+	class TestReflecting2f : public testing::Test{};
 
-	TEST_F(TestReflecting, Orthogonal)
+	TEST_F(TestReflecting2f, Orthogonal)
 	{
 		Vector2f normal{0,1};
 		Vector2f incoming{1,0};
 		Vector2f outgoing{Vector2f::Reflect(incoming, normal)};
-		EXPECT_FLOAT_EQ(incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(incoming.y, outgoing.y);
+		EXPECT_EQ(incoming, outgoing);
+
 		incoming = {-1, 0};
 		outgoing = Vector2f::Reflect(incoming, normal);
-		EXPECT_FLOAT_EQ(incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(incoming.y, outgoing.y);
+		EXPECT_EQ(incoming, outgoing);
 
 		normal = {1,1};
 		incoming = {1, -1};
 		outgoing = Vector2f::Reflect(incoming, normal);
-		EXPECT_FLOAT_EQ(incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(incoming.y, outgoing.y);
+		EXPECT_EQ(incoming, outgoing);
+
 		incoming = {-1, 1};
 		outgoing = Vector2f::Reflect(incoming, normal);
-		EXPECT_FLOAT_EQ(incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(incoming.y, outgoing.y);
+		EXPECT_EQ(incoming, outgoing);
 	}
 
-	TEST_F(TestReflecting, Parallel)
+	TEST_F(TestReflecting2f, Parallel)
 	{
 		Vector2f normal{0,1};
 		Vector2f incoming{0,1};
 		Vector2f outgoing{Vector2f::Reflect(incoming, normal)};
-		EXPECT_FLOAT_EQ(-incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(-incoming.y, outgoing.y);
+		EXPECT_EQ(-incoming, outgoing);
+
 		incoming = {0, -1};
 		outgoing = Vector2f::Reflect(incoming, normal);
-		EXPECT_FLOAT_EQ(-incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(-incoming.y, outgoing.y);
+		EXPECT_EQ(-incoming, outgoing);
 
 		normal = {1,1};
 		incoming = {1,1};
 		outgoing = Vector2f::Reflect(incoming, normal);
-		EXPECT_FLOAT_EQ(-incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(-incoming.y, outgoing.y);
+		EXPECT_EQ(-incoming, outgoing);
+
 		incoming = {-1, -1};
 		outgoing = Vector2f::Reflect(incoming, normal);
-		EXPECT_FLOAT_EQ(-incoming.x, outgoing.x);
-		EXPECT_FLOAT_EQ(-incoming.y, outgoing.y);
+		EXPECT_EQ(-incoming, outgoing);
 	}
-	TEST_F(TestReflecting, Slanted)
+	TEST_F(TestReflecting2f, Slanted)
 	{
 		Vector2f normal{0,1};
 		Vector2f incoming{1,-1};
@@ -678,9 +678,9 @@ namespace jela
 		EXPECT_FLOAT_EQ(1, outgoing.y);
 	}
 
-	class TestLength : public testing::Test{};
+	class TestLength2f : public testing::Test{};
 
-	TEST_F(TestLength, NormalLength)
+	TEST_F(TestLength2f, NormalLength)
 	{
 		constexpr Vector2f unitX{Vector2f::UnitX};
 		EXPECT_FLOAT_EQ(1, unitX.Length());
@@ -701,7 +701,7 @@ namespace jela
 		constexpr Vector2f val4{-3,4};
 		EXPECT_FLOAT_EQ(5, val4.Length());
 	}
-	TEST_F(TestLength, SquaredLength)
+	TEST_F(TestLength2f, SquaredLength)
 	{
 		constexpr Vector2f unitX{Vector2f::UnitX};
 		EXPECT_FLOAT_EQ(1, unitX.SquaredLength());
@@ -726,31 +726,31 @@ namespace jela
 	INSTANTIATE_TEST_SUITE_P
 	(
 		Operators,
-		TestUnaryOperators,
+		TestUnaryOperators2f,
 		testing::ValuesIn(INPUT_MAP),
-		[](const testing::TestParamInfo<TestUnaryOperators::ParamType>& info){return info.param.first;}
+		[](const testing::TestParamInfo<TestUnaryOperators2f::ParamType>& info){return info.param.first;}
 	);
 	INSTANTIATE_TEST_SUITE_P
 	(
 		Operators,
-		TestBinaryOperators,
-		testing::ValuesIn(TestBinaryOperators::GetOperations()),
-		[](const testing::TestParamInfo<TestBinaryOperators::ParamType>& info){return info.param.name;}
+		TestBinaryOperators2f,
+		testing::ValuesIn(TestBinaryOperators2f::GetOperations()),
+		[](const testing::TestParamInfo<TestBinaryOperators2f::ParamType>& info){return info.param.name;}
 	);
 	INSTANTIATE_TEST_SUITE_P
 	(
 		Operators,
-		TestComparison,
-		testing::ValuesIn(TestComparison::GetOperations()),
-		[](const testing::TestParamInfo<TestComparison::ParamType>& info){return info.param.name;}
+		TestComparison2f,
+		testing::ValuesIn(TestComparison2f::GetOperations()),
+		[](const testing::TestParamInfo<TestComparison2f::ParamType>& info){return info.param.name;}
 	);
 
 	INSTANTIATE_TEST_SUITE_P
 	(
 		Operators,
-		TestScalarOperations,
-		testing::ValuesIn(TestScalarOperations::GetOperations()),
-		[](const testing::TestParamInfo<TestScalarOperations::ParamType>& info){return info.param.name;}
+		TestScalarOperations2f,
+		testing::ValuesIn(TestScalarOperations2f::GetOperations()),
+		[](const testing::TestParamInfo<TestScalarOperations2f::ParamType>& info){return info.param.name;}
 	);
 
 

@@ -22,7 +22,8 @@ set(SOURCES
         FixedSizeAllocatorsTests.cpp
         SingleLinkAllocatorsTests.cpp
         ObservingObjects.cpp
-        Vectors.cpp
+        Vectors2f.cpp
+        Vectors3f.cpp
 )
 
 add_executable(${PROJECT_NAME}  ${SOURCES})
