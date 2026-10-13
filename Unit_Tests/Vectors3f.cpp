@@ -46,10 +46,14 @@ namespace jela::vec3f
 		EXPECT_FLOAT_EQ(vec2.x, 1);
 		EXPECT_FLOAT_EQ(vec2.y, -1);
 		EXPECT_FLOAT_EQ(vec2.z, 3);
-		constexpr Vector3f vec3{vec1, vec2};
-		EXPECT_FLOAT_EQ(vec3.x, 35);
-		EXPECT_FLOAT_EQ(vec3.y, -8);
-		EXPECT_FLOAT_EQ(vec3.z, 57);
+		constexpr Vector3f vec3{Vector2f{3,-37}, -72};
+		EXPECT_FLOAT_EQ(vec3.x, 3);
+		EXPECT_FLOAT_EQ(vec3.y, -37);
+		EXPECT_FLOAT_EQ(vec3.z, -72);
+		constexpr Vector3f vec4{vec1, vec2};
+		EXPECT_FLOAT_EQ(vec4.x, 35);
+		EXPECT_FLOAT_EQ(vec4.y, -8);
+		EXPECT_FLOAT_EQ(vec4.z, 57);
 	}
 
 	TEST(TestIndices3f, WrongIndices)
