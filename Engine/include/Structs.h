@@ -65,8 +65,13 @@ namespace jela
 			assert((std::abs(static_cast<float>(rhs)) > FLT_EPS)); x = x / rhs; y = y / rhs; return *this;
 		}
 
-    	bool operator==(const Vector2f& rhs) const { return (std::abs(x - rhs.x) <= FLT_EPS) && (std::abs(y - rhs.y) <= FLT_EPS); }
-		bool operator!=(const Vector2f& rhs) const { return !(*this == rhs); }
+    	constexpr bool operator==(const Vector2f& rhs) const
+        {
+        	// Avoiding std::abs, so this function can be constexpr
+        	if ((x > rhs.x) ? (x - rhs.x > FLT_EPS) : (rhs.x - x > FLT_EPS)) return false;
+        	if ((y > rhs.y) ? (y - rhs.y > FLT_EPS) : (rhs.y - y > FLT_EPS)) return false;
+        	return true;
+        }
 
 		constexpr static float Dot(const Vector2f& first, const Vector2f& second) { return first.x * second.x + first.y * second.y; }
 		constexpr static float Cross(const Vector2f& first, const Vector2f& second) { return first.x * second.y - first.y * second.x; }
@@ -115,6 +120,7 @@ namespace jela
     {
         constexpr Vector3f() = default;
     	constexpr Vector3f(float x, float y, float z) : x{ x }, y{ y }, z{ z } {}
+    	constexpr Vector3f(const Vector2f& xy, float z) : x{ xy.x }, y{ xy.y }, z{ z } {}
 
     	constexpr Vector3f(const Point3f& startPoint, const Point3f& endPoint) :
 			x{ endPoint.x - startPoint.x },
@@ -153,8 +159,14 @@ namespace jela
 			assert((std::abs(static_cast<float>(rhs)) > FLT_EPS)); x = x / rhs; y = y / rhs; z = z / rhs; return *this;
 		}
 
-    	bool operator==(const Vector3f& rhs) const { return (std::abs(x - rhs.x) <= FLT_EPS) && (std::abs(y - rhs.y) <= FLT_EPS) && (std::abs(z - rhs.z) <= FLT_EPS); }
-		bool operator!=(const Vector3f& rhs) const { return !(*this == rhs); }
+    	constexpr bool operator==(const Vector3f& rhs) const
+    	{
+    		// Avoiding std::abs, so this function can be constexpr
+		    if ((x > rhs.x) ? (x - rhs.x > FLT_EPS) : (rhs.x - x > FLT_EPS)) return false;
+		    if ((y > rhs.y) ? (y - rhs.y > FLT_EPS) : (rhs.y - y > FLT_EPS)) return false;
+		    if ((z > rhs.z) ? (z - rhs.z > FLT_EPS) : (rhs.z - z > FLT_EPS)) return false;
+    		return true;
+    	}
 
 		constexpr static float Dot(const Vector3f& first, const Vector3f& second) { return first.x * second.x + first.y * second.y + first.z * second.z; }
 		constexpr static Vector3f Cross(const Vector3f& first, const Vector3f& second)
