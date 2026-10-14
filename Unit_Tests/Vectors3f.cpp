@@ -254,18 +254,23 @@ namespace jela::vec3f
 
 			return result;
 		}
+	protected:
+		static bool CompareSameMatrix()
+		{
+			const auto& name = GetParam().name;
+
+			const std::regex r(std::format("(.*){}(.*)",TEST_CONCATENATION));
+			std::smatch matches{};
+			std::regex_search(name.cbegin(),name.cend(),matches,r);
+			const auto firstName = matches.str(1);
+			const auto secondName = matches.str(2);
+
+			return firstName == secondName;
+		}
 	};
 	TEST_P(TestComparison3f, Comparison)
 	{
-		const auto& name = GetParam().name;
-
-		const std::regex r(std::format("(.*){}(.*)",TEST_CONCATENATION));
-		std::smatch matches{};
-		std::regex_search(name.cbegin(),name.cend(),matches,r);
-		const auto firstName = matches.str(1);
-		const auto secondName = matches.str(2);
-
-		if (firstName == secondName)
+		if (CompareSameMatrix())
 		{
 			EXPECT_TRUE(op1 == op2);
 			EXPECT_FALSE(op1 != op2);

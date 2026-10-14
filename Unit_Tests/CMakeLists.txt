@@ -24,6 +24,7 @@ set(SOURCES
         ObservingObjects.cpp
         Vectors2f.cpp
         Vectors3f.cpp
+        Matrices3X3.cpp
 )
 
 add_executable(${PROJECT_NAME}  ${SOURCES})

@@ -104,6 +104,7 @@ namespace jela
 		const static Vector2f UnitX;
 		const static Vector2f UnitY;
 		const static Vector2f Zero;
+		const static Vector2f One;
 
     private:
     	constexpr static float FLT_EPS = std::numeric_limits<float>::epsilon();
@@ -112,6 +113,7 @@ namespace jela
 	inline constexpr Vector2f Vector2f::UnitX{1,0};
 	inline constexpr Vector2f Vector2f::UnitY{0,1};
 	inline constexpr Vector2f Vector2f::Zero{0,0};
+	inline constexpr Vector2f Vector2f::One{1,1};
 
 	constexpr Vector2f operator*(cFloatArithmetic auto lhs, const Vector2f& rhs) { return rhs * lhs; }
 
@@ -234,6 +236,7 @@ namespace jela
 		const static Vector3f UnitY;
 		const static Vector3f UnitZ;
 		const static Vector3f Zero;
+		const static Vector3f One;
 
 	private:
 		constexpr static float FLT_EPS = std::numeric_limits<float>::epsilon();
@@ -242,6 +245,7 @@ namespace jela
 	inline constexpr Vector3f Vector3f::UnitY{ 0, 1, 0 };
 	inline constexpr Vector3f Vector3f::UnitZ{ 0, 0, 1 };
 	inline constexpr Vector3f Vector3f::Zero{ 0, 0, 0 };
+	inline constexpr Vector3f Vector3f::One{ 1, 1, 1 };
 
 	constexpr Vector3f operator*(cFloatArithmetic auto lhs, const Vector3f& rhs) { return rhs * lhs; }
 
@@ -256,17 +260,23 @@ namespace jela
 			data{ xAxis, yAxis, t}
 		{}
 
-		Vector3f& operator[](int index) { assert(index >= 0 && index <= 2); return data[index]; }
-		Vector3f operator[](int index) const { assert(index >= 0 && index <= 2); return data[index]; };
+		friend tostream& operator<<(tostream& lhs, const Matrix3X3& rhs) { return (lhs << rhs.ToTString()); }
+		//Used in Unit Tests
+		friend void PrintTo(const Matrix3X3& mat, std::ostream* os) { (*os << mat.ToString(20)); }
 
-		Vector2f GetXAxis() const { return {data[0].x, data[0].y};}
-		Vector2f GetYAxis() const { return {data[1].x, data[1].y};}
-		Vector2f GetTranslation() const { return {data[2].x, data[2].y};}
+		constexpr Vector3f& operator[](int index) { assert(index >= 0 && index <= 2); return data[index]; }
+		constexpr Vector3f operator[](int index) const { assert(index >= 0 && index <= 2); return data[index]; };
+
+		constexpr Vector2f GetXAxis() const { return {data[0].x, data[0].y};}
+		constexpr Vector2f GetYAxis() const { return {data[1].x, data[1].y};}
+		constexpr Vector2f GetTranslation() const { return {data[2].x, data[2].y};}
 
 		static constexpr Matrix3X3 Translation(float x, float y) { return Translation({x,y}); }
 		static constexpr Matrix3X3 Translation(const Vector2f& translation) {return {Vector2f::UnitX, Vector2f::UnitY, translation}; }
-		static Matrix3X3 Rotation(float angle)
+		static Matrix3X3 Rotation(float angle, bool inDegrees = true)
 		{
+			if (inDegrees) angle *= std::numbers::pi_v<float> / 180.f;
+
 			const float c = std::cos(angle);
 			const float s = std::sin(angle);
 			return {{c ,s}, {-s, c}, Vector2f::Zero};
@@ -281,8 +291,18 @@ namespace jela
 		constexpr Vector2f TransformPoint(float x, float y) const { return { data[0].x * x + data[1].x * y + data[2].x, data[0].y * x + data[1].y * y + data[2].y }; }
 		constexpr Vector2f TransformPoint(const Vector2f& v) const { return TransformPoint(v.x, v.y); }
 
-		constexpr Matrix3X3 Transpose() { return *this = CalculateTranspose(); }
+		constexpr Matrix3X3& Transpose() { return *this = CalculateTranspose(); }
 
+		constexpr Matrix3X3 operator+() const
+		{
+			return *this;
+		}
+		constexpr Matrix3X3 operator-() const
+		{
+			Matrix3X3 result{*this};
+			for (auto& row : result.data) row = -row;
+			return result;
+		}
 		constexpr Matrix3X3& operator*=(cFloatArithmetic auto s)
 		{
 			for (auto& row : data) row *= s;
@@ -336,6 +356,34 @@ namespace jela
 
 			return result;
 		}
+
+		constexpr bool operator==(const Matrix3X3& m2) const
+		{
+			return data[0] == m2.data[0] && data[1] == m2.data[1] && data[2] == m2.data[2];
+		}
+
+		tstring ToTString(uint8_t decimalPrecision = 1) const
+		{
+			return std::format(_T("x: {}\ny: {}\nz: {}"),
+				data[0].ToTString(decimalPrecision),
+				data[1].ToTString(decimalPrecision),
+				data[2].ToTString(decimalPrecision));
+		}
+		std::string ToString(uint8_t decimalPrecision = 1) const
+		{
+			return std::format("x: {}\ny: {}\nz: {}",
+				data[0].ToString(decimalPrecision),
+				data[1].ToString(decimalPrecision),
+				data[2].ToString(decimalPrecision));
+		}
+		std::wstring ToWString(uint8_t decimalPrecision = 1) const
+		{
+			return std::format(L"x: {}\ny: {}\nz: {}",
+				data[0].ToWString(decimalPrecision),
+				data[1].ToWString(decimalPrecision),
+				data[2].ToWString(decimalPrecision));
+		}
+
 
 		static constexpr uint8_t ROWS = 3;
 		static constexpr uint8_t COLUMS = 3;
