@@ -282,6 +282,96 @@ namespace jela::mat3x3
         op1 *= op2;
         EXPECT_EQ(result, op1);
     }
+    TEST_P(TestBinaryOperationsMat3X3, TransposeDistributiveProperty)
+    {
+        const auto transposedAddition = (op1 + op2).Transpose();
+        const auto transposedA = op1.Transpose();
+        const auto transposedB = op2.Transpose();
+
+        EXPECT_EQ(transposedAddition, transposedA + transposedB);
+    }
+    TEST_P(TestBinaryOperationsMat3X3, TransposeSocksAndBootsProperty)
+    {
+        const auto transposedDot = (op1 * op2).Transpose();
+        const auto transposedA = op1.Transpose();
+        const auto transposedB = op2.Transpose();
+
+        EXPECT_EQ(transposedDot, transposedB * transposedA);
+    }
+
+
+    struct TernaryOperationInfo
+    {
+        std::string name{};
+        Matrix3X3 op1{};
+        Matrix3X3 op2{};
+        Matrix3X3 op3{};
+    };
+    class TestTernaryOperationsMat3X3 : public testing::TestWithParam<TernaryOperationInfo>
+    {
+    public:
+        static std::vector<TernaryOperationInfo> GetOperations()
+        {
+            std::vector<TernaryOperationInfo> result{};
+
+            for (const auto & [op1Name, op1] : INPUT_MAP)
+                for (const auto & [op2Name, op2] : OPERANDS)
+                    for (const auto & [op3Name, op3] : OPERANDS)
+                    result.emplace_back(std::format("{1}{0}{2}{0}{3}", TEST_CONCATENATION, op1Name, op2Name, op3Name), op1, op2, op3);
+
+            return result;
+        }
+        const inline static std::unordered_map<std::string, Matrix3X3> OPERANDS
+        {
+            {"Identity", {}},
+            {"Zeros", {Vector3f::Zero, Vector3f::Zero, Vector3f::Zero}},
+            {"Ones", {Vector3f::One, Vector3f::One, Vector3f::One}},
+            {"PositivesA", INPUT_MAP.at("Positives")},
+            {"PositivesB", {Vector3f{37,32,3},Vector3f{45,61,12},Vector3f{55,56,21}}},
+            {"NegativesA", INPUT_MAP.at("Negatives")},
+            {"NegativesB", {Vector3f{-83,-13,-21},Vector3f{-45,-31,-14},Vector3f{-41,-61,-31}}},
+            {"MixedSignsA", INPUT_MAP.at("MixedSigns")},
+            {"MixedSignsB", {Vector3f{-32,51,-6},Vector3f{-2,61,21},Vector3f{-4,-16,-41}}},
+        };
+
+    protected:
+        void SetUp() override
+        {
+            const auto& p = GetParam();
+            op1 = p.op1;
+            op2 = p.op2;
+            op3 = p.op3;
+        }
+
+        Matrix3X3 op1{};
+        Matrix3X3 op2{};
+        Matrix3X3 op3{};
+    };
+
+    TEST_P(TestTernaryOperationsMat3X3, RightDistributiveLaw)
+    {
+        EXPECT_EQ
+        (
+            (op1 + op2) * op3,
+            op1 * op3 + op2 * op3
+        );
+    }
+    TEST_P(TestTernaryOperationsMat3X3, LeftDistributiveLaw)
+    {
+        EXPECT_EQ
+        (
+            op3 * (op1 + op2),
+            op3 * op1 + op3 * op2
+        );
+    }
+    TEST_P(TestTernaryOperationsMat3X3, AssociativeProperty)
+    {
+        EXPECT_EQ
+        (
+            (op1 * op2) * op3,
+            op1 * (op2 * op3)
+        );
+    }
 
     class TestScalarOperationsMat3X3: public ::testing::TestWithParam<OperationInfo>
     {
@@ -463,6 +553,13 @@ namespace jela::mat3x3
         TestComparisonMat3X3,
         testing::ValuesIn(TestComparisonMat3X3::GetCompareOperations()),
         [](const testing::TestParamInfo<TestComparisonMat3X3::ParamType>& info){return info.param.name;}
+    );
+    INSTANTIATE_TEST_SUITE_P
+    (
+        Operators,
+        TestTernaryOperationsMat3X3,
+        testing::ValuesIn(TestTernaryOperationsMat3X3::GetOperations()),
+        [](const testing::TestParamInfo<TestTernaryOperationsMat3X3::ParamType>& info){return info.param.name;}
     );
     INSTANTIATE_TEST_SUITE_P
     (

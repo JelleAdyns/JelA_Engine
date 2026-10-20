@@ -170,7 +170,10 @@ namespace jela
     		return true;
     	}
 
-		constexpr static float Dot(const Vector3f& first, const Vector3f& second) { return first.x * second.x + first.y * second.y + first.z * second.z; }
+		constexpr static float Dot(const Vector3f& first, const Vector3f& second)
+    	{
+    		return first.x * second.x + first.y * second.y + first.z * second.z;
+    	}
 		constexpr static Vector3f Cross(const Vector3f& first, const Vector3f& second)
     	{
     		return
@@ -270,6 +273,9 @@ namespace jela
 		constexpr Vector2f GetXAxis() const { return {data[0].x, data[0].y};}
 		constexpr Vector2f GetYAxis() const { return {data[1].x, data[1].y};}
 		constexpr Vector2f GetTranslation() const { return {data[2].x, data[2].y};}
+		constexpr void SetXAxis(const Vector2f& xAxis) { data[0].x = xAxis.x; data[0].y = xAxis.y;}
+		constexpr void SetYAxis(const Vector2f& yAxis) { data[1].x = yAxis.x; data[1].y = yAxis.y;}
+		constexpr void SetTranslation(const Vector2f& translation) { data[2].x = translation.x, data[2].y = translation.y; }
 
 		static constexpr Matrix3X3 Translation(float x, float y) { return Translation({x,y}); }
 		static constexpr Matrix3X3 Translation(const Vector2f& translation) {return {Vector2f::UnitX, Vector2f::UnitY, translation}; }
@@ -277,6 +283,7 @@ namespace jela
 		{
 			if (inDegrees) angle *= std::numbers::pi_v<float> / 180.f;
 
+			angle = -angle;
 			const float c = std::cos(angle);
 			const float s = std::sin(angle);
 			return {{c ,s}, {-s, c}, Vector2f::Zero};
