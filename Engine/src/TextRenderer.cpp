@@ -20,18 +20,18 @@ namespace jela
             return;
         }
 
-        const Vector2f worldPos = GetOwner()->Transform()->WorldPosition();
+        //const Vector2f worldPos = GetOwner()->Transform()->WorldPosition();
         const Vector2f size
         {
             m_pTextFormat->GetFontSize() * (m_Text.size() +2),
             m_pTextFormat->GetFontSize()
         };
-        const Vector2f center
-        {
-            worldPos.x - size.x/2,
-            worldPos.y - size.y/2
-        };
-        ENGINE.RenderMngr()->DrawString(m_Text, Rectf{center,size.x, size.y}, m_DrawRect);
+        // const Vector2f center
+        // {
+        //     worldPos.x - size.x/2,
+        //     worldPos.y - size.y/2
+        // };
+        ENGINE.RenderMngr()->DrawString(m_Text, Rectf{- size.x/2, - size.y/2,size.x, size.y}, m_DrawRect);
     }
     void TextRenderer::SetDrawRect(bool drawRect)
     {

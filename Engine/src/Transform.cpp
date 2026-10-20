@@ -4,13 +4,14 @@
 namespace jela
 {
     Transform::Transform(Vector2f position, float rotation, Vector2f scale):
+        m_WorldTransform{},
         m_LocalTransform{position, rotation, scale}
     {}
     Transform::Transform(Vector2f position, float rotation, float scaleX, float scaleY):
-            Transform{position, rotation, {scaleX,scaleY}}
+        Transform{position, rotation, {scaleX,scaleY}}
     {}
     Transform::Transform(Vector2f position, float rotation, float scale):
-            Transform{position, rotation, {scale,scale}}
+        Transform{position, rotation, {scale,scale}}
     {}
     Transform::Transform(Vector2f position, float rotation):
         Transform{position, rotation, {1.f,1.f}}
@@ -43,16 +44,26 @@ namespace jela
     {
         SetWorldPos({x,y});
     }
-    void Transform::SetWorldPos(Vector2f newWorldPos)
+    void Transform::SetWorldPos(const Vector2f& newWorldPos)
     {
-        m_LocalTransform.position = newWorldPos - (WorldPosition() - Position());
+        Vector2f worldOffset = newWorldPos - WorldPosition();
+
+        if (const GameObject* pParent = GetOwner()->Parent())
+        {
+            const auto parentWorld = pParent->Transform()->WorldTransform();
+            const float x = Vector2f::Dot(worldOffset, parentWorld.GetXAxis() );
+            const float y = Vector2f::Dot(worldOffset, parentWorld.GetYAxis() );
+
+            worldOffset = {x, y};
+        }
+        m_LocalTransform.position += worldOffset;
         SetTransformDirty();
     }
     void Transform::SetLocalPos(float x, float y)
     {
         SetLocalPos({x,y});
     }
-    void Transform::SetLocalPos(Vector2f newLocalPos)
+    void Transform::SetLocalPos(const Vector2f& newLocalPos)
     {
         m_LocalTransform.position = newLocalPos;
         SetTransformDirty();
@@ -70,7 +81,7 @@ namespace jela
     {
         SetLocalScale({scaleX, scaleY});
     }
-    void Transform::SetLocalScale(Vector2f newLocalPos)
+    void Transform::SetLocalScale(const Vector2f& newLocalPos)
     {
         m_LocalTransform.scale = newLocalPos;
         SetTransformDirty();
@@ -80,28 +91,41 @@ namespace jela
         m_IsTransformDirty = true;
         std::ranges::for_each(GetOwner()->Children(), [](const GameObject* child){ child->Transform()->SetTransformDirty(); });
     }
+    Matrix3X3 Transform::LocalTransform() const
+    {
+        return Matrix3X3::Scale(m_LocalTransform.scale) *
+            Matrix3X3::Rotation(m_LocalTransform.rotation) *
+                Matrix3X3::Translation(m_LocalTransform.position);
+    }
+    const Matrix3X3& Transform::WorldTransform()
+    {
+        if (m_IsTransformDirty) UpdateWorldTransform();
+        return m_WorldTransform;
+    }
     Vector2f Transform::WorldPosition()
     {
         if (m_IsTransformDirty) UpdateWorldTransform();
-        return m_WorldTransform.position;
+        return m_WorldTransform.GetTranslation();
     }
     float Transform::WorldRotation()
     {
         if (m_IsTransformDirty) UpdateWorldTransform();
-        return m_WorldTransform.rotation;
+        return 0.f;//m_WorldTransform.rotation;
+        //return m_WorldTransform.rotation;
     }
     Vector2f Transform::WorldScale()
     {
         if (m_IsTransformDirty) UpdateWorldTransform();
-        return m_WorldTransform.scale;
+        return {};
+        //return m_WorldTransform.scale;
     }
     void Transform::UpdateWorldTransform()
     {
-        const GameObject* parent = GetOwner()->Parent();
+        m_WorldTransform = LocalTransform();
 
-        m_WorldTransform.position = m_LocalTransform.position + (parent ? parent->Transform()->WorldPosition() : Vector2f{});
-        m_WorldTransform.rotation = m_LocalTransform.rotation; //+ (parent ? parent->Transform()->WorldRotation() : 0);
-        m_WorldTransform.scale = m_LocalTransform.scale * (parent ? parent->Transform()->WorldScale() : Vector2f{1.f,1.f});
+        if (const GameObject* parent = GetOwner()->Parent())
+            m_WorldTransform *= parent->Transform()->WorldTransform() ;
+
         m_IsTransformDirty = false;
     }
 } // jela

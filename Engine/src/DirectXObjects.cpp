@@ -45,6 +45,23 @@ namespace jela::DX
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Scaling matrix."));
     }
+    void TransformStack::ApplyMatrix(const Matrix3X3& matrix)
+    {
+        if (!m_VecTransformMatrices.empty())
+        {
+            const D2D1::Matrix3x2F directMatrix
+            {
+                matrix[0][0], matrix[0][1],
+                matrix[1][0], matrix[1][1],
+                matrix[2][0], matrix[2][1]
+            };
+
+            auto& lastMatrix = m_VecTransformMatrices.back();
+            lastMatrix = directMatrix * lastMatrix;
+            m_TransformChanged = true;
+        }
+        else OutputDebugString(_T("Vector of matrices was empty while trying to apply a matrix."));
+    }
     D2D1::Matrix3x2F TransformStack::ConsumeMatrix() const
     {
         D2D1::Matrix3x2F combinedMatrix{D2D1::Matrix3x2F::Identity()};
@@ -305,6 +322,10 @@ namespace jela::DX
     void DeviceContext2D::Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom)
     {
         m_TransformStack.Scale(xScale, yScale, xPointToScaleFrom, yPointToScaleFrom);
+    }
+    void DeviceContext2D::ApplyMatrix(const Matrix3X3& matrix)
+    {
+        m_TransformStack.ApplyMatrix(matrix);
     }
     void DeviceContext2D::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
     {

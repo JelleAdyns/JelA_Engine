@@ -116,6 +116,7 @@ namespace jela
         void Scale(float scale, const Point2f& PointToScaleFrom);
         void Scale(float xScale, float yScale);
         void Scale(float scale);
+        void ApplyMatrix(const Matrix3X3& matrix);
 
         void Render() const;
         void ResizeBackBuffer();

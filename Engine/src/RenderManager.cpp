@@ -463,7 +463,7 @@ namespace jela
 
     void RenderManager::Translate(float xTranslation, float yTranslation)
     {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM) yTranslation *= -1;
+        if (USE_MATHEMATICAL_COORDINATESYSTEM) yTranslation = -yTranslation;
         m_DXHandler.dDeviceContext2D.Translate(xTranslation, yTranslation);
     }
     void RenderManager::Rotate(float angle, float xPivotPoint, float yPivotPoint)
@@ -511,6 +511,16 @@ namespace jela
     void RenderManager::Scale(float scale)
     {
         Scale(scale, 0, 0);
+    }
+    void RenderManager::ApplyMatrix(const Matrix3X3& matrix)
+    {
+        if (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            Vector2f translation = matrix.GetTranslation();
+            translation.y = -translation.y;
+            m_DXHandler.dDeviceContext2D.ApplyMatrix({matrix.GetXAxis(), matrix.GetYAxis(), translation});
+        }
+        else m_DXHandler.dDeviceContext2D.ApplyMatrix(matrix);
     }
     void RenderManager::Render() const
     {

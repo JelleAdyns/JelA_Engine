@@ -30,14 +30,16 @@ namespace jela
         Vector2f Scale() const { return m_LocalTransform.scale; };
 
         virtual void SetWorldPos(float x, float y);
-        virtual void SetWorldPos(Vector2f newWorldPos);
+        virtual void SetWorldPos(const Vector2f& newWorldPos);
         virtual void SetLocalPos(float x, float y);
-        virtual void SetLocalPos(Vector2f newLocalPos);
+        virtual void SetLocalPos(const Vector2f& newLocalPos);
         void SetLocalRot(float angle);
         void SetLocalScale(float scale);
         void SetLocalScale(float scaleX, float scaleY);
-        void SetLocalScale(Vector2f newLocalPos);
+        void SetLocalScale(const Vector2f& newLocalPos);
         void SetTransformDirty();
+        Matrix3X3 LocalTransform() const;
+        const Matrix3X3& WorldTransform();
         Vector2f WorldPosition();
         float WorldRotation();
         Vector2f WorldScale();
@@ -51,8 +53,8 @@ namespace jela
             Vector2f scale{1.f, 1.f};
         };
 
+        Matrix3X3 m_WorldTransform{};
         TRS m_LocalTransform{};
-        TRS m_WorldTransform{};
 
         bool m_IsTransformDirty{false};
 

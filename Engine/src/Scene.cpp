@@ -1,5 +1,8 @@
 #include "Scene.h"
+
+#include "Engine.h"
 #include "GameObject.h"
+#include "Transform.h"
 #include "Utils.h"
 
 namespace jela
@@ -11,8 +14,17 @@ namespace jela
     }
     void Scene::Draw() const
     {
-        for (const auto & obj : m_GameObjectHandler.GameObjects())
+        const auto& objs = m_GameObjectHandler.GameObjects();
+        const auto r = ENGINE.RenderMngr();
+
+        for (const auto & obj : objs)
+        {
+            const auto t = obj->Transform();
+            r->PushTransform();
+            r->ApplyMatrix(t->WorldTransform());
             obj->Draw();
+            r->PopTransform();
+        }
     }
     void Scene::Update()
     {

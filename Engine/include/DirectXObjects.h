@@ -5,6 +5,7 @@
 #include <functional>
 namespace jela
 {
+    struct Matrix3X3;
     struct Rectf;
 }
 
@@ -23,6 +24,7 @@ namespace jela::DX
         void Translate(float xTranslation, float yTranslation);
         void Rotate(float angle, float xPivotPoint, float yPivotPoint);
         void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom);
+        void ApplyMatrix(const Matrix3X3& matrix);
 
         bool IsDirty() const { return m_TransformChanged; }
         D2D1::Matrix3x2F ConsumeMatrix() const;
@@ -135,6 +137,7 @@ namespace jela::DX
         void Translate(float xTranslation, float yTranslation);
         void Rotate(float angle, float xPivotPoint, float yPivotPoint);
         void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom);
+        void ApplyMatrix(const Matrix3X3& matrix);
 
         void DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness = 1.f) const;
 
