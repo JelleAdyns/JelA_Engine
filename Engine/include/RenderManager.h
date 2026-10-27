@@ -18,6 +18,42 @@ namespace jela
         void SetColor(COLORREF newColor, float opacity = 1.F) const;
         void SetBackGroundColor(COLORREF newColor, float opacity = 1.F);
 
+        void DrawLineScreenCoord(float firstX, float firstY, float secondX, float secondY, float lineThickness = 1.f) const;
+        void DrawVectorMathCoord(float originX, float originY, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f) const;
+
+        void DrawVectorScreenCoord(float originX, float originY, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f) const;
+        void DrawLineMathCoord(float firstX, float firstY, float secondX, float secondY, float lineThickness = 1.f) const;
+
+        void DrawRectangleScreenCoord(float left, float top, float width, float height, float lineThickness = 1.f) const;
+        void DrawRectangleMathCoord(float left, float bottom, float width, float height, float lineThickness = 1.f) const;
+
+        void DrawRoundedRectScreenCoord(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRectMathCoord(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+
+        void DrawStringScreenCoord(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect = false) const;
+        void DrawStringMathCoord(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect = false) const;
+
+        void DrawTextureScreenCoord(const Texture* texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f) const;
+        void DrawTextureMathCoord(const Texture* texture, const Rectf& destRect, const Rectf& srcRect = {}, float opacity = 1.f) const;
+
+        void FillRectangleScreenCoord(float left, float top, float width, float height) const;
+        void FillRectangleMathCoord(float left, float bottom, float width, float height) const;
+
+        void FillRoundedRectScreenCoord(float left, float top, float width, float height, float radiusX, float radiusY) const;
+        void FillRoundedRectMathCoord(float left, float bottom, float width, float height, float radiusX, float radiusY) const;
+
+        void DrawEllipseScreenCoord(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawEllipseMathCoord(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f) const;
+
+        void DrawCircleScreenCoord(const Circlef& circle, float lineThickness = 1.f) const;
+        void DrawCircleMathCoord(const Circlef& circle, float lineThickness = 1.f) const;
+
+        void FillEllipseScreenCoord(float centerX, float centerY, float radiusX, float radiusY) const;
+        void FillEllipseMathCoord(float centerX, float centerY, float radiusX, float radiusY) const;
+
+        void FillCircleScreenCoord(const Circlef& circle) const;
+        void FillCircleMathCoord(const Circlef& circle) const;
+
         void DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness = 1.f) const;
         void DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness = 1.f) const;
         void DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness = 1.f) const;
@@ -106,11 +142,11 @@ namespace jela
 
         void PushTransform();
         void PopTransform();
-        void Translate(float xTranslation, float yTranslation);
+        void Translate(float xTranslation, float yTranslation, bool mathCoord = USE_MATHEMATICAL_COORDINATESYSTEM);
         void Translate(const Vector2f& translation);
-        void Rotate(float angle, float xPivotPoint, float yPivotPoint);
+        void Rotate(float angle, float xPivotPoint, float yPivotPoint, bool mathCoord = USE_MATHEMATICAL_COORDINATESYSTEM);
         void Rotate(float angle, const Point2f& pivotPoint);
-        void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom);
+        void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom, bool mathCoord = USE_MATHEMATICAL_COORDINATESYSTEM);
         void Scale(float scale, float xPointToScaleFrom, float yPointToScaleFrom);
         void Scale(float xScale, float yScale, const Point2f& PointToScaleFrom);
         void Scale(float scale, const Point2f& PointToScaleFrom);
@@ -127,7 +163,7 @@ namespace jela
         HResultHandler OnResizeBackBuffer();
         void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f);
         void FillGeometry(const Geometry* pGeometryObject);
-
+        void DrawVectorInCoordSysytem(float originX, float originY, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f, bool mathCoord = false) const;
 
         DX::DXHandler m_DXHandler{};
         GameWindow* m_pWindow;

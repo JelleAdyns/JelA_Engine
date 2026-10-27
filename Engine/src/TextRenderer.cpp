@@ -31,7 +31,7 @@ namespace jela
         //     worldPos.x - size.x/2,
         //     worldPos.y - size.y/2
         // };
-        ENGINE.RenderMngr()->DrawString(m_Text, Rectf{- size.x/2, - size.y/2,size.x, size.y}, m_DrawRect);
+        ENGINE.RenderMngr()->DrawStringScreenCoord(m_Text, -size.x/2, -size.y/2, size.x, size.y, m_DrawRect);
     }
     void TextRenderer::SetDrawRect(bool drawRect)
     {

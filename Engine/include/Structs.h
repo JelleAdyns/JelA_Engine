@@ -279,17 +279,23 @@ namespace jela
 
 		static constexpr Matrix3X3 Translation(float x, float y) { return Translation({x,y}); }
 		static constexpr Matrix3X3 Translation(const Vector2f& translation) {return {Vector2f::UnitX, Vector2f::UnitY, translation}; }
-		static Matrix3X3 Rotation(float angle, bool inDegrees = true)
+		static Matrix3X3 Rotation(float angle, bool inDegrees = true, const Point2f& pointToRotateAround = {})
 		{
 			if (inDegrees) angle *= std::numbers::pi_v<float> / 180.f;
 
-			angle = -angle;
 			const float c = std::cos(angle);
 			const float s = std::sin(angle);
-			return {{c ,s}, {-s, c}, Vector2f::Zero};
+			return Translation(pointToRotateAround) *
+				Matrix3X3{{c ,s}, {-s, c}, Vector2f::Zero} *
+					Translation(-pointToRotateAround);
 		}
-		static constexpr Matrix3X3 Scale(float xScale, float yScale) { return {Vector2f::UnitX * xScale, Vector2f::UnitY * yScale, Vector2f::Zero}; }
-		static constexpr Matrix3X3 Scale(const Vector2f& scale) { return Scale(scale.x, scale.y); }
+		static constexpr Matrix3X3 Scale(float xScale, float yScale, const Point2f& pointToScaleFrom = {})
+		{
+			return Translation(pointToScaleFrom) *
+				Matrix3X3{Vector2f::UnitX * xScale, Vector2f::UnitY * yScale, Vector2f::Zero} *
+					Translation(-pointToScaleFrom);
+		}
+		static constexpr Matrix3X3 Scale(const Vector2f& scale, const Point2f& pointToScaleFrom = {}) { return Scale(scale.x, scale.y, pointToScaleFrom); }
 
 		static constexpr Matrix3X3 Transpose(const Matrix3X3& m) { return m.CalculateTranspose(); }
 

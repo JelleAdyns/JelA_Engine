@@ -15,118 +15,75 @@ namespace jela
         m_DXHandler.dDeviceContext2D.SetBackgroundColor(newColor, opacity);
     }
 
-    //lines
-    void RenderManager::DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness) const
+    void RenderManager::DrawLineScreenCoord(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
     {
-        DrawLine(firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y, lineThickness);
+        m_DXHandler.dDeviceContext2D.DrawLine(firstX, firstY, secondX, secondY, lineThickness);
     }
-    void RenderManager::DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness) const
+    void RenderManager::DrawLineMathCoord(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
     {
-        DrawLine(firstX, firstY, secondPoint.x, secondPoint.y, lineThickness);
-    }
-    void RenderManager::DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness) const
-    {
-        DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness);
-    }
-    void RenderManager::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
-    {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM)
-        {
-            firstY = m_pWindow->GetGameSize().y - firstY;
-            secondY = m_pWindow->GetGameSize().y - secondY;
-        }
+        firstY = m_pWindow->GetGameSize().y - firstY;
+        secondY = m_pWindow->GetGameSize().y - secondY;
 
         m_DXHandler.dDeviceContext2D.DrawLine(firstX, firstY, secondX, secondY, lineThickness);
     }
 
-    void RenderManager::DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength, float lineThickness) const
+    void RenderManager::DrawVectorScreenCoord(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness) const
     {
-        DrawVector(origin.x, origin.y, vector.x, vector.y, headLineLength, lineThickness);
+        DrawVectorInCoordSysytem(originX, originY, vectorX, vectorY, headLineLength, lineThickness, false);
     }
-    void RenderManager::DrawVector(const Point2f& origin, float vectorX, float vectorY, float headLineLength, float lineThickness) const
+    void RenderManager::DrawVectorMathCoord(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness) const
     {
-        DrawVector(origin.x, origin.y, vectorX, vectorY, headLineLength, lineThickness);
-    }
-    void RenderManager::DrawVector(float originX, float originY, const Vector2f& vector, float headLineLength, float lineThickness) const
-    {
-        DrawVector(originX, originY, vector.x, vector.y, headLineLength, lineThickness);
-    }
-    void RenderManager::DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness) const
-    {
-        const float endX = originX + vectorX;
-        const float endY = originY + vectorY;
-
-        constexpr float desiredHeadAngle = std::numbers::pi_v<float> / 12.f;
-        const float flippedVectorAngle = atan2f(-vectorY, -vectorX);
-
-        const Point2f arrowP2{ endX + cosf(flippedVectorAngle - desiredHeadAngle) * headLineLength,
-                                endY + sinf(flippedVectorAngle - desiredHeadAngle) * headLineLength };
-
-        const Point2f arrowP3{ endX + cosf(flippedVectorAngle + desiredHeadAngle) * headLineLength,
-                                endY + sinf(flippedVectorAngle + desiredHeadAngle) * headLineLength };
-
-        DrawLine(originX, originY, endX, endY, lineThickness);
-        DrawLine(endX, endY, arrowP2.x, arrowP2.y, lineThickness);
-        DrawLine(endX, endY, arrowP3.x, arrowP3.y, lineThickness);
+        DrawVectorInCoordSysytem(originX, originY, vectorX, vectorY, headLineLength, lineThickness, true);
     }
 
-
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-
-    //Rectangles
-    void RenderManager::DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness) const
+    void RenderManager::DrawRectangleScreenCoord(float left, float top, float width, float height, float lineThickness) const
     {
-        DrawRectangle( leftBottom.x, leftBottom.y, width, height, lineThickness);
+        m_DXHandler.dDeviceContext2D.DrawRectangle(left, top, left + width, top + height, lineThickness);
     }
-    void RenderManager::DrawRectangle(const Rectf& rect, float lineThickness) const
-    {
-        DrawRectangle( rect.left, rect.bottom ,rect.width, rect.height, lineThickness);
-    }
-
-    void RenderManager::DrawRectangle(float left, float bottom, float width, float height, float lineThickness) const
+    void RenderManager::DrawRectangleMathCoord(float left, float bottom, float width, float height, float lineThickness) const
     {
         m_DXHandler.dDeviceContext2D.DrawRectangle(
-            left,         m_pWindow->GetGameSize().y - (bottom + height),
-            left + width, m_pWindow->GetGameSize().y - bottom,
-            lineThickness);
+           left,         m_pWindow->GetGameSize().y - (bottom + height),
+           left + width, m_pWindow->GetGameSize().y - bottom,
+           lineThickness);
     }
 
-    //RoundedRects
-    void RenderManager::DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
-    {
-        DrawRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY, lineThickness);
-    }
-    void RenderManager::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness) const
-    {
-        DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY, lineThickness);
-    }
-
-    void RenderManager::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawRoundedRectScreenCoord(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
         m_DXHandler.dDeviceContext2D.DrawRoundedRect(
-            left,         m_pWindow->GetGameSize().y - (bottom + height),
-            left + width, m_pWindow->GetGameSize().y - bottom,
+            left, top, left + width, top + height,
             radiusX,radiusY,
             lineThickness
         );
     }
+    void RenderManager::DrawRoundedRectMathCoord(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    {
+        m_DXHandler.dDeviceContext2D.DrawRoundedRect(
+           left,         m_pWindow->GetGameSize().y - (bottom + height),
+           left + width, m_pWindow->GetGameSize().y - bottom,
+           radiusX,radiusY,
+           lineThickness
+       );
+    }
+    void RenderManager::DrawStringScreenCoord(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect) const
+    {
+        auto [l,t,r,b] = D2D1::RectF(left, top, left + width, top + height);
 
-    // Strings
-    void RenderManager::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect) const
-    {
-        DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, height, showRect);
+        if (showRect) m_DXHandler.dDeviceContext2D.DrawRectangle(l, t, r, b);
+
+        m_DXHandler.dDeviceContext2D.DrawString(
+            to_wstring(textToDisplay),
+            l,t,r,b,
+            ENGINE.ResourceMngr()->GetCurrentTextFormat()->GetTextFormat()
+            );
     }
-    void RenderManager::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect) const
-    {
-        DrawString(textToDisplay, destRect.left, destRect.bottom, destRect.width, destRect.height, showRect);
-    }
-    void RenderManager::DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect) const
+    void RenderManager::DrawStringMathCoord(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect) const
     {
         const auto [l, t, r, b] = D2D1::RectF(
-            left,
-            m_pWindow->GetGameSize().y - (bottom + height),
-            left + width,
-            m_pWindow->GetGameSize().y - bottom);
+           left,
+           m_pWindow->GetGameSize().y - (bottom + height),
+           left + width,
+           m_pWindow->GetGameSize().y - bottom);
 
         if (showRect) m_DXHandler.dDeviceContext2D.DrawRectangle(l, t, r, b);
 
@@ -136,35 +93,75 @@ namespace jela
             ENGINE.ResourceMngr()->GetCurrentTextFormat()->GetTextFormat()
             );
     }
+    void RenderManager::DrawTextureScreenCoord(const Texture* texture, const Rectf& destRect, const Rectf& srcRect, float opacity) const
+    {
+        const D2D1_RECT_F destination
+        {
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+            D2D1::RectF(destRect.left, destRect.bottom - destRect.height, destRect.left + destRect.width, destRect.bottom)
+#else
+            D2D1::RectF(destRect.left, destRect.top, destRect.left + destRect.width, destRect.top + destRect.height)
+#endif
+        };
 
-    void RenderManager::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect) const
-    {
-       DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, showRect);
-    }
-    void RenderManager::DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect) const
-    {
-        DrawString(textToDisplay, left, bottom, width, ENGINE.ResourceMngr()->GetCurrentTextFormat()->GetFontSize(), showRect);
-    }
+        if (!texture)
+        {
+            m_DXHandler.dDeviceContext2D.FillRectangle(destination.left, destination.top, destination.right, destination.bottom);
+            OutputDebugString(_T("ERROR! Texture was nullptr in DrawTexture!\n"));
+            return;
+        }
 
-    //Textures
-    void RenderManager::DrawTexture(const Texture* texture, float destLeft, float destBottom, const Rectf& srcRect, float opacity) const
-    {
-        DrawTexture(texture, Rectf{ destLeft, destBottom, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
+        const Vector2f texSize = texture->GetSize();
+        D2D1_RECT_F source{};
+        if (srcRect.width <= 0 || srcRect.height <= 0)
+        {
+            source = D2D1::RectF(0.F, 0.F, texSize.x, texSize.y);
+        }
+        else
+        {
+            constexpr float sliceMargin{ 0.07f };
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+            source = D2D1::RectF(
+                srcRect.left + sliceMargin,
+                texSize.y - (srcRect.bottom + srcRect.height) + sliceMargin,
+                srcRect.left + srcRect.width - sliceMargin,
+                texSize.y - srcRect.bottom - sliceMargin
+            );
+#else
+            source = D2D1::RectF(
+                srcRect.left + sliceMargin,
+                srcRect.top + sliceMargin,
+                srcRect.left + srcRect.width - sliceMargin,
+                srcRect.top + srcRect.height - sliceMargin
+            );
+#endif
+
+        }
+        m_DXHandler.dDeviceContext2D.DrawTexture(texture->GetBitmap(), destination, source, opacity);
     }
-    void RenderManager::DrawTexture(const Texture* texture, const Point2f& destLeftBottom, const Rectf& srcRect, float opacity) const
-    {
-        DrawTexture(texture, Rectf{ destLeftBottom.x, destLeftBottom.y, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
-    }
-    void RenderManager::DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect, float opacity) const
+    void RenderManager::DrawTextureMathCoord(const Texture* texture, const Rectf& destRect, const Rectf& srcRect, float opacity) const
     {
         const Vector2f& wndwSize = m_pWindow->GetGameSize();
 
-        const D2D1_RECT_F destination = D2D1::RectF(
-            destRect.left,
-            wndwSize.y - (destRect.bottom + destRect.height),
-            destRect.left + destRect.width,
-            wndwSize.y - destRect.bottom
-        );
+        const D2D1_RECT_F destination
+        {
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+            D2D1::RectF(
+                destRect.left,
+                wndwSize.y - (destRect.bottom + destRect.height),
+                destRect.left + destRect.width,
+                wndwSize.y - destRect.bottom
+            )
+#else
+            D2D1::RectF(
+                destRect.left,
+                wndwSize.y - destRect.top,
+                destRect.left + destRect.width,
+                wndwSize.y - destRect.top + destRect.height
+            )
+#endif
+        };
+
 
         if (!texture)
         {
@@ -182,11 +179,19 @@ namespace jela
         else
         {
             constexpr float sliceMargin{ 0.07f };
+#ifdef MATHEMATICAL_COORDINATESYSTEM
             source = D2D1::RectF(
                 srcRect.left + sliceMargin,
                 texSize.y - (srcRect.bottom  + srcRect.height) + sliceMargin,
                 srcRect.left + srcRect.width - sliceMargin,
                 texSize.y - srcRect.bottom - sliceMargin);
+#else
+            source = D2D1::RectF(
+                srcRect.left + sliceMargin,
+                texSize.y - srcRect.top + sliceMargin,
+                srcRect.left + srcRect.width - sliceMargin,
+                texSize.y - srcRect.top + srcRect.height - sliceMargin);
+#endif
         }
 
         m_DXHandler.dDeviceContext2D.DrawTexture(
@@ -195,13 +200,185 @@ namespace jela
             opacity
         );
     }
+    void RenderManager::FillRectangleScreenCoord(float left, float top, float width, float height) const
+    {
+        m_DXHandler.dDeviceContext2D.FillRectangle(left, top, left + width, top + height);
+    }
+    void RenderManager::FillRectangleMathCoord(float left, float bottom, float width, float height) const
+    {
+        m_DXHandler.dDeviceContext2D.FillRectangle(
+           left,         m_pWindow->GetGameSize().y - (bottom + height),
+           left + width, m_pWindow->GetGameSize().y - bottom
+           );
+    }
+    void RenderManager::FillRoundedRectScreenCoord(float left, float top, float width, float height, float radiusX, float radiusY) const
+    {
+        m_DXHandler.dDeviceContext2D.FillRoundedRect(
+            left, top, left + width, top + height,
+            radiusX, radiusY
+            );
+    }
+    void RenderManager::FillRoundedRectMathCoord(float left, float bottom, float width, float height, float radiusX, float radiusY) const
+    {
+        m_DXHandler.dDeviceContext2D.FillRoundedRect(
+           left,         m_pWindow->GetGameSize().y - (bottom + height),
+           left + width, m_pWindow->GetGameSize().y - bottom,
+           radiusX, radiusY
+           );
+    }
+    void RenderManager::DrawEllipseScreenCoord(float centerX, float centerY, float radiusX, float radiusY, float lineThickness) const
+    {
+        m_DXHandler.dDeviceContext2D.DrawEllipse(
+           centerX, centerY,
+           radiusX, radiusY,
+           lineThickness
+       );
+    }
+    void RenderManager::DrawEllipseMathCoord(float centerX, float centerY, float radiusX, float radiusY, float lineThickness) const
+    {
+        centerY = m_pWindow->GetGameSize().y - centerY;
+
+        m_DXHandler.dDeviceContext2D.DrawEllipse(
+            centerX, centerY,
+            radiusX, radiusY,
+            lineThickness
+        );
+    }
+    void RenderManager::DrawCircleScreenCoord(const Circlef& circle, float lineThickness) const
+    {
+        DrawEllipseScreenCoord(circle.center.x, circle.center.y, circle.rad, circle.rad, lineThickness);
+    }
+    void RenderManager::DrawCircleMathCoord(const Circlef& circle, float lineThickness) const
+    {
+        DrawEllipseMathCoord(circle.center.x, circle.center.y, circle.rad, circle.rad, lineThickness);
+    }
+    void RenderManager::FillEllipseScreenCoord(float centerX, float centerY, float radiusX, float radiusY) const
+    {
+        m_DXHandler.dDeviceContext2D.FillEllipse(
+            centerX, centerY,
+            radiusX, radiusY
+            );
+    }
+    void RenderManager::FillEllipseMathCoord(float centerX, float centerY, float radiusX, float radiusY) const
+    {
+        centerY = m_pWindow->GetGameSize().y - centerY;
+
+        m_DXHandler.dDeviceContext2D.FillEllipse(
+            centerX, centerY,
+            radiusX, radiusY
+            );
+    }
+    void RenderManager::FillCircleScreenCoord(const Circlef& circle) const
+    {
+        FillEllipseScreenCoord(circle.center.x, circle.center.y, circle.rad, circle.rad);
+    }
+    void RenderManager::FillCircleMathCoord(const Circlef& circle) const
+    {
+        FillEllipseMathCoord(circle.center.x, circle.center.y, circle.rad, circle.rad);
+    }
 
 
-    //-----------------
-    //Fill
-    //----------------
+    void RenderManager::DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness) const
+    {
+        DrawLine(firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y, lineThickness);
+    }
+    void RenderManager::DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness) const
+    {
+        DrawLine(firstX, firstY, secondPoint.x, secondPoint.y, lineThickness);
+    }
+    void RenderManager::DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness) const
+    {
+        DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness);
+    }
+    void RenderManager::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
+    {
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) DrawLineMathCoord(firstX,firstY,secondX,secondY,lineThickness);
+        else DrawLineScreenCoord(firstX,firstY,secondX,secondY,lineThickness);
+    }
 
-    //Rectangles
+    void RenderManager::DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength, float lineThickness) const
+    {
+        DrawVector(origin.x, origin.y, vector.x, vector.y, headLineLength, lineThickness);
+    }
+    void RenderManager::DrawVector(const Point2f& origin, float vectorX, float vectorY, float headLineLength, float lineThickness) const
+    {
+        DrawVector(origin.x, origin.y, vectorX, vectorY, headLineLength, lineThickness);
+    }
+    void RenderManager::DrawVector(float originX, float originY, const Vector2f& vector, float headLineLength, float lineThickness) const
+    {
+        DrawVector(originX, originY, vector.x, vector.y, headLineLength, lineThickness);
+    }
+    void RenderManager::DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness) const
+    {
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) DrawVectorMathCoord(originX,originY,vectorX,vectorY,headLineLength,lineThickness);
+        else DrawVectorInCoordSysytem(originX, originY, vectorX, vectorY, headLineLength, lineThickness);
+    }
+
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+
+    void RenderManager::DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness) const
+    {
+        DrawRectangle( leftBottom.x, leftBottom.y, width, height, lineThickness);
+    }
+    void RenderManager::DrawRectangle(const Rectf& rect, float lineThickness) const
+    {
+        DrawRectangle( rect.left, rect.bottom ,rect.width, rect.height, lineThickness);
+    }
+
+    void RenderManager::DrawRectangle(float left, float bottom, float width, float height, float lineThickness) const
+    {
+       DrawRectangleMathCoord(left, bottom, width, height, lineThickness);
+    }
+
+    void RenderManager::DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    {
+        DrawRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY, lineThickness);
+    }
+    void RenderManager::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness) const
+    {
+        DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY, lineThickness);
+    }
+
+    void RenderManager::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    {
+        DrawRoundedRectMathCoord(left, bottom, width, height, radiusX, radiusY, lineThickness);
+    }
+
+    void RenderManager::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect) const
+    {
+        DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, height, showRect);
+    }
+    void RenderManager::DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect) const
+    {
+        DrawString(textToDisplay, destRect.left, destRect.bottom, destRect.width, destRect.height, showRect);
+    }
+    void RenderManager::DrawString(const tstring& textToDisplay, float left, float bottom, float width, float height, bool showRect) const
+    {
+        DrawStringMathCoord(textToDisplay, left, bottom, width, height, showRect);
+    }
+
+    void RenderManager::DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, bool showRect) const
+    {
+        DrawString(textToDisplay, leftBottom.x, leftBottom.y, width, showRect);
+    }
+    void RenderManager::DrawString(const tstring& textToDisplay, float left, float bottom, float width, bool showRect) const
+    {
+        DrawString(textToDisplay, left, bottom, width, ENGINE.ResourceMngr()->GetCurrentTextFormat()->GetFontSize(), showRect);
+    }
+
+    void RenderManager::DrawTexture(const Texture* texture, float destLeft, float destBottom, const Rectf& srcRect, float opacity) const
+    {
+        DrawTexture(texture, Rectf{ destLeft, destBottom, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
+    }
+    void RenderManager::DrawTexture(const Texture* texture, const Point2f& destLeftBottom, const Rectf& srcRect, float opacity) const
+    {
+        DrawTexture(texture, Rectf{ destLeftBottom.x, destLeftBottom.y, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
+    }
+    void RenderManager::DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect, float opacity) const
+    {
+       DrawTextureMathCoord(texture, destRect, srcRect, opacity);
+    }
+
     void RenderManager::FillRectangle(const Point2f& leftBottom, float width, float height) const
     {
         FillRectangle(leftBottom.x, leftBottom.y, width, height);
@@ -212,21 +389,9 @@ namespace jela
     }
     void RenderManager::FillRectangle(float left, float bottom, float width, float height) const
     {
-        m_DXHandler.dDeviceContext2D.FillRectangle(
-            left,         m_pWindow->GetGameSize().y - (bottom + height),
-            left + width, m_pWindow->GetGameSize().y - bottom
-            );
+        FillRectangleMathCoord(left, bottom, width, height);
     }
 
-    //RoundedRects
-    void RenderManager::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const
-    {
-        m_DXHandler.dDeviceContext2D.FillRoundedRect(
-            left,         m_pWindow->GetGameSize().y - (bottom + height),
-            left + width, m_pWindow->GetGameSize().y - bottom,
-            radiusX, radiusY
-            );
-    }
     void RenderManager::FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY) const
     {
         FillRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY);
@@ -235,10 +400,12 @@ namespace jela
     {
         FillRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY);
     }
+    void RenderManager::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const
+    {
+        FillRoundedRectMathCoord(left, bottom, width, height, radiusX, radiusY);
+    }
 
 #else
-
-    //Rectangles
 
     void RenderManager::DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness) const
     {
@@ -250,10 +417,9 @@ namespace jela
     }
     void RenderManager::DrawRectangle(float left, float top, float width, float height, float lineThickness) const
     {
-        m_DXHandler.dDeviceContext2D.DrawRectangle(left, top, left + width, top + height, lineThickness);
+        DrawRectangleScreenCoord(left, top, width, height, lineThickness);
     }
 
-    //RoundedRects
     void RenderManager::DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
         DrawRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY, lineThickness);
@@ -264,14 +430,9 @@ namespace jela
     }
     void RenderManager::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
-        m_DXHandler.dDeviceContext2D.DrawRoundedRect(
-            left, top, left + width, top + height,
-            radiusX,radiusY,
-            lineThickness
-        );
+       DrawRoundedRectScreenCoord(left, top, width, height, radiusX, radiusY, lineThickness);
     }
 
-    //String
     void RenderManager::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect) const
     {
         DrawString(textToDisplay, leftTop.x, leftTop.y, width, height, showRect);
@@ -282,30 +443,18 @@ namespace jela
     }
     void RenderManager::DrawString(const tstring& textToDisplay, float left, float top, float width, float height, bool showRect) const
     {
-        auto [l,t,r,b] = D2D1::RectF(left, top, left + width, top + height);
-
-        if (showRect) m_DXHandler.dDeviceContext2D.DrawRectangle(l, t, r, b);
-
-        m_DXHandler.dDeviceContext2D.DrawString(
-            to_wstring(textToDisplay),
-            l,t,r,b,
-            ENGINE.ResourceMngr()->GetCurrentTextFormat()->GetTextFormat()
-            );
+       DrawStringScreenCoord(textToDisplay, left, top, width, height, showRect);
     }
 
-    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
     void RenderManager::DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, bool showRect) const
     {
         DrawString(textToDisplay, leftTop.x, leftTop.y, width, showRect);
     }
-    //Takes the size of the font as Height of the destination rectangle in order to have a logical position
     void RenderManager::DrawString(const tstring& textToDisplay, float left, float top, float width, bool showRect) const
     {
         DrawString(textToDisplay, left, top, width, ENGINE.ResourceMngr()->GetCurrentTextFormat()->GetFontSize(), showRect);
     }
 
-
-    //Textures
     void RenderManager::DrawTexture(const Texture* texture, float destLeft, float destTop, const Rectf& srcRect, float opacity) const
     {
         DrawTexture(texture, Rectf{ destLeft, destTop, texture ? texture->GetWidth() : 50, texture ? texture->GetHeight() : 50 }, srcRect, opacity);
@@ -316,39 +465,9 @@ namespace jela
     }
     void RenderManager::DrawTexture(const Texture* texture, const Rectf& destRect, const Rectf& srcRect, float opacity) const
     {
-        const D2D1_RECT_F destination = D2D1::RectF(destRect.left, destRect.top, destRect.left + destRect.width, destRect.top + destRect.height);
-
-        if (!texture)
-        {
-            m_DXHandler.dDeviceContext2D.FillRectangle(destination.left, destination.top, destination.right, destination.bottom);
-            OutputDebugString(_T("ERROR! Texture was nullptr in DrawTexture!\n"));
-            return;
-        }
-
-        D2D1_RECT_F source{};
-        if (srcRect.width <= 0 || srcRect.height <= 0)
-        {
-            source = D2D1::RectF(0.F, 0.F, texture->GetWidth(), texture->GetHeight());
-        }
-        else
-        {
-            constexpr float sliceMargin{ 0.07f };
-            source = D2D1::RectF(
-                srcRect.left + sliceMargin,
-                srcRect.top + sliceMargin,
-                srcRect.left + srcRect.width - sliceMargin,
-                srcRect.top + srcRect.height - sliceMargin
-            );
-        }
-        m_DXHandler.dDeviceContext2D.DrawTexture(texture->GetBitmap(), destination, source, opacity);
-
+        DrawTextureScreenCoord(texture, destRect, srcRect, opacity);
     }
 
-    //-----------------
-    //Fill
-    //-----------------
-
-    //Rectangles
     void RenderManager::FillRectangle(const Point2f& leftTop, float width, float height) const
     {
         FillRectangle(leftTop.x, leftTop.y, width, height);
@@ -359,10 +478,9 @@ namespace jela
     }
     void RenderManager::FillRectangle(float left, float top, float width, float height) const
     {
-        m_DXHandler.dDeviceContext2D.FillRectangle(left, top, left + width, top + height);
+        FillRectangleScreenCoord(left, top, width, height);
     }
 
-    //RoundedRects
     void RenderManager::FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY) const
     {
         FillRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY);
@@ -373,10 +491,7 @@ namespace jela
     }
     void RenderManager::FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const
     {
-        m_DXHandler.dDeviceContext2D.FillRoundedRect(
-            left, top, left + width, top + height,
-            radiusX, radiusY
-            );
+        FillRoundedRectScreenCoord(left, top, width, height, radiusX, radiusY);
     }
 
 #endif // MATHEMATICAL_COORDINATESYSTEM
@@ -396,13 +511,8 @@ namespace jela
     }
     void RenderManager::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness) const
     {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM) centerY = m_pWindow->GetGameSize().y - centerY;
-
-        m_DXHandler.dDeviceContext2D.DrawEllipse(
-            centerX, centerY,
-            radiusX, radiusY,
-            lineThickness
-        );
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) DrawEllipseMathCoord(centerX, centerY, radiusX, radiusY, lineThickness);
+        else DrawEllipseScreenCoord(centerX, centerY, radiusX, radiusY, lineThickness);
     }
 
     void RenderManager::FillEllipse(const Point2f& center, float radiusX, float radiusY) const
@@ -419,12 +529,8 @@ namespace jela
     }
     void RenderManager::FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const
     {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM) centerY = m_pWindow->GetGameSize().y - centerY;
-
-        m_DXHandler.dDeviceContext2D.FillEllipse(
-            centerX, centerY,
-            radiusX, radiusY
-            );
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) FillEllipseMathCoord(centerX, centerY, radiusX, radiusY);
+        else FillEllipseScreenCoord(centerX, centerY, radiusX, radiusY);
     }
 
     //Geometry
@@ -459,21 +565,48 @@ namespace jela
         m_DXHandler.dDeviceContext2D.FillGeometry(pGeometryObject->GetGeometry());
         PopTransform();
     }
-
-
-    void RenderManager::Translate(float xTranslation, float yTranslation)
+    void RenderManager::DrawVectorInCoordSysytem(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness, bool mathCoord) const
     {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM) yTranslation = -yTranslation;
+        const float endX = originX + vectorX;
+        const float endY = originY + vectorY;
+
+        constexpr float desiredHeadAngle = std::numbers::pi_v<float> / 12.f;
+        const float flippedVectorAngle = atan2f(-vectorY, -vectorX);
+
+        const Point2f arrowP2{ endX + cosf(flippedVectorAngle - desiredHeadAngle) * headLineLength,
+                                endY + sinf(flippedVectorAngle - desiredHeadAngle) * headLineLength };
+
+        const Point2f arrowP3{ endX + cosf(flippedVectorAngle + desiredHeadAngle) * headLineLength,
+                                endY + sinf(flippedVectorAngle + desiredHeadAngle) * headLineLength };
+
+        if (mathCoord)
+        {
+            DrawLineMathCoord(originX, originY, endX, endY, lineThickness);
+            DrawLineMathCoord(endX, endY, arrowP2.x, arrowP2.y, lineThickness);
+            DrawLineMathCoord(endX, endY, arrowP3.x, arrowP3.y, lineThickness);
+        }
+        else
+        {
+            DrawLineScreenCoord(originX, originY, endX, endY, lineThickness);
+            DrawLineScreenCoord(endX, endY, arrowP2.x, arrowP2.y, lineThickness);
+            DrawLineScreenCoord(endX, endY, arrowP3.x, arrowP3.y, lineThickness);
+        }
+    }
+
+
+    void RenderManager::Translate(float xTranslation, float yTranslation, bool mathCoord)
+    {
+        if (mathCoord) yTranslation = -yTranslation;
         m_DXHandler.dDeviceContext2D.Translate(xTranslation, yTranslation);
     }
-    void RenderManager::Rotate(float angle, float xPivotPoint, float yPivotPoint)
+    void RenderManager::Rotate(float angle, float xPivotPoint, float yPivotPoint, bool mathCoord)
     {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM) yPivotPoint = m_pWindow->GetGameSize().y - yPivotPoint;
+        if (mathCoord) yPivotPoint = m_pWindow->GetGameSize().y - yPivotPoint;
         m_DXHandler.dDeviceContext2D.Rotate(angle, xPivotPoint, yPivotPoint);
     }
-    void RenderManager::Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom)
+    void RenderManager::Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom, bool mathCoord)
     {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM) yPointToScaleFrom = m_pWindow->GetGameSize().y - yPointToScaleFrom;
+        if (mathCoord) yPointToScaleFrom = m_pWindow->GetGameSize().y - yPointToScaleFrom;
         m_DXHandler.dDeviceContext2D.Scale(xScale, yScale, xPointToScaleFrom, yPointToScaleFrom);
     }
     void RenderManager::PushTransform()
@@ -514,13 +647,18 @@ namespace jela
     }
     void RenderManager::ApplyMatrix(const Matrix3X3& matrix)
     {
-        if (USE_MATHEMATICAL_COORDINATESYSTEM)
+        constexpr Matrix3X3 scale{Matrix3X3::Scale(1.f, -1.f)};
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
         {
-            Vector2f translation = matrix.GetTranslation();
-            translation.y = -translation.y;
-            m_DXHandler.dDeviceContext2D.ApplyMatrix({matrix.GetXAxis(), matrix.GetYAxis(), translation});
+            const Matrix3X3 windowTranslation{Matrix3X3::Translation(0.f, -ENGINE.Window()->GetGameSize().y)};
+            m_DXHandler.dDeviceContext2D.ApplyMatrix( scale * matrix * windowTranslation * scale );
         }
-        else m_DXHandler.dDeviceContext2D.ApplyMatrix(matrix);
+        else
+        {
+            Matrix3X3 m = scale * matrix * scale; // scaling for counter-clockwise rotation
+            m.SetTranslation(matrix.GetTranslation()); // scaling shouldn't affect translation
+            m_DXHandler.dDeviceContext2D.ApplyMatrix(m);
+        }
     }
     void RenderManager::Render() const
     {

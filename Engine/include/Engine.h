@@ -13,15 +13,6 @@
 
 namespace jela
 {
-    inline constexpr bool USE_MATHEMATICAL_COORDINATESYSTEM {
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-        true
-#else
-        false
-#endif
-    };
-
-
 
     class Engine final
     {

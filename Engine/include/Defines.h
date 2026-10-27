@@ -109,4 +109,13 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #undef min
 #undef max
 
+inline constexpr bool USE_MATHEMATICAL_COORDINATESYSTEM {
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+	true
+#else
+	false
+#endif
+};
+
+
 #endif // !DEFINES_H
