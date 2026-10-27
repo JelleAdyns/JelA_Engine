@@ -19,7 +19,6 @@ namespace jela
         const Texture* GetTexture() const;
 
         Rectf GetDestRect() const;
-        Rectf GetWorldDestRect() const;
         Rectf GetSourceRect() const;
         void SetSourceRectPos(float x, float y);
         void SetSourceRectPos(Vector2f newPos);

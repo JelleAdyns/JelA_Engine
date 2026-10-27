@@ -648,17 +648,13 @@ namespace jela
     void RenderManager::ApplyMatrix(const Matrix3X3& matrix)
     {
         constexpr Matrix3X3 scale{Matrix3X3::Scale(1.f, -1.f)};
+
         if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
         {
             const Matrix3X3 windowTranslation{Matrix3X3::Translation(0.f, -ENGINE.Window()->GetGameSize().y)};
             m_DXHandler.dDeviceContext2D.ApplyMatrix( scale * matrix * windowTranslation * scale );
         }
-        else
-        {
-            Matrix3X3 m = scale * matrix * scale; // scaling for counter-clockwise rotation
-            m.SetTranslation(matrix.GetTranslation()); // scaling shouldn't affect translation
-            m_DXHandler.dDeviceContext2D.ApplyMatrix(m);
-        }
+        else m_DXHandler.dDeviceContext2D.ApplyMatrix(matrix);
     }
     void RenderManager::Render() const
     {

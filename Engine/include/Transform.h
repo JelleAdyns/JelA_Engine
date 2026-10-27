@@ -41,7 +41,7 @@ namespace jela
         Matrix3X3 LocalTransform() const;
         const Matrix3X3& WorldTransform();
         Vector2f WorldPosition();
-        float WorldRotation();
+        float WorldRotation() const;
         Vector2f WorldScale();
 
     private:

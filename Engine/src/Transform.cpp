@@ -1,5 +1,6 @@
 #include "Transform.h"
 #include "GameObject.h"
+#include "Defines.h"
 
 namespace jela
 {
@@ -94,7 +95,7 @@ namespace jela
     Matrix3X3 Transform::LocalTransform() const
     {
         return Matrix3X3::Scale(m_LocalTransform.scale) *
-            Matrix3X3::Rotation(m_LocalTransform.rotation) *
+            Matrix3X3::Rotation((USE_MATHEMATICAL_COORDINATESYSTEM ? 1.f : -1.f) * m_LocalTransform.rotation) *
                 Matrix3X3::Translation(m_LocalTransform.position);
     }
     const Matrix3X3& Transform::WorldTransform()
@@ -107,17 +108,18 @@ namespace jela
         if (m_IsTransformDirty) UpdateWorldTransform();
         return m_WorldTransform.GetTranslation();
     }
-    float Transform::WorldRotation()
+    float Transform::WorldRotation() const
     {
-        if (m_IsTransformDirty) UpdateWorldTransform();
-        return 0.f;//m_WorldTransform.rotation;
-        //return m_WorldTransform.rotation;
+        float rot = m_LocalTransform.rotation;
+        if (const GameObject* pParent = GetOwner()->Parent())
+            rot += pParent->Transform()->WorldRotation();
+
+        return rot;
     }
     Vector2f Transform::WorldScale()
     {
         if (m_IsTransformDirty) UpdateWorldTransform();
-        return {};
-        //return m_WorldTransform.scale;
+        return {m_WorldTransform.GetXAxis().Length(), m_WorldTransform.GetYAxis().Length()};
     }
     void Transform::UpdateWorldTransform()
     {

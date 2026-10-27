@@ -29,12 +29,6 @@ namespace jela
 
         return Rectf{- m_DestSize.x / 2, - m_DestSize.y / 2, m_DestSize.x, m_DestSize.y};
     }
-    Rectf TextureImage::GetWorldDestRect() const
-    {
-        if (m_pRectTransform) return m_pRectTransform->GetWorldRect();
-
-        return Rectf{- m_DestSize.x / 2, - m_DestSize.y / 2, m_DestSize.x, m_DestSize.y};
-    }
     Rectf TextureImage::GetSourceRect() const
     {
         return m_SourceRect;

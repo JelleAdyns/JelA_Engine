@@ -25,7 +25,7 @@ namespace jela
     {
         SetWorldPos({x,y});
     }
-    void RectTransform::SetWorldPos(Vector2f newWorldPos)
+    void RectTransform::SetWorldPos(const Vector2f& newWorldPos)
     {
         const Vector2f anchorOffset = Position() - m_AnchoredPosition;
         Transform::SetWorldPos(newWorldPos);
@@ -35,7 +35,7 @@ namespace jela
     {
         SetLocalPos({x,y});
     }
-    void RectTransform::SetLocalPos(Vector2f newLocalPos)
+    void RectTransform::SetLocalPos(const Vector2f& newLocalPos)
     {
         const Vector2f anchorOffset = Position() - m_AnchoredPosition;
         Transform::SetLocalPos(newLocalPos);
@@ -45,7 +45,7 @@ namespace jela
     {
         SetAnchoredPos({x,y});
     }
-    void RectTransform::SetAnchoredPos(Vector2f newAnchoredPos)
+    void RectTransform::SetAnchoredPos(const Vector2f& newAnchoredPos)
     {
         m_AnchoredPosition = newAnchoredPos;
     }
@@ -58,17 +58,16 @@ namespace jela
     {
         SetAnchor({xMapping, yMapping});
     }
-    void RectTransform::SetAnchor(Vector2f mapping)
+    void RectTransform::SetAnchor(const Vector2f& mapping)
     {
         const Vector2f prevOffset = GetAnchorOffset(m_Anchor);
         m_Anchor = mapping;
         const Vector2f newOffset = GetAnchorOffset(m_Anchor);
         Vector2f anchorDifference = (newOffset - prevOffset);
 
-        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) anchorDifference.y = -anchorDifference.y;
-
         SetAnchoredPos(m_AnchoredPosition - anchorDifference);
         UpdateRectPos();
+        SetTransformDirty();
     }
 
     void RectTransform::SetPivot(Anchor pivot)
@@ -79,14 +78,12 @@ namespace jela
     {
         SetPivot({xMapping, yMapping});
     }
-    void RectTransform::SetPivot(Vector2f mapping)
+    void RectTransform::SetPivot(const Vector2f& mapping)
     {
-        const Vector2f prevMap = (m_Pivot - Vector2f{0.5,0.5}) * m_Size;
+        const Vector2f prevMap = (m_Pivot - Vector2f{0.5,0.5}).Scale(m_Size);
         m_Pivot = mapping;
-        const Vector2f newMap = (m_Pivot - Vector2f{0.5,0.5}) * m_Size;
+        const Vector2f newMap = (m_Pivot - Vector2f{0.5,0.5}).Scale(m_Size);
         Vector2f pivotDifference = (newMap - prevMap);
-
-        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) pivotDifference.y = -pivotDifference.y;
 
         SetLocalPos(Position() + pivotDifference);
         for (const auto pChild : GetOwner()->Children())
@@ -95,14 +92,14 @@ namespace jela
             pTransform->SetLocalPos(pTransform->Position() - pivotDifference);
         }
         UpdateRectPos();
-
+        SetTransformDirty();
     }
 
     void RectTransform::SetRectSize(float width, float height)
     {
         SetRectSize({width, height});
     }
-    void RectTransform::SetRectSize(Vector2f size)
+    void RectTransform::SetRectSize(const Vector2f& size)
     {
         m_Size.x = size.x;
         m_Size.y = size.y;
@@ -126,23 +123,14 @@ namespace jela
         UpdateRectPos();
         return Rectf{m_RectPos,m_Size.x,m_Size.y};
     }
-    Rectf RectTransform::GetWorldRect()
-    {
-        UpdateRectPos();
-        Vector2f parentWorldPos{};
 
-        if (const auto pParent = GetOwner()->Parent(); pParent)
-            parentWorldPos = pParent->Transform()->WorldPosition();
-
-        return Rectf{m_RectPos + parentWorldPos, m_Size.x, m_Size.y};
-    }
-    Vector2f RectTransform::GetAnchorOffset(Vector2f anchor) const
+    Vector2f RectTransform::GetAnchorOffset(const Vector2f& anchor) const
     {
         if (const auto pParent = GetOwner()->Parent();
            pParent)
         {
             if (const auto rectTransform = pParent->GetComponent<RectTransform>(); rectTransform)
-                return (anchor - Vector2f{0.5,0.5}) * rectTransform->GetSize();
+                return (anchor - Vector2f{0.5,0.5}).Scale(rectTransform->GetSize());
         }
 
         return {};
@@ -150,8 +138,7 @@ namespace jela
     void RectTransform::UpdateRectPos()
     {
         Vector2f pivot = m_Pivot;
-        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) pivot.y = 1-pivot.y;
-        m_RectPos = Position() - pivot * m_Size;
+        m_RectPos = - pivot.Scale(m_Size);
     }
     constexpr Vector2f RectTransform::GetAnchorMapping(Anchor anchor)
     {

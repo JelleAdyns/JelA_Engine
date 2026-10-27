@@ -16,21 +16,16 @@ namespace jela
         ENGINE.ResourceMngr()->SetCurrentTextFormat(m_pTextFormat.get());
         if (m_pRectTransform)
         {
-            ENGINE.RenderMngr()->DrawString(m_Text, m_pRectTransform->GetWorldRect(), m_DrawRect);
+            const auto pos = m_pRectTransform->GetRectPos();
+            const auto size = m_pRectTransform->GetSize();
+            ENGINE.RenderMngr()->DrawStringScreenCoord(m_Text, pos.x, pos.y, size.x, size.y, m_DrawRect);
             return;
         }
-
-        //const Vector2f worldPos = GetOwner()->Transform()->WorldPosition();
         const Vector2f size
         {
             m_pTextFormat->GetFontSize() * (m_Text.size() +2),
             m_pTextFormat->GetFontSize()
         };
-        // const Vector2f center
-        // {
-        //     worldPos.x - size.x/2,
-        //     worldPos.y - size.y/2
-        // };
         ENGINE.RenderMngr()->DrawStringScreenCoord(m_Text, -size.x/2, -size.y/2, size.x, size.y, m_DrawRect);
     }
     void TextRenderer::SetDrawRect(bool drawRect)

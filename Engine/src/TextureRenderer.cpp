@@ -14,10 +14,10 @@ namespace jela
     }
     void TextureRenderer::Draw() const
     {
-        auto destRect = m_pTextureImage->GetWorldDestRect();
+        auto destRect = m_pTextureImage->GetDestRect();
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-            destRect.bottom = -destRect.bottom;
+        destRect.bottom = -destRect.bottom;
 #endif
 
         ENGINE.RenderMngr()->DrawTextureScreenCoord(
@@ -28,8 +28,12 @@ namespace jela
 
         if (auto* pRectTranform = GetOwner()->GetComponent<RectTransform>())
         {
+            auto pos = -pRectTranform->AnchoredPos();
+#ifdef MATHEMATICAL_COORDINATESYSTEM
+            pos.y = -pos.y;
+#endif
             ENGINE.RenderMngr()->SetColor(RGB(0,255,0));
-            ENGINE.RenderMngr()->DrawEllipse( - pRectTranform->AnchoredPos(), 20,20);
+            ENGINE.RenderMngr()->DrawEllipseScreenCoord( pos.x, pos.y, 20,20);
             ENGINE.RenderMngr()->SetColor(RGB(255,255,255));
         }
     }

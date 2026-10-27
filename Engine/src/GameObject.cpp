@@ -21,7 +21,7 @@ namespace jela
     void GameObject::Draw() const
     {
         if (m_pRenderer) m_pRenderer->Draw();
-        ENGINE.RenderMngr()->DrawEllipseScreenCoord(0.f,0.f,20.f,20.f, 2.f);
+        ENGINE.RenderMngr()->DrawEllipseScreenCoord(0.f,0.f,5.f,5.f, 2.f);
     }
     void GameObject::Update()
     {

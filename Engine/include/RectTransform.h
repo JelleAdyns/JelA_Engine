@@ -25,29 +25,28 @@ namespace jela
 
         void Start() override;
         void SetWorldPos(float x, float y) override;
-        void SetWorldPos(Vector2f newWorldPos) override;
+        void SetWorldPos(const Vector2f& newWorldPos) override;
         void SetLocalPos(float x, float y) override;
-        void SetLocalPos(Vector2f newLocalPos) override;
+        void SetLocalPos(const Vector2f& newLocalPos) override;
         void SetAnchoredPos(float x, float y);
-        void SetAnchoredPos(Vector2f newAnchoredPos);
+        void SetAnchoredPos(const Vector2f& newAnchoredPos);
 
         void SetAnchor(Anchor);
         void SetAnchor(float xMapping, float yMapping);
-        void SetAnchor(Vector2f mapping);
+        void SetAnchor(const Vector2f& mapping);
         void SetPivot(Anchor);
         void SetPivot(float xMapping, float yMapping);
-        void SetPivot(Vector2f mapping);
+        void SetPivot(const Vector2f& mapping);
         void SetRectSize(float width, float height);
-        void SetRectSize(Vector2f);
+        void SetRectSize(const Vector2f&);
 
         Vector2f AnchoredPos() const;
         Vector2f GetSize() const;
         Vector2f GetRectPos();
         Rectf GetRect();
-        Rectf GetWorldRect();
 
     private:
-        Vector2f GetAnchorOffset(Vector2f anchor) const;
+        Vector2f GetAnchorOffset(const Vector2f& anchor) const;
         void UpdateRectPos();
         constexpr static Vector2f GetAnchorMapping(Anchor);
         constexpr static bool IsLeft(Anchor);
