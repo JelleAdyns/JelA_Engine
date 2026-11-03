@@ -1,6 +1,5 @@
 #include "DirectXObjects.h"
 
-#include "Structs.h"
 #include "Engine.h"
 
 namespace jela::DX
@@ -30,7 +29,7 @@ namespace jela::DX
         if (!m_VecTransformMatrices.empty())
         {
             auto& lastMatrix = m_VecTransformMatrices.back();
-            lastMatrix = D2D1::Matrix3x2F::Rotation(-angle, D2D1::Point2F(xPivotPoint, yPivotPoint)) * lastMatrix;
+            lastMatrix = D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(xPivotPoint, yPivotPoint)) * lastMatrix;
             m_TransformChanged = true;
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to add a Rotation matrix."));
@@ -62,7 +61,7 @@ namespace jela::DX
         }
         else OutputDebugString(_T("Vector of matrices was empty while trying to apply a matrix."));
     }
-    D2D1::Matrix3x2F TransformStack::ConsumeMatrix() const
+    D2D1::Matrix3x2F TransformStack::UseMatrix() const
     {
         D2D1::Matrix3x2F combinedMatrix{D2D1::Matrix3x2F::Identity()};
         for (const auto& matrix : m_VecTransformMatrices)
@@ -282,7 +281,7 @@ namespace jela::DX
         // not the left corner
         if (m_pDGameBitmap)
         {
-            SetTransform();
+            get()->SetTransform(D2D1::Matrix3x2F::Identity());
             const auto& viewportSize = ENGINE.Window()->GetViewportSize();
             const auto& viewportPos = ENGINE.Window()->GetViewportPos();
             pContext->DrawBitmap(
@@ -331,6 +330,9 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) firstY = -firstY;
+
         get()->DrawLine(
             D2D1::Point2F(firstX, firstY),
             D2D1::Point2F(secondX, secondY),
@@ -342,6 +344,13 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            top = -top;
+            bottom = -bottom;
+        }
+
         get()->DrawRectangle(
             D2D1::RectF(left, top, right, bottom),
             m_pDColorBrush,
@@ -352,6 +361,13 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            top = -top;
+            bottom = -bottom;
+        }
+
         get()->FillRectangle(
             D2D1::RectF(left, top, right, bottom),
             m_pDColorBrush);
@@ -360,6 +376,13 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            top = -top;
+            bottom = -bottom;
+        }
+
         get()->DrawRoundedRectangle(
             D2D1::RoundedRect
             (
@@ -375,6 +398,13 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            top = -top;
+            bottom = -bottom;
+        }
+
         get()->FillRoundedRectangle(
             D2D1::RoundedRect(
                 D2D1::RectF(left, top, right, bottom),
@@ -387,6 +417,9 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) centerY = -centerY;
+
         get()->DrawEllipse(
             D2D1::Ellipse( D2D1::Point2F(centerX, centerY), radiusX, radiusY),
             m_pDColorBrush,
@@ -397,6 +430,9 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) centerY = -centerY;
+
         get()->FillEllipse(
            D2D1::Ellipse( D2D1::Point2F(centerX, centerY), radiusX, radiusY),
            m_pDColorBrush);
@@ -417,6 +453,13 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            top = -top;
+            bottom = -bottom;
+        }
+
         get()->DrawText(
             textToDisplay.c_str(),
             static_cast<UINT32>(textToDisplay.length()),
@@ -430,8 +473,17 @@ namespace jela::DX
     {
         if (IsInFaultyState()) return;
         SetTransform();
+
+        D2D1_RECT_F dr = destRect;
+
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            dr.top = -dr.top;
+            dr.bottom = -dr.bottom;
+        }
+
         get()->DrawBitmap(
-            bitmap, destRect, opacity,
+            bitmap, dr, opacity,
             D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
             srcRect
             );
@@ -491,8 +543,16 @@ namespace jela::DX
     }
     void DeviceContext2D::SetTransform() const
     {
-        if (m_TransformStack.IsDirty())
-            get()->SetTransform(m_TransformStack.ConsumeMatrix());
+        if (!m_TransformStack.IsDirty()) return;
+
+        auto m = m_TransformStack.UseMatrix();
+        if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM)
+        {
+            const auto s = D2D1::Matrix3x2F::Scale(1,-1);
+            const auto t = D2D1::Matrix3x2F::Translation(0,-ENGINE.Window()->GetGameSize().y);
+            m = s * m * t * s;
+        }
+        get()->SetTransform(m);
     }
     SwapChain::SwapChain(const Device3D& device3D, const DeviceGI& deviceGI)
     {

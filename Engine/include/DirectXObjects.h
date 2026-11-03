@@ -27,7 +27,7 @@ namespace jela::DX
         void ApplyMatrix(const Matrix3X3& matrix);
 
         bool IsDirty() const { return m_TransformChanged; }
-        D2D1::Matrix3x2F ConsumeMatrix() const;
+        D2D1::Matrix3x2F UseMatrix() const;
 
     private:
         std::vector<D2D1::Matrix3x2F> m_VecTransformMatrices{};

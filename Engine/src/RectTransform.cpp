@@ -63,7 +63,7 @@ namespace jela
         const Vector2f prevOffset = GetAnchorOffset(m_Anchor);
         m_Anchor = mapping;
         const Vector2f newOffset = GetAnchorOffset(m_Anchor);
-        Vector2f anchorDifference = (newOffset - prevOffset);
+        const Vector2f anchorDifference = (newOffset - prevOffset);
 
         SetAnchoredPos(m_AnchoredPosition - anchorDifference);
         UpdateRectPos();
@@ -80,10 +80,12 @@ namespace jela
     }
     void RectTransform::SetPivot(const Vector2f& mapping)
     {
-        const Vector2f prevMap = (m_Pivot - Vector2f{0.5,0.5}).Scale(m_Size);
+        constexpr Vector2f offset{0.5f, 0.5f};
+
+        const Vector2f prevMap = (m_Pivot - offset).Scale(m_Size);
         m_Pivot = mapping;
-        const Vector2f newMap = (m_Pivot - Vector2f{0.5,0.5}).Scale(m_Size);
-        Vector2f pivotDifference = (newMap - prevMap);
+        const Vector2f newMap = (m_Pivot - offset).Scale(m_Size);
+        const Vector2f pivotDifference = (newMap - prevMap);
 
         SetLocalPos(Position() + pivotDifference);
         for (const auto pChild : GetOwner()->Children())

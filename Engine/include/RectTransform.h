@@ -54,17 +54,18 @@ namespace jela
         constexpr static bool IsUp(Anchor);
         constexpr static bool IsDown(Anchor);
 
+        constexpr static bool MATH_COORD = USE_MATHEMATICAL_COORDINATESYSTEM;
         static constexpr std::array<Vector2f, static_cast<std::size_t>(Anchor::SIZE)> m_AnchorMappings
         {
-            Vector2f{0.f,0.5f},
-            Vector2f{1.f,0.5f},
-            Vector2f{0.5f,1.f},
-            Vector2f{0.5f,0.f},
-            Vector2f{0.f,1.f},
-            Vector2f{1.f,1.f},
-            Vector2f{0.f,0.f},
-            Vector2f{1.f,0.f},
-            Vector2f{0.5f,0.5f},
+            Vector2f{0.0f, (MATH_COORD ? 0.5f : (1 - 0.5f)) },
+            Vector2f{1.0f, (MATH_COORD ? 0.5f : (1 - 0.5f)) },
+            Vector2f{0.5f, (MATH_COORD ? 1.0f : (1 - 1.0f)) },
+            Vector2f{0.5f, (MATH_COORD ? 0.0f : (1 - 0.0f)) },
+            Vector2f{0.0f, (MATH_COORD ? 1.0f : (1 - 1.0f)) },
+            Vector2f{1.0f, (MATH_COORD ? 1.0f : (1 - 1.0f)) },
+            Vector2f{0.0f, (MATH_COORD ? 0.0f : (1 - 0.0f)) },
+            Vector2f{1.0f, (MATH_COORD ? 0.0f : (1 - 0.0f)) },
+            Vector2f{0.5f, (MATH_COORD ? 0.5f : (1 - 0.5f)) },
         };
         Vector2f m_RectPos{};
         Vector2f m_Size{};
