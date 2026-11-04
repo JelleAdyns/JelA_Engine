@@ -20,10 +20,10 @@ namespace jela
 		const Vector2f& GetTranslation() const { return m_Translation; };
 		ID2D1PathGeometry* GetGeometry() const { return m_pGeo; };
 
+		virtual void ResetPosition() { m_Translation = {}; }
 	protected:
 		Geometry() = default;
 		virtual ~Geometry() { SafeRelease(&m_pGeo); };
-		virtual void ResetPosition() { m_Translation = {}; }
 
 		HRESULT Recreate(bool releasePrevious = true);
 

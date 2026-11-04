@@ -74,13 +74,11 @@ namespace jela
 
 	bool Polygon::Recreate(const std::vector<Point2f>& points, bool closeSegment)
 	{
-		HRESULT hr = S_OK;
-
 		m_Points = points;
 		if (m_Points.empty()) return false;
 
+		HRESULT hr = S_OK;
 		hr = Geometry::Recreate();
-
 
 		if (!SUCCEEDED(hr)) return false;
 
@@ -94,11 +92,10 @@ namespace jela
 		{
 			std::vector<D2D1_POINT_2F> D2points(m_Points.size());
 
-			const auto windowHeight = ENGINE.Window()->GetGameSize().y;
 			for (size_t i = 0; i < m_Points.size(); i++)
 			{
 				auto pointY = m_Points[i].y;
-				if (USE_MATHEMATICAL_COORDINATESYSTEM) pointY = windowHeight - pointY;
+				if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) pointY = -pointY;
 				D2points[i] = D2D1::Point2F(m_Points[i].x, pointY);
 			}
 
@@ -205,8 +202,8 @@ namespace jela
 		if (!Recreate(point1, point2, clockwise, closeSegment))
 		{
 			OutputDebugString(std::format(_T("Creation of Arc failed! Tried to create an arc with:\n"
-									"point 1: ({}, {})\npoint 2: ({}, {})\nclockwise: {}\nclose segments: {} "),
-				point1.x,point1.y,point2.x,point2.y,clockwise,closeSegment).c_str());
+									"point 1: {}\npoint 2: {}\nclockwise: {}\nclose segments: {} "),
+				point1.ToTString(),point2.ToTString(),clockwise,closeSegment).c_str());
 		}
 	}
 
@@ -239,31 +236,29 @@ namespace jela
 
 		if (SUCCEEDED(hr))
 		{
-			const auto startRad = (startAngle + (angle < 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
-			const auto endRad = (startAngle + (angle > 0.f ? angle : 0)) * std::numbers::pi_v<float> / 180;
-
-			const auto windowHeight = ENGINE.Window()->GetGameSize().y;
+			const auto startRad = (startAngle + std::min(angle, 0.f)) * std::numbers::pi_v<float> / 180;
+			const auto endRad = (startAngle + std::max(angle, 0.f)) * std::numbers::pi_v<float> / 180;
 
 			const auto startX = radiusX * std::cosf(startRad);
 			auto startY = radiusY * std::sinf(startRad);
-			if (USE_MATHEMATICAL_COORDINATESYSTEM) startY = windowHeight - startY;
+			if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) startY = -startY;
 
 			const auto endX = radiusX * std::cosf(endRad);
 			auto endY = radiusY * std::sinf(endRad);
-			if (USE_MATHEMATICAL_COORDINATESYSTEM) endY = windowHeight - endY;
+			if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) endY = -endY;
 
 			const D2D1_ARC_SEGMENT arcSegment{
 				D2D1::Point2F(endX, endY),
 				D2D1::SizeF(radiusX, radiusY),
 				0,
-				D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+				USE_MATHEMATICAL_COORDINATESYSTEM ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE,
 				std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
 			};
 
 			pSink->BeginFigure(D2D1::Point2F(startX, startY), D2D1_FIGURE_BEGIN_FILLED);
 			pSink->AddArc(arcSegment);
 
-			if (closeSegment) pSink->AddLine(D2D1::Point2F(0, USE_MATHEMATICAL_COORDINATESYSTEM ? windowHeight : 0));
+			if (closeSegment) pSink->AddLine(D2D1::Point2F());
 
 			pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
 			hr = pSink->Close();
@@ -283,23 +278,24 @@ namespace jela
 	}
 	bool Arc::Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment)
 	{
+		if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) clockwise = !clockwise;
+
 		m_Radius = point1 - point2;
 		m_Radius.x = std::abs(m_Radius.x);
 		m_Radius.y = std::abs(m_Radius.y);
 
 		m_Angle = clockwise ? -90.f : 90.f;
 
-        const auto& swapCenterPoint = [&](bool xComparison)					// CP1  _____P2
-        {																			//	   /
-            if (xComparison) m_StartAngle += 90;									//	  /
-			if (xComparison == clockwise) SetPosition(point1.x, point2.y);			//   |
-		};																			//	 |
-																					// P1		 CP2
-		SetPosition(point2.x, point1.y);
+        const auto& swapCenterPoint = [&](bool xComparison)
+        {																		// CP1  _____P2
+        	if (xComparison == clockwise) SetPosition(point1.x, point2.y);		//	   /
+        	else						  SetPosition(point2.x, point1.y);		//	  /
+																				//   |
+            if (xComparison) m_StartAngle += 90;								//	 |
+        	if (!clockwise) m_StartAngle += 90;									// P1		 CP2
+		};
 
-		if (USE_MATHEMATICAL_COORDINATESYSTEM ?
-			(point1.y >= point2.y) :
-			(point1.y <= point2.y))
+		if (point1.y >= point2.y)
 		{
 			m_StartAngle = 0;
 			swapCenterPoint(point1.x <= point2.x);
@@ -310,10 +306,7 @@ namespace jela
 			swapCenterPoint(point1.x > point2.x);
 		}
 
-		if (!clockwise) m_StartAngle += 90;
-
 		return Recreate(m_Radius.x, m_Radius.y, m_StartAngle, m_Angle, closeSegment);
-
 	}
 
 	void Arc::SetPosition(float centerX, float centerY)

@@ -95,7 +95,7 @@ namespace jela
     Matrix3X3 Transform::LocalTransform() const
     {
         return Matrix3X3::Scale(m_LocalTransform.scale) *
-            Matrix3X3::Rotation((USE_MATHEMATICAL_COORDINATESYSTEM ? 1.f : -1.f) * m_LocalTransform.rotation) *
+            Matrix3X3::Rotation(m_LocalTransform.rotation) *
                 Matrix3X3::Translation(m_LocalTransform.position);
     }
     const Matrix3X3& Transform::WorldTransform()
