@@ -57,7 +57,6 @@ namespace jela
                 }
 
                 m_Components[typeID] = pComp;
-                pComp->Init();
 
                 return pComp;
             }

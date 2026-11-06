@@ -9,7 +9,7 @@ namespace jela
 {
     GameObject& GameObject::Create(Scene& scene)
     {
-        auto& obj = scene.ConsumeGameObject(std::move(GameObject{scene}));
+        auto& obj = Scene::GameObjectDoor::ConsumeGameObject(&scene, std::move(GameObject{scene}));
         obj.m_IsPartOfScene = true;
         return obj;
     }

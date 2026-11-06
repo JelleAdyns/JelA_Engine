@@ -79,6 +79,8 @@ namespace jela
             void RemoveComponents(const Container<Component*>& pCompsToRemove);
             template <cDerivedComponent T> T* GetComponent(std::size_t vecIndex);
 
+            void InitComponents() const;
+
             void Clear();
 
         private:
@@ -103,19 +105,16 @@ namespace jela
         Scene& operator=(const Scene&) = delete;
         Scene& operator=(Scene&&) noexcept = delete;
 
-        virtual void OnEnter() {};
-        virtual void OnExit() {};
-        virtual void OnSuspend() {};
-        virtual void OnResume() {};
+        virtual void Load() = 0;
+        virtual void OnEnter() {}
+        virtual void OnExit() {}
+        virtual void OnSuspend() {}
+        virtual void OnResume() {}
 
-        void Start();
+        void InitObjects() const;
+        void Start() const;
         void Draw() const;
         void Update();
-
-
-        GameObject& AddGameObject();
-        GameObject& ConsumeGameObject(GameObject&& gameObject);
-
 
         bool IsBeingDestroyed() const { return m_IsBeingDestroyed; }
 
@@ -137,7 +136,15 @@ namespace jela
             {
                 pScene->RemoveComponents<Container>(pCompsToRemove);
             }
+            static GameObject& ConsumeGameObject(Scene* pScene, GameObject&& gameObject)
+            {
+                return pScene->ConsumeGameObject(std::forward<GameObject&&>(gameObject));
+            }
         };
+
+    protected:
+
+        GameObject& AddGameObject();
 
     private:
         template <cDerivedComponent T, typename ...Args> T* AddComponent(Args&& ...args)
@@ -150,6 +157,7 @@ namespace jela
         {
             m_ComponentHandler.RemoveComponents<Container>(pCompsToRemove);
         }
+        GameObject& ConsumeGameObject(GameObject&& gameObject);
 
         static constexpr std::size_t POOL_SIZE = 10'000;
 

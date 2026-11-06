@@ -14,7 +14,7 @@ namespace jela
 
         TextureImage(const tstring& textureName);
 
-        void Start() override;
+        void Init() override;
         const ResourcePtr<Texture>& GetManagedTexture() const;
         const Texture* GetTexture() const;
 

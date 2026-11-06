@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include <execution>
+
 #include "Engine.h"
 #include "GameObject.h"
 #include "Transform.h"
@@ -7,7 +9,11 @@
 
 namespace jela
 {
-    void Scene::Start()
+    void Scene::InitObjects() const
+    {
+        m_ComponentHandler.InitComponents();
+    }
+    void Scene::Start() const
     {
         for (const auto & obj : m_GameObjectHandler.GameObjects())
             obj->Start();
@@ -116,6 +122,14 @@ namespace jela
         utils::SwapEraseOnVector(m_Components, index);
         if (m_Components.empty()) return;
         m_Components.at(index).GetBasePointer()->SetBufferIndex(BufferOwnerKey{}, index);
+    }
+    void Scene::ComponentHandler::InitComponents() const
+    {
+        std::for_each(std::execution::par, m_Components.cbegin(), m_Components.cend(),
+            [](const AnyComponent& pComp)
+            {
+                pComp.GetBasePointer()->Init();
+            });
     }
     void Scene::ComponentHandler::Clear()
     {

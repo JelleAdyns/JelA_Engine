@@ -11,11 +11,11 @@ namespace jela
     {
         if (m_Scenes.empty()) return;
 
-        if (Scene* pTopScene = m_Scenes.back().pScene.get();
-            m_pActiveScene != pTopScene)
+        if (m_SceneChanged)
         {
-            m_pActiveScene = pTopScene;
+            m_pActiveScene = m_Scenes.back().pScene.get();
             if (m_pActiveScene) m_pActiveScene->Start();
+            m_SceneChanged = false;
         }
 
         if (m_pActiveScene) m_pActiveScene->Update();

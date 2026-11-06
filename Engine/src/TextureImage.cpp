@@ -11,7 +11,7 @@ namespace jela
     {
         ENGINE.ResourceMngr()->GetTexture(textureName, m_pTexture);
     }
-    void TextureImage::Start()
+    void TextureImage::Init()
     {
         m_pRectTransform = GetOwner()->GetComponent<RectTransform>();
     }
