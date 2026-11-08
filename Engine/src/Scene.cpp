@@ -117,14 +117,15 @@ namespace jela
     {}
     void Scene::ComponentHandler::RemoveComponent(const Component* pCompToRemove)
     {
-        const auto index = pCompToRemove->GetBufferIndex();
+        auto index = pCompToRemove->GetBufferIndex();
         utils::SwapEraseOnVector(m_Components, index);
         if (m_Components.empty()) return;
+        if (index == m_Components.size()) --index;
         m_Components.at(index).GetBasePointer()->SetBufferIndex(BufferOwnerKey{}, index);
     }
     void Scene::ComponentHandler::InitComponents() const
     {
-        std::for_each(std::execution::par, m_Components.cbegin(), m_Components.cend(),
+        std::ranges::for_each(m_Components,
             [](const AnyComponent& pComp)
             {
                 pComp.GetBasePointer()->Init();
@@ -132,7 +133,7 @@ namespace jela
     }
     void Scene::ComponentHandler::StartComponents() const
     {
-        std::for_each(std::execution::par, m_Components.cbegin(), m_Components.cend(),
+        std::ranges::for_each(m_Components,
              [](const AnyComponent& pComp)
              {
                  pComp.GetBasePointer()->Start();
