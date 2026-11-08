@@ -77,7 +77,7 @@ namespace jela
     }
     GameObject::~GameObject()
     {
-        if (m_pParent && !m_pScene->IsBeingDestroyed())
+        if (m_IsPartOfScene && !m_pScene->IsBeingDestroyed())
             Scene::GameObjectDoor::RemoveComponents<std::vector>(m_pScene, m_Components | std::views::values | std::ranges::to<std::vector>());
         m_Components.clear();
     }
