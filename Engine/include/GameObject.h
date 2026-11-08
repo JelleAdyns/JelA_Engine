@@ -122,6 +122,8 @@ namespace jela
     private:
         explicit GameObject(Scene& scene);
 
+        static inline int amountOfObjects{};
+        int index{};
         bool m_IsPartOfScene{false};
         bool m_IsDead{false};
         Scene* m_pScene;
