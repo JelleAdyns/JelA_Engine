@@ -15,8 +15,7 @@ namespace jela
     }
     void Scene::Start() const
     {
-        for (const auto & obj : m_GameObjectHandler.GameObjects())
-            obj->Start();
+        m_ComponentHandler.StartComponents();
     }
     void Scene::Draw() const
     {
@@ -130,6 +129,14 @@ namespace jela
             {
                 pComp.GetBasePointer()->Init();
             });
+    }
+    void Scene::ComponentHandler::StartComponents() const
+    {
+        std::for_each(std::execution::par, m_Components.cbegin(), m_Components.cend(),
+             [](const AnyComponent& pComp)
+             {
+                 pComp.GetBasePointer()->Start();
+             });
     }
     void Scene::ComponentHandler::Clear()
     {

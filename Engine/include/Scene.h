@@ -80,6 +80,7 @@ namespace jela
             template <cDerivedComponent T> T* GetComponent(std::size_t vecIndex);
 
             void InitComponents() const;
+            void StartComponents() const;
 
             void Clear();
 

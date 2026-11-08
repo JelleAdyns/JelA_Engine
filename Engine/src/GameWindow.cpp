@@ -76,27 +76,27 @@ namespace jela
         if (GetMonitorInfo(MonitorFromWindow(m_hWindow, MONITOR_DEFAULTTOPRIMARY), &mi))
         {
             ::SetWindowLongPtr(m_hWindow, GWL_STYLE, m_OriginalStyle);
+            const LONG_PTR exStyle = ::GetWindowLongPtr(m_hWindow, GWL_EXSTYLE);
+            const int width = static_cast<int>(m_GameWidth * m_WindowScale);
+            const int height = static_cast<int>(m_GameHeight * m_WindowScale);
+            const int xPos = mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - width / 2;
+            const int yPos = mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - height / 2;
 
-            const UINT dpi = GetDpiForWindow(m_hWindow);
-            const float dpiMultiplier = dpi / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
+            RECT wr = {xPos,yPos,xPos + width,yPos + height };
+            AdjustWindowRectExForDpi(&wr, m_OriginalStyle, FALSE, static_cast<DWORD>(exStyle), GetDpiForWindow(m_hWindow));
 
             if (setSize)
             {
-                m_WindowWidth = static_cast<int>(m_GameWidth * m_WindowScale * dpiMultiplier);
-                m_WindowHeight = static_cast<int>(m_GameHeight * m_WindowScale * dpiMultiplier);
+                m_WindowWidth = wr.right - wr.left;
+                m_WindowHeight = wr.bottom - wr.top;
             }
-
-            const int windowWidth{ static_cast<int>(GetSystemMetricsForDpi(SM_CXFIXEDFRAME, dpi) * 2 + m_WindowWidth + m_WindowPosOffset * dpiMultiplier * 2) };
-            const int windowHeight{ static_cast<int>(GetSystemMetricsForDpi(SM_CYFIXEDFRAME, dpi) * 2 +
-                                GetSystemMetricsForDpi(SM_CYCAPTION, dpi) + m_WindowHeight + m_WindowPosOffset * dpiMultiplier * 2) };
-
             if (setPos)
             {
-                m_WindowPosX = mi.rcMonitor.left + (mi.rcMonitor.right - mi.rcMonitor.left) / 2 - windowWidth / 2;
-                m_WindowPosY = mi.rcMonitor.top + (mi.rcMonitor.bottom - mi.rcMonitor.top) / 2 - windowHeight / 2;
+                m_WindowPosX = wr.left;
+                m_WindowPosY = wr.top;
             }
 
-            ::SetWindowPos(m_hWindow, nullptr, m_WindowPosX, m_WindowPosY, windowWidth, windowHeight, SWP_FRAMECHANGED);
+            ::SetWindowPos(m_hWindow, nullptr, m_WindowPosX, m_WindowPosY, m_WindowWidth, m_WindowHeight, SWP_FRAMECHANGED);
 
             m_IsFullscreen = false;
         }
@@ -114,9 +114,13 @@ namespace jela
         {
             //https://www.codeproject.com/Questions/108400/How-to-Set-Win32-Application-to-Full-Screen-C
             m_OriginalStyle = static_cast<DWORD>(::GetWindowLongPtr(m_hWindow, GWL_STYLE));
-            DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
-            DWORD dwNewStyle = m_OriginalStyle & ~dwRemove;
+            const auto ExStyle = static_cast<DWORD>(::GetWindowLongPtr(m_hWindow, GWL_EXSTYLE));
+            constexpr DWORD dwRemove = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX;
+            const DWORD dwNewStyle = m_OriginalStyle & ~dwRemove;
+            constexpr DWORD dwExRemove = WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE;
+            const DWORD dwExNewStyle = ExStyle & ~dwExRemove;
             ::SetWindowLongPtr(m_hWindow, GWL_STYLE, dwNewStyle);
+            ::SetWindowLongPtr(m_hWindow, GWL_EXSTYLE, dwExNewStyle);
 
             m_WindowWidth = static_cast<int>(mi.rcMonitor.right - mi.rcMonitor.left);
             m_WindowHeight = static_cast<int>(mi.rcMonitor.bottom - mi.rcMonitor.top);

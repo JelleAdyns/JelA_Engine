@@ -83,6 +83,7 @@ namespace jela
         };
 
         bool m_SceneChanged{true};
+        bool m_FirstUpdatePassed{false};
         Scene* m_pActiveScene {nullptr};
         std::vector<SceneInfo> m_Scenes{}; // Technicaly used as a std::stack, but using std::vector to be able to iterate over all scenes in "Draw()"
     };

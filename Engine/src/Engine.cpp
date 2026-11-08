@@ -132,6 +132,7 @@ namespace jela
             break;
         case WM_SIZE:
             m_pRenderManager->ResizeBackBuffer();
+            m_pRenderManager->Render();
             r = 0;
             break;
         case WM_DISPLAYCHANGE:
