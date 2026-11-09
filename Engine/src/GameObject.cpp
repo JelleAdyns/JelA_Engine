@@ -21,7 +21,6 @@ namespace jela
     void GameObject::Draw() const
     {
         if (m_pRenderer) m_pRenderer->Draw();
-        ENGINE.RenderMngr()->DrawEllipse(0.f,0.f,5.f,5.f, 2.f);
     }
     void GameObject::Update()
     {
@@ -74,28 +73,14 @@ namespace jela
         m_RendererTypeID{typeid(Renderer)}
     {
         AddComponent<jela::Transform>();
-        index = amountOfObjects;
-        amountOfObjects++;
     }
     GameObject::~GameObject()
     {
-        if (m_IsPartOfScene/* && !m_pScene->IsBeingDestroyed()*/)
-        {
-            const auto t1 =  std::chrono::steady_clock::now();
+        if (m_IsPartOfScene && !m_pScene->IsBeingDestroyed())
             Scene::GameObjectDoor::RemoveComponents<std::vector>(m_pScene, m_Components | std::views::values | std::ranges::to<std::vector>());
-            // for (const auto pComp : m_Components | std::views::values)
-            // {
-            //     Scene::GameObjectDoor::RemoveComponent(m_pScene, pComp);
-            // }
-            const auto t2 =  std::chrono::steady_clock::now();
-
-            const auto result =  std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
-            OutputDebugString(std::format(_T("TEST {}: {}\n"), index, result.count()).c_str());
-        }
         m_Components.clear();
     }
     GameObject::GameObject(GameObject&& other) noexcept:
-    index{std::exchange(other.index, 0)},
         m_IsPartOfScene{std::exchange(other.m_IsPartOfScene, false)},
         m_IsDead{std::exchange(other.m_IsDead, false)},
         m_pScene{std::exchange(other.m_pScene, nullptr)},

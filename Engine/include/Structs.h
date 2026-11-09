@@ -457,6 +457,8 @@ namespace jela
 		constexpr Point2f BottomRight() const { return Point2f{Right(), bottom}; }
 		constexpr Point2f TopLeft() const { return Point2f{left, Top()}; }
 		constexpr Point2f TopRight() const { return Point2f{Right(), Top()}; }
+		constexpr void SetPos(float leftPos, float bottomPos) { left = leftPos; bottom = bottomPos;  }
+		constexpr void SetPos(const Vector2f& pos) { SetPos(pos.x, pos.y); }
 
 		float left{};
 		float bottom{};
@@ -526,6 +528,8 @@ namespace jela
 		constexpr Point2f BottomRight() const { return Point2f{Right(), Bottom()}; }
 		constexpr Point2f TopLeft() const { return Point2f{left, top}; }
 		constexpr Point2f TopRight() const { return Point2f{Right(), top}; }
+		constexpr void SetPos(float leftPos, float topPos) { left = leftPos; top = topPos;  }
+		constexpr void SetPos(const Vector2f& pos) { SetPos(pos.x, pos.y); }
 
 		float left{};
 		float top{};

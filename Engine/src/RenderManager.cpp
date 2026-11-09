@@ -90,6 +90,10 @@ namespace jela
     {
         DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY, lineThickness);
     }
+    void RenderManager::DrawRoundedRect(const RoundedRectf& rect, float lineThickness) const
+    {
+        DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, rect.xRadius, rect.yRadius, lineThickness);
+    }
 
     void RenderManager::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
@@ -205,6 +209,10 @@ namespace jela
     {
         FillRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY);
     }
+    void RenderManager::FillRoundedRect(const RoundedRectf& rect) const
+    {
+        FillRoundedRect(rect.left, rect.bottom, rect.width, rect.height, rect.xRadius, rect.yRadius);
+    }
     void RenderManager::FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const
     {
         m_DXHandler.dDeviceContext2D.FillRoundedRect(
@@ -236,6 +244,10 @@ namespace jela
     void RenderManager::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness) const
     {
         DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, radiusX, radiusY, lineThickness);
+    }
+    void RenderManager::DrawRoundedRect(const RoundedRectf& rect, float lineThickness) const
+    {
+        DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, rect.xRadius, rect.yRadius, lineThickness);
     }
     void RenderManager::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness) const
     {
@@ -339,6 +351,10 @@ namespace jela
     void RenderManager::FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const
     {
         FillRoundedRect( rect.left, rect.top, rect.width, rect.height, radiusX, radiusY);
+    }
+    void RenderManager::FillRoundedRect(const RoundedRectf& rect) const
+    {
+        FillRoundedRect( rect.left, rect.top, rect.width, rect.height, rect.xRadius, rect.yRadius);
     }
     void RenderManager::FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const
     {

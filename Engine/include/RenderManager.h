@@ -35,6 +35,7 @@ namespace jela
 
         void DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
         void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const RoundedRectf& rect, float lineThickness = 1.f) const;
         void DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
 
         void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect = false) const;
@@ -56,6 +57,7 @@ namespace jela
 
         void FillRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY) const;
         void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const;
+        void FillRoundedRect(const RoundedRectf& rect) const;
         void FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const;
 #else
         void DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness = 1.f) const;
@@ -64,6 +66,7 @@ namespace jela
 
         void DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
         void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const RoundedRectf& rect, float lineThickness = 1.f) const;
         void DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
 
         void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect = false) const;
@@ -85,6 +88,7 @@ namespace jela
 
         void FillRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY) const;
         void FillRoundedRect(const Rectf& rect, float radiusX, float radiusY) const;
+        void FillRoundedRect(const RoundedRectf& rect) const;
         void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 

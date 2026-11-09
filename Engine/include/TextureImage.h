@@ -33,6 +33,7 @@ namespace jela
         RectTransform* m_pRectTransform{};
         Rectf m_SourceRect{};
         Vector2f m_DestSize{};
+        bool m_UseSourceRectSize{false};
     };
 
 } // jela

@@ -14,6 +14,8 @@ namespace jela
     void TextureImage::Init()
     {
         m_pRectTransform = GetOwner()->GetComponent<RectTransform>();
+        if (m_UseSourceRectSize) UseSourceRectSize();
+        else UseTextureSize();
     }
     const ResourcePtr<Texture>& TextureImage::GetManagedTexture() const
     {
@@ -35,12 +37,7 @@ namespace jela
     }
     void TextureImage::SetSourceRectPos(float x, float y)
     {
-        m_SourceRect.left = x;
-#ifdef MATHEMATICAL_COORDINATESYSTEM
-        m_SourceRect.bottom = y;
-#else
-        m_SourceRect.top = y;
-#endif
+        m_SourceRect.SetPos(x,y);
     }
     void TextureImage::SetSourceRectPos(Vector2f newPos)
     {
@@ -61,12 +58,14 @@ namespace jela
     }
     void TextureImage::UseSourceRectSize()
     {
+        m_UseSourceRectSize = true;
         if (m_pRectTransform) m_pRectTransform->SetRectSize(m_SourceRect.width, m_SourceRect.height);
         m_DestSize.x = m_SourceRect.width;
         m_DestSize.y = m_SourceRect.height;
     }
     void TextureImage::UseTextureSize()
     {
+        m_UseSourceRectSize = false;
         if (m_pRectTransform) m_pRectTransform->SetRectSize(m_pTexture->GetSize());
         m_DestSize = m_pTexture->GetSize();
     }
