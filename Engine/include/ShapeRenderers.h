@@ -67,7 +67,7 @@ namespace jela
     {
     public:
         RectfRenderer() = default;
-        explicit RectfRenderer(const Rectf& rect) : ShapeRenderer{rect} {}
+        explicit RectfRenderer(const Rectf& rect) : ShapeRenderer{std::forward<const Rectf&>(rect)} {}
         void Draw() const override
         {
             if (m_Fill) ENGINE.RenderMngr()->FillRectangle(m_Shape);
@@ -78,7 +78,7 @@ namespace jela
     {
     public:
         RoundedRectfRenderer() = default;
-        explicit RoundedRectfRenderer(const RoundedRectf& rect) : ShapeRenderer{rect} {}
+        explicit RoundedRectfRenderer(const RoundedRectf& rect) : ShapeRenderer{std::forward<const RoundedRectf&>(rect)} {}
         void Draw() const override
         {
             if (m_Fill) ENGINE.RenderMngr()->FillRoundedRect(m_Shape);
@@ -96,7 +96,7 @@ namespace jela
     {
     public:
         EllipsefRenderer() = default;
-        explicit EllipsefRenderer(const Ellipsef& ellipse) : ShapeRenderer{ellipse} {}
+        explicit EllipsefRenderer(const Ellipsef& ellipse) : ShapeRenderer{std::forward<const Ellipsef&>(ellipse)} {}
         void Draw() const override
         {
             if (m_Fill) ENGINE.RenderMngr()->FillEllipse(m_Shape);
@@ -114,7 +114,7 @@ namespace jela
     {
     public:
         CirclefRenderer() = default;
-        explicit CirclefRenderer(const Circlef& circle) : ShapeRenderer{circle} {}
+        explicit CirclefRenderer(const Circlef& circle) : ShapeRenderer{std::forward<const Circlef&>(circle)} {}
         void Draw() const override
         {
             if (m_Fill) ENGINE.RenderMngr()->FillCircle(m_Shape);
