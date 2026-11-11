@@ -3,7 +3,6 @@
 #include "Engine.h"
 #include "GameObject.h"
 #include "TextureImage.h"
-#include "Transform.h"
 #include "RectTransform.h"
 
 namespace jela

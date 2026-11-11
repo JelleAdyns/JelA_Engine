@@ -1,6 +1,7 @@
 #ifndef TEXTURERENDERCOMPONENT_H
 #define TEXTURERENDERCOMPONENT_H
-#include "Renderer.h"
+#include "Geometry.h"
+#include "Renderers.h"
 
 namespace jela
 {

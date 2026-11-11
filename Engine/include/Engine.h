@@ -13,6 +13,8 @@
 
 namespace jela
 {
+    template <typename T, typename... Types>
+    concept cAnyOf = std::disjunction_v<std::is_same<T, Types>...>;
 
     class Engine final
     {

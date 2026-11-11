@@ -607,6 +607,66 @@ namespace jela
 		Point2f center{};
 		float rad{};
 	};
+
+	struct Color
+	{
+		constexpr Color() = default;
+
+		template <typename T>
+			requires std::is_floating_point_v<T>
+		constexpr Color(T r, T g, T b, T a = 1.f) :
+			Color
+			{
+				static_cast<uint8_t>(std::clamp(r, 0.f, 1.f) * 255),
+				static_cast<uint8_t>(std::clamp(g, 0.f, 1.f) * 255),
+				static_cast<uint8_t>(std::clamp(b, 0.f, 1.f) * 255),
+				static_cast<uint8_t>(std::clamp(a, 0.f, 1.f) * 255)
+			}
+		{}
+		constexpr Color(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 255) :
+			r {std::min<std::uint8_t>(r,255)},
+			g {std::min<std::uint8_t>(g,255)},
+			b {std::min<std::uint8_t>(b,255)},
+			a {std::min<std::uint8_t>(a,255)}
+		{};
+		explicit operator COLORREF() const {
+			return RGB(r, g, b);
+		}
+
+		std::uint8_t r{};
+		std::uint8_t g{};
+		std::uint8_t b{};
+
+		std::uint8_t a{};
+
+		const static Color WHITE;
+		const static Color BLACK;
+		const static Color GREY;
+
+		const static Color RED;
+		const static Color GREEN;
+		const static Color BLUE;
+
+		const static Color YELLOW;
+		const static Color CYAN;
+		const static Color MAGENTA;
+
+		const static Color ORANGE;
+		const static Color PURPLE;
+		const static Color LIME;
+	};
+	inline constexpr Color Color::WHITE{255,255,255};
+	inline constexpr Color Color::BLACK{0,0,0};
+	inline constexpr Color Color::GREY{128,128,128};
+	inline constexpr Color Color::RED{255,0,0};
+	inline constexpr Color Color::GREEN{0,255,0};
+	inline constexpr Color Color::BLUE{0,0,255};
+	inline constexpr Color Color::YELLOW{255,255,0};
+	inline constexpr Color Color::CYAN{0,255,255};
+	inline constexpr Color Color::MAGENTA{255,0,255};
+	inline constexpr Color Color::ORANGE{255,128,0};
+	inline constexpr Color Color::PURPLE{128,0,255};
+	inline constexpr Color Color::LIME{128,255,0};
 }
 
 #endif // !STRUCTS_H
