@@ -1,6 +1,7 @@
 #ifndef RENDERCOMPONENT_H
 #define RENDERCOMPONENT_H
 #include "Component.h"
+#include "Engine.h"
 
 namespace jela
 {
