@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "Structs.h"
+#include "JelA/Structs.h"
 
 namespace jela::mat3x3
 {

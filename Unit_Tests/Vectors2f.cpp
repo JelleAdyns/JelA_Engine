@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <complex>
 
-#include "Structs.h"
+#include "JelA/Structs.h"
 
 namespace jela::vec2f
 {

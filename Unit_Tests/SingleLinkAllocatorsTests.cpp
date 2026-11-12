@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "SingleLinkAllocators.h"
+#include "JelA/Memory/SingleLinkAllocators.h"
 
 namespace jela
 {

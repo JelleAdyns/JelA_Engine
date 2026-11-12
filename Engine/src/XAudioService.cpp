@@ -1,8 +1,7 @@
-#include "AudioService.h"
-#include "Engine.h"
-#include "FileExceptions.h"
+#include "JelA/AudioService.h"
+#include "JelA/Engine.h"
+#include "JelA/Misc/FileExceptions.h"
 #include <xaudio2.h>
-#include <ranges>
 #include <filesystem>
 #include <mutex>
 #include <map>

@@ -1,6 +1,6 @@
-#include "DirectXObjects.h"
+#include "JelA/DirectXObjects.h"
 
-#include "Engine.h"
+#include "JelA/Engine.h"
 
 namespace jela::DX
 {

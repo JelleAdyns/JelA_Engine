@@ -1,7 +1,7 @@
-#include "AudioService.h"
+#include "JelA/AudioService.h"
 #include <windows.h>
 #include <format>
-#include "Defines.h"
+#include "JelA/Misc/Defines.h"
 
 namespace jela
 {

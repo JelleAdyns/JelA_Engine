@@ -1,11 +1,11 @@
-#include "Scene.h"
+#include "JelA/Scene.h"
 
 #include <execution>
 
-#include "Engine.h"
-#include "GameObject.h"
-#include "Transform.h"
-#include "Utils.h"
+#include "JelA/Engine.h"
+#include "JelA/GameObject.h"
+#include "JelA/Components/Transform.h"
+#include "JelA/Utils.h"
 
 namespace jela
 {

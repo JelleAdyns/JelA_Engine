@@ -2,7 +2,7 @@
 
 #include <complex>
 
-#include "Structs.h"
+#include "JelA/Structs.h"
 
 namespace jela::vec3f
 {

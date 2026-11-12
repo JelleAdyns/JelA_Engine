@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "Component.h"
-#include "FixedSizeAllocators.h"
+#include "JelA/Components/Component.h"
+#include "JelA/Memory/FixedSizeAllocators.h"
 
 
 namespace jela

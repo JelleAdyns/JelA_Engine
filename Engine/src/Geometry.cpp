@@ -1,13 +1,13 @@
 // ReSharper disable CppDFAUnusedValue
 // ReSharper disable CppDFAUnreachableCode
 // ReSharper disable CppDFAConstantConditions
-#include "Geometry.h"
-#include "Engine.h"
+#include "JelA/Geometry.h"
+#include "JelA/Engine.h"
 #include <algorithm>
 #include <execution>
 #include <numbers>
 
-#include "Utils.h"
+#include "JelA/Utils.h"
 
 namespace jela
 {

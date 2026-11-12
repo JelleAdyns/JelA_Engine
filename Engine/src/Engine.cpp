@@ -1,7 +1,7 @@
-#include "Engine.h"
+#include "JelA/Engine.h"
 #include <thread>
 
-#include "AudioService.h"
+#include "JelA/AudioService.h"
 
 namespace jela
 {

@@ -1,10 +1,10 @@
-#include "GameWindow.h"
+#include "JelA/GameWindow.h"
 
 #include <windowsx.h>
 
 #include <utility>
 
-#include "Engine.h"
+#include "JelA/Engine.h"
 
 namespace jela
 {

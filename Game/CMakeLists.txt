@@ -1,7 +1,5 @@
 project(GameProjectTitle)
 
-set(GUI_TYPE WIN32)
-
 #Setup the source files of the Game Project
 set(SOURCES 
 	"Main.cpp"
@@ -31,10 +29,6 @@ add_custom_target(copyResources ALL
 )
 
 add_dependencies(${PROJECT_NAME} copyResources)
-
-#Filter the Source files
-source_group("src" REGULAR_EXPRESSION ".cpp|.h")
-
 
 include(functions)
 AddVLD()

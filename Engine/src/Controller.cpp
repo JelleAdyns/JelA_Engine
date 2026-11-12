@@ -1,5 +1,6 @@
-#include "Controller.h"
+#include "JelA/Controller.h"
 #include <unordered_map>
+#include <utility>
 
 #include <XInput.h>
 
@@ -12,20 +13,20 @@ namespace jela
 		explicit ControllerImpl(uint8_t controllerIndex) :
 			m_ControllerIndex{ controllerIndex }
 		{
-			static_assert(static_cast<int>(Button::DpadUp) == XINPUT_GAMEPAD_DPAD_UP);
-			static_assert(static_cast<int>(Button::DpadDown) == XINPUT_GAMEPAD_DPAD_DOWN);
-			static_assert(static_cast<int>(Button::DpadLeft) == XINPUT_GAMEPAD_DPAD_LEFT);
-			static_assert(static_cast<int>(Button::DpadRight) == XINPUT_GAMEPAD_DPAD_RIGHT);
-			static_assert(static_cast<int>(Button::Start) == XINPUT_GAMEPAD_START);
-			static_assert(static_cast<int>(Button::Back) == XINPUT_GAMEPAD_BACK);
-			static_assert(static_cast<int>(Button::LeftThumb) == XINPUT_GAMEPAD_LEFT_THUMB);
-			static_assert(static_cast<int>(Button::RightThumb) == XINPUT_GAMEPAD_RIGHT_THUMB);
-			static_assert(static_cast<int>(Button::LeftShoulder) == XINPUT_GAMEPAD_LEFT_SHOULDER);
-			static_assert(static_cast<int>(Button::RightShoulder) == XINPUT_GAMEPAD_RIGHT_SHOULDER);
-			static_assert(static_cast<int>(Button::A) == XINPUT_GAMEPAD_A);
-			static_assert(static_cast<int>(Button::B) == XINPUT_GAMEPAD_B);
-			static_assert(static_cast<int>(Button::X) == XINPUT_GAMEPAD_X);
-			static_assert(static_cast<int>(Button::Y) == XINPUT_GAMEPAD_Y);
+			static_assert(std::to_underlying(Button::DpadUp) == XINPUT_GAMEPAD_DPAD_UP);
+			static_assert(std::to_underlying(Button::DpadDown) == XINPUT_GAMEPAD_DPAD_DOWN);
+			static_assert(std::to_underlying(Button::DpadLeft) == XINPUT_GAMEPAD_DPAD_LEFT);
+			static_assert(std::to_underlying(Button::DpadRight) == XINPUT_GAMEPAD_DPAD_RIGHT);
+			static_assert(std::to_underlying(Button::Start) == XINPUT_GAMEPAD_START);
+			static_assert(std::to_underlying(Button::Back) == XINPUT_GAMEPAD_BACK);
+			static_assert(std::to_underlying(Button::LeftThumb) == XINPUT_GAMEPAD_LEFT_THUMB);
+			static_assert(std::to_underlying(Button::RightThumb) == XINPUT_GAMEPAD_RIGHT_THUMB);
+			static_assert(std::to_underlying(Button::LeftShoulder) == XINPUT_GAMEPAD_LEFT_SHOULDER);
+			static_assert(std::to_underlying(Button::RightShoulder) == XINPUT_GAMEPAD_RIGHT_SHOULDER);
+			static_assert(std::to_underlying(Button::A) == XINPUT_GAMEPAD_A);
+			static_assert(std::to_underlying(Button::B) == XINPUT_GAMEPAD_B);
+			static_assert(std::to_underlying(Button::X) == XINPUT_GAMEPAD_X);
+			static_assert(std::to_underlying(Button::Y) == XINPUT_GAMEPAD_Y);
 		}
 
 		~ControllerImpl() = default;
