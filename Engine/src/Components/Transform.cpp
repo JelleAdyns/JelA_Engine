@@ -1,12 +1,12 @@
 #include "JelA/Components/Transform.h"
 #include "JelA/GameObject.h"
-#include "JelA/Misc/Defines.h"
 
 namespace jela
 {
+    constexpr std::size_t Transform::MAX_AMOUNT{Scene::GetMaxObjects()};
+
     Transform::Transform(Vector2f position, float rotation, Vector2f scale):
-        m_WorldTransform{},
-        m_LocalTransform{position, rotation, scale}
+        m_LocalTransform{.position = position, .rotation = rotation, .scale = scale}
     {}
     Transform::Transform(Vector2f position, float rotation, float scaleX, float scaleY):
         Transform{position, rotation, {scaleX,scaleY}}

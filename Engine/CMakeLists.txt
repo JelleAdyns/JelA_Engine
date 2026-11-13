@@ -5,9 +5,10 @@ set(LIB_HEADERS
         include/JelA/Commands/MovementCommands.h
         include/JelA/Components/Renderers/LineRenderer.h
         include/JelA/Components/Renderers/PrimitiveRenderers.h
-        include/JelA/Components/Renderers/Renderers.h
+        include/JelA/Components/Renderers/Renderer.h
         include/JelA/Components/Renderers/TextRenderer.h
         include/JelA/Components/Renderers/TextureRenderer.h
+        include/JelA/Components/Renderers/ShapeRenderers.h
         include/JelA/Components/Movement.h
         include/JelA/Components/Rotator.h
         include/JelA/Components/Component.h
@@ -26,6 +27,7 @@ set(LIB_HEADERS
         include/JelA/Misc/FileExceptions.h
         include/JelA/Misc/framework.h
         include/JelA/Misc/HResultHandler.h
+        include/JelA/Misc/Concepts.h
         include/JelA/AudioService.h
         include/JelA/Controller.h
         include/JelA/DirectXObjects.h
@@ -40,6 +42,7 @@ set(LIB_HEADERS
         include/JelA/Utils.h
 )
 set(LIB_SOURCES
+        ${LIB_HEADERS}
         src/AudioService.cpp
         src/Controller.cpp
         src/DirectXObjects.cpp
@@ -65,6 +68,8 @@ set(LIB_SOURCES
         src/Components/Transform.cpp
         src/Utils.cpp
         src/XAudioService.cpp
+        src/Components/Renderers/LineRenderer.cpp
+        src/Components/Renderers/PrimitiveRenderers.cpp
 )
 
 

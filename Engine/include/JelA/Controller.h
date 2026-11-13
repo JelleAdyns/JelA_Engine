@@ -2,11 +2,14 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "Commands/Command.h"
-#include "Structs.h"
+#include <cstdint>
+#include <memory>
 
 namespace jela
 {
+	struct Vector2f;
+	class Command;
+
 	class Controller final
 	{
 	public:
@@ -30,7 +33,7 @@ namespace jela
 			X = 0x4000,
 			Y = 0x8000
 		};
-		enum class ButtonState : uint8_t
+		enum class ButtonState : std::uint8_t
 		{
 			UpThisFrame,
 			DownThisFrame,
@@ -38,7 +41,7 @@ namespace jela
 			NotPressed
 		};
 
-		Controller(ID controllerIndex);
+		explicit Controller(ID controllerIndex);
 
 		~Controller();
 

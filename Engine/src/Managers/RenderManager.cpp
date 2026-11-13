@@ -1,11 +1,15 @@
 #include "JelA/Managers/RenderManager.h"
 
 #include <numbers>
-
+#include "JelA/Geometry.h"
 #include "JelA/Engine.h"
+#include "JelA/GameWindow.h"
 
 namespace jela
 {
+    RenderManager::RenderManager(GameWindow* pWindow):
+        m_pWindow{pWindow}
+    {}
     void RenderManager::SetColor(COLORREF newColor, float opacity) const
     {
         m_DXHandler.dDeviceContext2D.SetDrawColor(newColor, opacity);

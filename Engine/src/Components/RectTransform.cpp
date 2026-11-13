@@ -1,8 +1,6 @@
 #include "JelA/Components/RectTransform.h"
 
-#include "JelA/Engine.h"
 #include "JelA/GameObject.h"
-#include "JelA/Components/Transform.h"
 
 namespace jela
 {
@@ -145,7 +143,7 @@ namespace jela
     constexpr Vector2f RectTransform::GetAnchorMapping(Anchor anchor)
     {
         assert((anchor != Anchor::SIZE));
-        return m_AnchorMappings[static_cast<int>(anchor)];
+        return m_AnchorMappings[std::to_underlying(anchor)];
     }
     constexpr bool RectTransform::IsLeft(Anchor anchor)
     {

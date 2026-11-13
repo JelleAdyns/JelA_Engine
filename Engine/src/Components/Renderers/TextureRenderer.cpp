@@ -19,15 +19,12 @@ namespace jela
             m_pTextureImage->GetSourceRect(),
             GetOpacity());
 
-        if (auto* pRectTranform = GetOwner()->GetComponent<RectTransform>())
+        if (const auto* pRectTranform = GetOwner()->GetComponent<RectTransform>())
         {
             ENGINE.RenderMngr()->SetColor(RGB(0,255,0));
             ENGINE.RenderMngr()->DrawEllipse( -pRectTranform->AnchoredPos(), 20,20);
             ENGINE.RenderMngr()->SetColor(RGB(255,255,255));
         }
-        ENGINE.RenderMngr()->FillPolygon(poly);
-        ENGINE.RenderMngr()->DrawArc(arc);
-        ENGINE.RenderMngr()->DrawArc(arc2);
     }
     void TextureRenderer::SetOpacity(uint8_t opacityPercentage)
     {

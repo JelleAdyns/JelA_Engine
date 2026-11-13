@@ -1,8 +1,12 @@
 #include "JelA/Controller.h"
-#include <unordered_map>
-#include <utility>
 
+
+#include <unordered_map>
+#include <Windows.h>
 #include <XInput.h>
+
+#include "JelA/Structs.h"
+#include "JelA/Commands/Command.h"
 
 namespace jela
 {
@@ -76,8 +80,8 @@ namespace jela
 		{
 			std::size_t operator()(const ControllerButtonState& controllerState) const
 			{
-				auto result = static_cast<std::size_t>(controllerState.buttonState) << 8;
-				result |= static_cast<std::size_t>(controllerState.button);
+				auto result = std::to_underlying(controllerState.buttonState) << 8;
+				result |= std::to_underlying(controllerState.button);
 
 				return result;
 			}
@@ -131,7 +135,7 @@ namespace jela
 	bool Controller::ControllerImpl::IsAnyButtonPressedImpl() const
 	{
 		const XINPUT_STATE previousState = m_CurrentState;
-		XINPUT_STATE currentState = XINPUT_STATE{};
+		auto currentState = XINPUT_STATE{};
 		XInputGetState(m_ControllerIndex, &currentState);
 
 		//buttons
@@ -171,7 +175,7 @@ namespace jela
 		m_CurrentState = XINPUT_STATE{};
 		XInputGetState(m_ControllerIndex, &m_CurrentState);
 
-		auto buttonChanges = m_CurrentState.Gamepad.wButtons ^ m_PreviousState.Gamepad.wButtons;
+		const auto buttonChanges = m_CurrentState.Gamepad.wButtons ^ m_PreviousState.Gamepad.wButtons;
 		m_ButtonsPressedThisFrame = buttonChanges & m_CurrentState.Gamepad.wButtons;
 		m_ButtonsReleasedThisFrame = buttonChanges & (~m_CurrentState.Gamepad.wButtons);
 		HandleInputImpl();
@@ -179,15 +183,15 @@ namespace jela
 
 	bool Controller::ControllerImpl::IsDownThisFrameImpl(Button button) const
 	{
-		return m_ButtonsPressedThisFrame & static_cast<int>(button);
+		return m_ButtonsPressedThisFrame & std::to_underlying(button);
 	}
 	bool Controller::ControllerImpl::IsUpThisFrameImpl(Button button) const
 	{
-		return m_ButtonsReleasedThisFrame & static_cast<int>(button);
+		return m_ButtonsReleasedThisFrame & std::to_underlying(button);
 	}
 	bool Controller::ControllerImpl::IsPressedImpl(Button button) const
 	{
-		return m_CurrentState.Gamepad.wButtons & static_cast<int>(button);
+		return m_CurrentState.Gamepad.wButtons & std::to_underlying(button);
 	}
 
 	void Controller::ControllerImpl::SetJoystickDeadzone(bool left, uint8_t percentage)
@@ -206,9 +210,7 @@ namespace jela
 
 	void Controller::ControllerImpl::AddCommandImpl(const std::shared_ptr<Command>& pCommand, Button button, ButtonState buttonState)
 	{
-		ControllerButtonState state{};
-		state.button = button;
-		state.buttonState = buttonState;
+		const ControllerButtonState state{.button = button, .buttonState = buttonState};
 	#ifndef NDEBUG
 		if (m_MapCommands.contains(state)) std::cout << "Binding to the requested button already exists. Overwriting now.\n";
 	#endif // !NDEBUG
@@ -217,9 +219,7 @@ namespace jela
 
 	void Controller::ControllerImpl::RemoveCommandImpl(Button button, ButtonState buttonState)
 	{
-		ControllerButtonState state{};
-		state.button = button;
-		state.buttonState = buttonState;
+		const ControllerButtonState state{.button = button, .buttonState = buttonState};
 		if (m_MapCommands.contains(state)) m_MapCommands.erase(state);
 	}
 

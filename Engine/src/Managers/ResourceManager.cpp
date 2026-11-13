@@ -126,6 +126,7 @@ namespace jela
     {
         SafeRelease(&m_pDBitmap);
     }
+    void Swap(Texture& first, Texture& second) noexcept {first.Swap(second);}
     void Texture::Swap(Texture& other) noexcept
     {
         std::swap(other.m_FileName, m_FileName);
@@ -133,6 +134,11 @@ namespace jela
         std::swap(other.m_TextureWidth, m_TextureWidth);
         std::swap(other.m_TextureHeight, m_TextureHeight);
     }
+    ID2D1Bitmap* Texture::GetBitmap() const{ return m_pDBitmap; }
+    Vector2f Texture::GetSize() const{ return {m_TextureWidth, m_TextureHeight}; }
+    float Texture::GetWidth() const{ return m_TextureWidth; }
+    float Texture::GetHeight() const{ return m_TextureHeight; }
+    const std::wstring& Texture::GetFileName() const{ return m_FileName; }
 
     void Texture::InitFactory()
     {
@@ -234,6 +240,7 @@ namespace jela
 
         SafeRelease(&m_pFontCollection);
     }
+    void Swap(Font& first, Font& second) noexcept{first.Swap(second);}
     void Font::Swap(Font& other) noexcept
     {
         std::swap(m_pFontCollection, other.m_pFontCollection);
@@ -304,6 +311,7 @@ namespace jela
     {
         SafeRelease(&m_pDWriteFactory);
     }
+    std::wstring Font::GetFontName() const { return m_FontName; }
 
 
     TextFormat::TextFormat(float fontSize, bool bold, bool italic, HorAllignment horAllign, VertAllignment vertAllign)
@@ -558,4 +566,5 @@ namespace jela
     {
         return ENGINE.ResourceMngr();
     }
+
 }

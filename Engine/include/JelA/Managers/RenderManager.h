@@ -1,19 +1,22 @@
 #ifndef RENDERMANAGER_H
 #define RENDERMANAGER_H
-#include "JelA/DirectXObjects.h"
-#include "JelA/GameWindow.h"
-#include "JelA/Geometry.h"
-#include "JelA/Managers/ResourceManager.h"
 
+#include "JelA/DirectXObjects.h"
+#include "JelA/Managers/ResourceManager.h"
+#include "JelA/Structs.h"
 
 namespace jela
 {
+    class GameWindow;
+
+    class Geometry;
+    class Polygon;
+    class Arc;
+
     class RenderManager
     {
     public:
-        explicit RenderManager(GameWindow* pWindow):
-            m_pWindow{pWindow}
-        {}
+        explicit RenderManager(GameWindow* pWindow);
 
         void SetColor(COLORREF newColor, float opacity = 1.F) const;
         void SetBackGroundColor(COLORREF newColor, float opacity = 1.F);

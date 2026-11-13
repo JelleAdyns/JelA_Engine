@@ -1,76 +1,83 @@
 #include "JelA/Utils.h"
 
+#include "JelA/Structs.h"
+
 namespace jela::utils
 {
 
     // Following functions originate from Koen Samyn, professor Game Development at Howest
 
-    // Private Implementations
-    struct QuadraticInformation
+    namespace
     {
-        float a{};
-        float b{};
-        float c{};
-        float Discriminant{};
-    };
-    bool LineIntersectsEllipse(const Point2f& point1, const Point2f& point2, const Ellipsef& e, QuadraticInformation& info)
-    {
-        //https://math.stackexchange.com/questions/2534644/points-of-intersection-between-line-and-ellipse
-        const jela::Vector2f slope{ point2 - point1 };
-        const float slopeCoefficient{ slope.y / slope.x }; // Represents 'm' in 'y = mx + a'
+        // Private Implementations
 
-        const float lineElevation{ (point1.y - e.center.y) - slopeCoefficient * (point1.x - e.center.x) }; // Represents 'a' in 'y = mx + a'
-        const float yRadSquared{ e.radiusY * e.radiusY };
-        const float xRadSquared{ e.radiusX * e.radiusX };
-
-        // ax^2 + bx + c = 0
-        const float a{ yRadSquared + xRadSquared * slopeCoefficient * slopeCoefficient };
-        const float b{ 2 * xRadSquared * slopeCoefficient * lineElevation };
-        const float c{ xRadSquared * (lineElevation * lineElevation) - xRadSquared * yRadSquared };
-
-        // D = b^2 - 4*a*c
-        const float D{ b * b - 4 * a * c };
-        info = { a, b, c, D };
-        return D >= 0; // infinite line overlaps
-    }
-    void CalculateIntersections(float slopeCoefficient, float lineElevation, const QuadraticInformation& info, std::pair<Point2f, Point2f>& intersections)
-    {
-        // (-b +- sqrt(D)) / 2*a
-        float x1{}, x2{};
-
-        if (std::abs(info.a) > FLT_EPSILON)
+        struct QuadraticInformation
         {
-            const float sqrtD{ sqrtf(info.Discriminant) };
-            const float denom{ 1 / (2 * info.a) };
+            float a{};
+            float b{};
+            float c{};
+            float Discriminant{};
+        };
 
-            x1 = (-info.b - sqrtD) * denom;
-            x2 = (-info.b + sqrtD) * denom;
-        }
-        // y = mx + a
-        const float y1 = slopeCoefficient * x1 + lineElevation;
-        const float y2 = slopeCoefficient * x2 + lineElevation;
-
-        intersections.first.x += x1;
-        intersections.first.y += y1;
-        intersections.second.x += x2;
-        intersections.second.y += y2;
-
-        if (std::abs(info.Discriminant) < FLT_EPSILON)
+        bool LineIntersectsEllipse(const Point2f& point1, const Point2f& point2, const Ellipsef& e, QuadraticInformation& info)
         {
-            intersections.second.x = FLT_MAX;
-            intersections.second.y = FLT_MAX;
-        }
-    }
-    Intersections IntersectionPointsLieOnLine(const Point2f& point1, const Point2f& point2, std::pair<Point2f, Point2f>& intersections)
-    {
-        const bool firstPointLiesOnLine{ IsPointOnLineSegment(intersections.first, point1, point2, 0.01f) };
-        const bool secondPointLiesOnLine{ IsPointOnLineSegment(intersections.second, point1, point2, 0.01f) };
-        if (!firstPointLiesOnLine) intersections.first = jela::Point2f{ FLT_MAX, FLT_MAX};
-        if (!secondPointLiesOnLine) intersections.second = jela::Point2f{ FLT_MAX, FLT_MAX };
+            //https://math.stackexchange.com/questions/2534644/points-of-intersection-between-line-and-ellipse
+            const jela::Vector2f slope{ point2 - point1 };
+            const float slopeCoefficient{ slope.y / slope.x }; // Represents 'm' in 'y = mx + a'
 
-        if (firstPointLiesOnLine && secondPointLiesOnLine) return Intersections::Double;
-        if (firstPointLiesOnLine || secondPointLiesOnLine) return Intersections::One;
-        return Intersections::None;
+            const float lineElevation{ (point1.y - e.center.y) - slopeCoefficient * (point1.x - e.center.x) }; // Represents 'a' in 'y = mx + a'
+            const float yRadSquared{ e.radiusY * e.radiusY };
+            const float xRadSquared{ e.radiusX * e.radiusX };
+
+            // ax^2 + bx + c = 0
+            const float a{ yRadSquared + xRadSquared * slopeCoefficient * slopeCoefficient };
+            const float b{ 2 * xRadSquared * slopeCoefficient * lineElevation };
+            const float c{ xRadSquared * (lineElevation * lineElevation) - xRadSquared * yRadSquared };
+
+            // D = b^2 - 4*a*c
+            const float D{ b * b - 4 * a * c };
+            info = { a, b, c, D };
+            return D >= 0; // infinite line overlaps
+        }
+        void CalculateIntersections(float slopeCoefficient, float lineElevation, const QuadraticInformation& info, std::pair<Point2f, Point2f>& intersections)
+        {
+            // (-b +- sqrt(D)) / 2*a
+            float x1{}, x2{};
+
+            if (std::abs(info.a) > FLT_EPSILON)
+            {
+                const float sqrtD{ sqrtf(info.Discriminant) };
+                const float denom{ 1 / (2 * info.a) };
+
+                x1 = (-info.b - sqrtD) * denom;
+                x2 = (-info.b + sqrtD) * denom;
+            }
+            // y = mx + a
+            const float y1 = slopeCoefficient * x1 + lineElevation;
+            const float y2 = slopeCoefficient * x2 + lineElevation;
+
+            intersections.first.x += x1;
+            intersections.first.y += y1;
+            intersections.second.x += x2;
+            intersections.second.y += y2;
+
+            if (std::abs(info.Discriminant) < FLT_EPSILON)
+            {
+                intersections.second.x = FLT_MAX;
+                intersections.second.y = FLT_MAX;
+            }
+        }
+        Intersections IntersectionPointsLieOnLine(const Point2f& point1, const Point2f& point2, std::pair<Point2f, Point2f>& intersections)
+        {
+            const bool firstPointLiesOnLine{ IsPointOnLineSegment(intersections.first, point1, point2, 0.01f) };
+            const bool secondPointLiesOnLine{ IsPointOnLineSegment(intersections.second, point1, point2, 0.01f) };
+            if (!firstPointLiesOnLine) intersections.first = jela::Point2f{ FLT_MAX, FLT_MAX};
+            if (!secondPointLiesOnLine) intersections.second = jela::Point2f{ FLT_MAX, FLT_MAX };
+
+            if (firstPointLiesOnLine && secondPointLiesOnLine) return Intersections::Double;
+            if (firstPointLiesOnLine || secondPointLiesOnLine) return Intersections::One;
+            return Intersections::None;
+        }
     }
 
     // Public Implementations

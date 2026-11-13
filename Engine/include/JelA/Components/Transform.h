@@ -2,14 +2,13 @@
 #define TRANSFORMCOMPONENT_H
 #include "Component.h"
 #include "JelA/Structs.h"
-#include "JelA/Scene.h"
 
 namespace jela
 {
     class Transform : public Component
     {
     public:
-        static constexpr std::size_t MAX_AMOUNT = Scene::GetMaxObjects();
+        static const std::size_t MAX_AMOUNT;
 
         Transform() = default;
         Transform(Vector2f position, float rotation, Vector2f scale);

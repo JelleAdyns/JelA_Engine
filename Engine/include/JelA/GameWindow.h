@@ -1,11 +1,15 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 #include <functional>
+#include <optional>
+#include "JelA/Misc/framework.h"
 
-#include "Structs.h"
 
 namespace jela
 {
+    struct Vector2f;
+    using Point2f = Vector2f;
+
     class GameWindow
     {
     public:

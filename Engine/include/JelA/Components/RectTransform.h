@@ -1,13 +1,11 @@
 #ifndef ANCHOREDRECT_H
 #define ANCHOREDRECT_H
-#include "Component.h"
+
 #include "JelA/Structs.h"
 #include "Transform.h"
 
 namespace jela
 {
-
-    class Transform;
     class RectTransform final : public Transform
     {
     public:

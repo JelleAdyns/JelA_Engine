@@ -1,21 +1,17 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "Structs.h"
-#include "Misc/framework.h"
 #include <strsafe.h>
 
 #include "Managers/ResourceManager.h"
 #include "Managers/InputManager.h"
 #include "Managers/RenderManager.h"
 #include "Managers/SceneManager.h"
+#include "GameWindow.h"
 
 
 namespace jela
 {
-    template <typename T, typename... Types>
-    concept cAnyOf = std::disjunction_v<std::is_same<T, Types>...>;
-
     class Engine final
     {
     public:

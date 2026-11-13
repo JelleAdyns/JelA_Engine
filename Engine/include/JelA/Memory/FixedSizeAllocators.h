@@ -5,7 +5,6 @@
 #include <optional>
 #include <ranges>
 
-#include "JelA/Misc/Defines.h"
 #include "MemoryAllocator.h"
 
 namespace jela

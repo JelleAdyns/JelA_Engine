@@ -1,22 +1,14 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-#include "Misc/Defines.h"
 #include <cassert>
-#include <type_traits>
 #include <numbers>
 
+#include "JelA/Misc/Defines.h"
+#include "Misc/Concepts.h"
 
 namespace jela
 {
-	template <typename T>
-	concept cFloatArithmetic =
-		std::is_arithmetic_v<T> &&
-			std::is_signed_v<T> &&
-				std::numeric_limits<T>::max() <= std::numeric_limits<float>::max() &&
-					std::numeric_limits<T>::min() >= std::numeric_limits<float>::min();
-
-
     struct Vector2f;
 	using Point2f = Vector2f;
 

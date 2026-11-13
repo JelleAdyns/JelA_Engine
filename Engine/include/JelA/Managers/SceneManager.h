@@ -1,8 +1,8 @@
 #ifndef SCENEMANAGER_H
 #define SCENEMANAGER_H
 
+#include <type_traits>
 #include "JelA/Scene.h"
-#include "JelA/Misc/Defines.h"
 
 namespace jela
 {

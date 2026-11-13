@@ -1,7 +1,5 @@
 #include "JelA/GameWindow.h"
 
-#include <windowsx.h>
-
 #include <utility>
 
 #include "JelA/Engine.h"

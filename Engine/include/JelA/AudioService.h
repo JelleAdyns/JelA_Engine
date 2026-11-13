@@ -1,24 +1,19 @@
 #ifndef AUDIOSERVICE_H
 #define AUDIOSERVICE_H
 
-#include <string>
-#include <memory>
-#include "Observer.h"
 #include "Misc/Defines.h"
 #include "ObservingObjects.h"
+#include "Observer.h"
 
 namespace jela
 {
-
 	using SoundID = unsigned int;
 	struct SoundInstanceID final : public ObservingObject<std::optional<uint8_t>, uint8_t>
 	{
 		std::optional<uint8_t> GetID() const { return GetValue(); }
 
         SoundInstanceID() = default;
-		SoundInstanceID(Subject<uint8_t>* pSubject, std::uint8_t index):
-		   ObservingObject{pSubject, index}
-		{}
+		SoundInstanceID(Subject<uint8_t>* pSubject, std::uint8_t index);
 
 	private:
 

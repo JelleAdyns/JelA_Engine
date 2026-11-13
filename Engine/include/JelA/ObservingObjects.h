@@ -2,15 +2,10 @@
 #define OBSERVINGOBJECT_H
 
 #include "Observer.h"
+#include "Misc/Concepts.h"
 
 namespace jela
 {
-    template <typename T>
-        concept cExchangable = std::is_move_constructible_v<T> && std::is_copy_constructible_v<T> && std::is_swappable_v<T>;
-
-    template <typename T>
-        concept cEasyConstruct = cExchangable<T> && std::is_default_constructible_v<T>;
-
     template <cExchangable T>
     struct ObjectObserved
     {

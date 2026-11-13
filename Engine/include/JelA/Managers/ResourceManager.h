@@ -3,12 +3,11 @@
 
 #include "JelA/ObservingObjects.h"
 #include "JelA/Misc/HResultHandler.h"
-#include "JelA/Structs.h"
 #include <unordered_map>
 
 namespace jela
 {
-
+    struct Vector2f;
     //---------------------------------------------------------------
     class Texture final
     {
@@ -23,13 +22,13 @@ namespace jela
         ~Texture();
 
         void Swap(Texture& other) noexcept;
-        friend void Swap(Texture& first, Texture& second) noexcept {first.Swap(second);}
+        friend void Swap(Texture& first, Texture& second) noexcept;
 
-        ID2D1Bitmap* GetBitmap() const { return m_pDBitmap; }
-        Vector2f GetSize() const { return {m_TextureWidth, m_TextureHeight}; }
-        float GetWidth() const { return m_TextureWidth; }
-        float GetHeight() const { return m_TextureHeight; }
-        const tstring& GetFileName() const { return m_FileName; }
+        ID2D1Bitmap* GetBitmap() const;
+        Vector2f GetSize() const;
+        float GetWidth() const;
+        float GetHeight() const;
+        const tstring& GetFileName() const;
 
         static void InitFactory();
         static void DestroyFactory();
@@ -62,12 +61,13 @@ namespace jela
         ~Font();
 
         void Swap(Font& other) noexcept;
-        friend void Swap(Font& first, Font& second) noexcept {first.Swap(second);}
+        friend void Swap(Font& first, Font& second) noexcept;
 
         static void InitFactory();
         static void DestroyFactory();
 
-        std::wstring GetFontName() const { return m_FontName; }
+        std::wstring GetFontName() const;
+
     private:
         // using friend class for tight coupling
         friend class TextFormat;

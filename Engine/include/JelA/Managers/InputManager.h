@@ -5,10 +5,14 @@
 
 #include "JelA/Commands/Command.h"
 #include "JelA/Controller.h"
-#include "JelA/Structs.h"
+#include "JelA/Misc/framework.h"
 
 namespace jela
 {
+
+    struct Vector2f;
+    using Point2f = Vector2f;
+
     namespace mouse
     {
         enum class Actions : uint8_t

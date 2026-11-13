@@ -1,10 +1,25 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "Structs.h"
+#include <stdexcept>
+#include <vector>
+
+namespace jela
+{
+    struct Vector2f;
+    using Point2f = Vector2f;
+
+    struct Rectf;
+    struct RoundedRectf;
+    struct Ellipsef;
+    struct Circlef;
+}
 
 namespace jela::utils
 {
+
+
+
     // Following functions originate from Koen Samyn, professor Game Development at Howest
 
     enum class Intersections

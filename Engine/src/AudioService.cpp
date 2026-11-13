@@ -1,7 +1,6 @@
 #include "JelA/AudioService.h"
 #include <windows.h>
 #include <format>
-#include "JelA/Misc/Defines.h"
 
 namespace jela
 {
@@ -13,6 +12,9 @@ namespace jela
 	//------------------------------------------------------------------------------------------------------------------------------
 	// SoundInstanceID
 
+	SoundInstanceID::SoundInstanceID(Subject<uint8_t>* pSubject, std::uint8_t index):
+		ObservingObject{pSubject, index}
+	{}
 	void SoundInstanceID::Notify(uint8_t index)
     {
         if (GetValue().has_value() && GetValue().value() == index)
@@ -31,10 +33,10 @@ namespace jela
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// LogAudio
-	void LogAudio::AddSound(const tstring& path, SoundID id)
+	void LogAudio::AddSound(const tstring& filename, SoundID id)
 	{
-		OutputDebugString(std::format(_T("LogAudio: AddSound: path: {}, id: {}\n"), path, id).c_str());
-		m_pRealService->AddSound(path, id);
+		OutputDebugString(std::format(_T("LogAudio: AddSound: path: {}, id: {}\n"), filename, id).c_str());
+		m_pRealService->AddSound(filename, id);
 	}
 	void LogAudio::RemoveSound(SoundID id)
 	{

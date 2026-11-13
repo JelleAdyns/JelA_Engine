@@ -1,7 +1,7 @@
 #include "JelA/GameObject.h"
 
 #include "JelA/Components/Transform.h"
-#include "JelA/Components/Renderers/Renderers.h"
+#include "JelA/Components/Renderers/Renderer.h"
 #include "JelA/Scene.h"
 #include "JelA/Engine.h"
 

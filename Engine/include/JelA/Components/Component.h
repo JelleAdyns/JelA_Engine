@@ -20,12 +20,12 @@ namespace jela
     class BufferOwnerKey final
     {
         friend class Scene;
-        BufferOwnerKey(){}
+        BufferOwnerKey() = default;
     };
     class ComponentOwnerKey final
     {
         friend class GameObject;
-        ComponentOwnerKey(){}
+        ComponentOwnerKey() = default;
     };
 
     class Component
@@ -123,40 +123,6 @@ namespace jela
             return _T("TIP: Define a 'static constexpr std::size_t MAX_AMOUNT' field in your component class"
                                   " to customize the max amount of that component.\n");
         }
-    };
-
-
-    class derived: public Component
-    {
-    public:
-        ~derived() override
-        {
-            OutputDebugString(_T("derived Destructor!\n"));
-        }
-        derived()
-        {
-            OutputDebugString(_T("derived Constructor!\n"));
-        }
-        void Init() override{};
-        void Start() override{};
-        void Update() override{};
-        int kaas{};
-    };
-    class derived2: public Component
-    {
-    public:
-        ~derived2() override
-        {
-            OutputDebugString(_T("derived2 Destructor!\n"));
-        }
-        derived2()
-        {
-            OutputDebugString(_T("derived2 Constructor!\n"));
-        };
-        void Init() override{};
-        void Start() override{};
-        void Update() override{};
-        static constexpr std::size_t MAX_AMOUNT { 30 };
     };
 
 }

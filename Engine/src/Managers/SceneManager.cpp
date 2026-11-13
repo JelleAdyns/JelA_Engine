@@ -1,5 +1,7 @@
 #include "JelA/Managers/SceneManager.h"
 
+#include "JelA/Scene.h"
+
 namespace jela
 {
     void SceneManager::Draw() const

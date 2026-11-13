@@ -1,8 +1,8 @@
 #ifndef TEXTRENDERER_H
 #define TEXTRENDERER_H
-#include "Renderers.h"
-#include "JelA/Managers/ResourceManager.h"
 
+#include "Renderer.h"
+#include "JelA/Managers/ResourceManager.h"
 
 namespace jela
 {
