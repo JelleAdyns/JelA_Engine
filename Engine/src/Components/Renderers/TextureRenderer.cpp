@@ -21,9 +21,9 @@ namespace jela
 
         if (const auto* pRectTranform = GetOwner()->GetComponent<RectTransform>())
         {
-            ENGINE.RenderMngr()->SetColor(RGB(0,255,0));
+            ENGINE.RenderMngr()->SetColor(Color::GREEN);
             ENGINE.RenderMngr()->DrawEllipse( -pRectTranform->AnchoredPos(), 20,20);
-            ENGINE.RenderMngr()->SetColor(RGB(255,255,255));
+            ENGINE.RenderMngr()->SetColor(Color::WHITE);
         }
     }
     void TextureRenderer::SetOpacity(uint8_t opacityPercentage)

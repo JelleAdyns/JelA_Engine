@@ -3,6 +3,9 @@
 #include "Misc/Defines.h"
 #include "Misc/HResultHandler.h"
 #include <functional>
+
+#include "Structs.h"
+
 namespace jela
 {
     struct Matrix3X3;
@@ -128,8 +131,8 @@ namespace jela::DX
         DeviceContext2D& operator=(DeviceContext2D&&) noexcept = delete;
 
         void ReleaseBuffers();
-        void SetBackgroundColor(COLORREF newColor, float opacity);
-        void SetDrawColor(COLORREF newColor, float opacity) const;
+        void SetBackgroundColor(Color newColor);
+        void SetDrawColor(Color newColor) const;
         HResultHandler Draw(const std::function<void()>& drawer) const;
 
         void PushTransform();

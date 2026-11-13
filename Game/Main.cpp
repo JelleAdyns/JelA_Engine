@@ -90,7 +90,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 {  
     int result{-1};
 
-    if (ENGINE.Init(hInstance, _T("Resources/"), 16 * 40, 9 * 40, RGB(0,0,255)))
+    if (ENGINE.Init(hInstance, _T("Resources/"), 16 * 40, 9 * 40, jela::Color{0,0,255}))
     {
         ENGINE.SceneMngr()->SetScene<TestScene>();
 

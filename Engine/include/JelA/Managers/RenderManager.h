@@ -18,8 +18,8 @@ namespace jela
     public:
         explicit RenderManager(GameWindow* pWindow);
 
-        void SetColor(COLORREF newColor, float opacity = 1.F) const;
-        void SetBackGroundColor(COLORREF newColor, float opacity = 1.F);
+        void SetColor(Color newColor) const;
+        void SetBackGroundColor(Color newColor);
 
         void DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness = 1.f) const;
         void DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness = 1.f) const;

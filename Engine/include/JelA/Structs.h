@@ -621,15 +621,14 @@ namespace jela
 			b {std::min<std::uint8_t>(b,255)},
 			a {std::min<std::uint8_t>(a,255)}
 		{};
-		explicit operator COLORREF() const {
-			return RGB(r, g, b);
-		}
+
+		explicit operator COLORREF() const { return RGB(r, g, b); }
 
 		std::uint8_t r{};
 		std::uint8_t g{};
 		std::uint8_t b{};
 
-		std::uint8_t a{};
+		std::uint8_t a{255};
 
 		const static Color WHITE;
 		const static Color BLACK;

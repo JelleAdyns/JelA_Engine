@@ -23,7 +23,7 @@ namespace jela
 
         ~Engine() = default;
 
-        bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, COLORREF bgColor = RGB(0,0,0), const tstring& wndwName = _T("Game"));
+        bool Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, Color bgColor = {}, const tstring& wndwName = _T("Game"));
         int Run();
         void Shutdown();
         void Quit();

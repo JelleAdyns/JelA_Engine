@@ -234,22 +234,24 @@ namespace jela::DX
             SafeRelease(&m_pDTargetBitmap);
         }
     }
-    void DeviceContext2D::SetBackgroundColor(COLORREF newColor, float opacity)
+    void DeviceContext2D::SetBackgroundColor(Color newColor)
     {
         m_BGColor = D2D1::ColorF(
-            GetRValue(newColor) / 255.f,
-            GetGValue(newColor) / 255.f,
-            GetBValue(newColor) / 255.f,
-            std::clamp(opacity, 0.0f, 1.0f));
+            newColor.r / 255.f,
+            newColor.g / 255.f,
+            newColor.b / 255.f,
+            newColor.a / 255.f
+            );
     }
-    void DeviceContext2D::SetDrawColor(COLORREF newColor, float opacity) const
+    void DeviceContext2D::SetDrawColor(Color newColor) const
     {
         m_pDColorBrush->SetColor(D2D1::ColorF(
-           GetRValue(newColor) / 255.f,
-           GetGValue(newColor) / 255.f,
-           GetBValue(newColor) / 255.f));
+           newColor.r / 255.f,
+           newColor.g / 255.f,
+           newColor.b / 255.f
+           ));
 
-        m_pDColorBrush->SetOpacity(std::clamp(opacity, 0.0f, 1.0f));
+        m_pDColorBrush->SetOpacity(newColor.a / 255.f);
     }
     HResultHandler DeviceContext2D::Draw(const std::function<void()>& drawer) const
     {

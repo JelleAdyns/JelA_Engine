@@ -9,7 +9,7 @@ namespace jela
     void RectfRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(static_cast<COLORREF>(m_Color), m_Color.a);
+        r->SetColor(m_Color);
         if (m_Fill) r->FillRectangle(m_Primitive);
         else r->DrawRectangle(m_Primitive, m_LineThickness);
     }
@@ -19,7 +19,7 @@ namespace jela
     void RoundedRectfRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(static_cast<COLORREF>(m_Color), m_Color.a);
+        r->SetColor(m_Color);
         if (m_Fill) r->FillRoundedRect(m_Primitive);
         else r->DrawRoundedRect(m_Primitive, m_LineThickness);
     }
@@ -36,7 +36,7 @@ namespace jela
     void EllipsefRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(static_cast<COLORREF>(m_Color), m_Color.a);
+        r->SetColor(m_Color);
         if (m_Fill) r->FillEllipse(m_Primitive);
         else r->DrawEllipse(m_Primitive, m_LineThickness);
     }
@@ -53,7 +53,7 @@ namespace jela
     void CirclefRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(static_cast<COLORREF>(m_Color), m_Color.a);
+        r->SetColor(m_Color);
         if (m_Fill) r->FillCircle(m_Primitive);
         else r->DrawCircle(m_Primitive, m_LineThickness);
     }

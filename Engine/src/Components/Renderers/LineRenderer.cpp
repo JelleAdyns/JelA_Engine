@@ -6,7 +6,7 @@ namespace jela
     void LineRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(static_cast<COLORREF>(m_Color), m_Color.a);
+        r->SetColor(m_Color);
         r->DrawLine(m_Point1, m_Point2, m_LineThickness);
     }
     void LineRenderer::Move(const Vector2f& offset){Move(offset.x,offset.y);}

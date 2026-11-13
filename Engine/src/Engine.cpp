@@ -11,7 +11,7 @@ namespace jela
         m_SecondsPerFrame{1.f/60.f}
     {}
 
-    bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, COLORREF bgColor, const tstring& wndwName)
+    bool Engine::Init(HINSTANCE hInstance, const tstring& resourcePath, int width, int height, Color bgColor, const tstring& wndwName)
     {
         SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);

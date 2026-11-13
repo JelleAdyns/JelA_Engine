@@ -10,13 +10,13 @@ namespace jela
     RenderManager::RenderManager(GameWindow* pWindow):
         m_pWindow{pWindow}
     {}
-    void RenderManager::SetColor(COLORREF newColor, float opacity) const
+    void RenderManager::SetColor(Color newColor) const
     {
-        m_DXHandler.dDeviceContext2D.SetDrawColor(newColor, opacity);
+        m_DXHandler.dDeviceContext2D.SetDrawColor(newColor);
     }
-    void RenderManager::SetBackGroundColor(COLORREF newColor, float opacity)
+    void RenderManager::SetBackGroundColor(Color newColor)
     {
-        m_DXHandler.dDeviceContext2D.SetBackgroundColor(newColor, opacity);
+        m_DXHandler.dDeviceContext2D.SetBackgroundColor(newColor);
     }
 
     void RenderManager::DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness) const
