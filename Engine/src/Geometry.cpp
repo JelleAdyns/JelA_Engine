@@ -63,7 +63,7 @@ namespace jela
 
 	//--------------------------------------------------------------------------------------------------------------------
 	// Polygon
-	Polygon::Polygon(const std::vector<Point2f>& points, bool closeSegment) :
+	PolygonGeometry::PolygonGeometry(const std::vector<Point2f>& points, bool closeSegment) :
 		Geometry{},
 		m_Points{points}
 	{
@@ -72,7 +72,7 @@ namespace jela
 			OutputDebugString(std::format(_T("Creation of Polygon failed!\n")).c_str());
 	}
 
-	bool Polygon::Recreate(const std::vector<Point2f>& points, bool closeSegment)
+	bool PolygonGeometry::Recreate(const std::vector<Point2f>& points, bool closeSegment)
 	{
 		m_Points = points;
 		if (m_Points.empty()) return false;
@@ -110,26 +110,27 @@ namespace jela
 		return hr == S_OK;
 	}
 
-	void Polygon::ResetPosition()
+	void PolygonGeometry::ResetPosition()
 	{
 		AdjustPoints([&](Point2f& point) { point -= GetTranslation(); });
 		Geometry::ResetPosition();
 	}
-	void Polygon::Move(const Vector2f& translation)
+	void PolygonGeometry::Move(const Vector2f& translation)
 	{
 		Geometry::Move(translation);
 		AdjustPoints([&](Point2f& point) { point += translation; });
 	}
 
-	std::vector<Point2f> Polygon::GetOriginalPoints() const
+	std::vector<Point2f> PolygonGeometry::GetOriginalPoints() const
 	{
 		std::vector<Point2f>transformedPoints = m_Points;
 		std::for_each(std::execution::par, transformedPoints.begin(), transformedPoints.end(),
 			[&](Point2f& point) { point -= GetTranslation(); });
 		return transformedPoints;
 	}
+	const std::vector<Point2f>& PolygonGeometry::GetPoints() const { return m_Points; }
 
-	bool Polygon::IsPointInside(const Point2f& point) const
+	bool PolygonGeometry::IsPointInside(const Point2f& point) const
 	{
 		if (m_Points.size() < 2) return false;
 
@@ -169,8 +170,9 @@ namespace jela
 		return numberOfIntersectionPoints % 2 != 0;
 
 	}
+	bool PolygonGeometry::IsSegmentClosed() const { return m_SegmentClosed; }
 
-	void Polygon::AdjustPoints(const std::function<void(Point2f&)>& func)
+	void PolygonGeometry::AdjustPoints(const std::function<void(Point2f&)>& func)
 	{
 		std::for_each(std::execution::par, m_Points.begin(), m_Points.end(), func);
 	}
@@ -179,7 +181,7 @@ namespace jela
 
 	//--------------------------------------------------------------------------------------------------------------------
 	// Arc
-	Arc::Arc(float centerX, float centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
+	ArcGeometry::ArcGeometry(float centerX, float centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
 		Geometry{},
 		m_Radius{radiusX,radiusY},
 		m_StartAngle{startAngle},
@@ -193,10 +195,10 @@ namespace jela
 				centerX,centerY,radiusX,radiusY,startAngle,angle, closeSegment).c_str());
 		}
 	}
-	Arc::Arc(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
-		Arc{ center.x, center.y, radiusX, radiusY, startAngle, angle, closeSegment }
+	ArcGeometry::ArcGeometry(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
+		ArcGeometry{ center.x, center.y, radiusX, radiusY, startAngle, angle, closeSegment }
 	{}
-	Arc::Arc(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment) :
+	ArcGeometry::ArcGeometry(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment) :
 		Geometry{}
 	{
 		if (!Recreate(point1, point2, clockwise, closeSegment))
@@ -207,7 +209,7 @@ namespace jela
 		}
 	}
 
-	bool Arc::Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment)
+	bool ArcGeometry::Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment)
 	{
 		assert(radiusX >= 0 && radiusY >= 0);
 
@@ -268,15 +270,15 @@ namespace jela
 
 		return hr == S_OK;
 	}
-	bool Arc::RecreateByRadius(float radiusX, float radiusY, bool closeSegment)
+	bool ArcGeometry::RecreateByRadius(float radiusX, float radiusY, bool closeSegment)
 	{
 		return Recreate(radiusX, radiusY, m_StartAngle, m_Angle, closeSegment);
 	}
-	bool Arc::RecreateByAngle(float startAngle, float angle, bool closeSegment)
+	bool ArcGeometry::RecreateByAngle(float startAngle, float angle, bool closeSegment)
 	{
 		return Recreate(m_Radius.x, m_Radius.y, startAngle, angle, closeSegment);
 	}
-	bool Arc::Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment)
+	bool ArcGeometry::Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment)
 	{
 		if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) clockwise = !clockwise;
 
@@ -309,7 +311,7 @@ namespace jela
 		return Recreate(m_Radius.x, m_Radius.y, m_StartAngle, m_Angle, closeSegment);
 	}
 
-	void Arc::SetPosition(float centerX, float centerY)
+	void ArcGeometry::SetPosition(float centerX, float centerY)
 	{
 		ResetPosition();
 		Move(centerX, centerY);

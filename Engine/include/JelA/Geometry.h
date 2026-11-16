@@ -33,16 +33,16 @@ namespace jela
 		ID2D1PathGeometry* m_pGeo{};
 	};
 
-	class Polygon final : public Geometry
+	class PolygonGeometry final : public Geometry
 	{
 	public:
-		Polygon(const std::vector<Point2f>& points, bool closeSegment = true);
+		PolygonGeometry(const std::vector<Point2f>& points, bool closeSegment = true);
 
-		Polygon(const Polygon& other) = default;
-		Polygon(Polygon&& other) noexcept = default;
-		Polygon& operator=(const Polygon& other) = default;
-		Polygon& operator=(Polygon&& other) noexcept = default;
-		~Polygon() override = default;
+		PolygonGeometry(const PolygonGeometry& other) = default;
+		PolygonGeometry(PolygonGeometry&& other) noexcept = default;
+		PolygonGeometry& operator=(const PolygonGeometry& other) = default;
+		PolygonGeometry& operator=(PolygonGeometry&& other) noexcept = default;
+		~PolygonGeometry() override = default;
 
 		bool Recreate(const std::vector<Point2f>& points, bool closeSegment = true);
 
@@ -51,8 +51,9 @@ namespace jela
 		void Move(const Vector2f& translation) override;
 
 		std::vector<Point2f> GetOriginalPoints() const;
-		const std::vector<Point2f>& GetPoints() const{ return m_Points; };
+		const std::vector<Point2f>& GetPoints() const;;
 		bool IsPointInside(const Point2f& point) const;
+		bool IsSegmentClosed() const;
 	private:
 		void AdjustPoints(const std::function<void(Point2f&)>& func);
 
@@ -60,18 +61,18 @@ namespace jela
 		std::vector<Point2f> m_Points{};
 	};
 
-	class Arc final : public Geometry
+	class ArcGeometry final : public Geometry
 	{
 	public:
-		Arc(float centerX, float centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
-		Arc(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
-		Arc(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
+		ArcGeometry(float centerX, float centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
+		ArcGeometry(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
+		ArcGeometry(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
 
-		Arc(const Arc& other) = default;
-		Arc(Arc&& other) noexcept = default;
-		Arc& operator=(const Arc& other) = default;
-		Arc& operator=(Arc&& other) noexcept = default;
-		~Arc() override = default;
+		ArcGeometry(const ArcGeometry& other) = default;
+		ArcGeometry(ArcGeometry&& other) noexcept = default;
+		ArcGeometry& operator=(const ArcGeometry& other) = default;
+		ArcGeometry& operator=(ArcGeometry&& other) noexcept = default;
+		~ArcGeometry() override = default;
 
 		bool Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
 		bool RecreateByRadius(float radiusX, float radiusY, bool closeSegment);

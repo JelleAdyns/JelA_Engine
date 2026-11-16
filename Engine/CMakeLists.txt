@@ -40,6 +40,8 @@ set(LIB_HEADERS
         include/JelA/Scene.h
         include/JelA/Structs.h
         include/JelA/Utils.h
+        include/JelA/Components/Renderers/GeometryRenderers.h
+        include/JelA/Components/Polygon.h
 )
 set(LIB_SOURCES
         ${LIB_HEADERS}
@@ -70,6 +72,7 @@ set(LIB_SOURCES
         src/XAudioService.cpp
         src/Components/Renderers/LineRenderer.cpp
         src/Components/Renderers/PrimitiveRenderers.cpp
+        src/Components/Renderers/GeometryRenderers.cpp
 )
 
 

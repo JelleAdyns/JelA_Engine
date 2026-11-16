@@ -410,19 +410,19 @@ namespace jela
     }
 
     //Geometry
-    void RenderManager::DrawPolygon(const Polygon& polygon, float lineThickness)
+    void RenderManager::DrawPolygon(const PolygonGeometry& polygon, float lineThickness)
     {
         DrawGeometry(&polygon, lineThickness);
     }
-    void RenderManager::FillPolygon(const Polygon& polygon)
+    void RenderManager::FillPolygon(const PolygonGeometry& polygon)
     {
         FillGeometry(&polygon);
     }
-    void RenderManager::DrawArc(const Arc& arc, float lineThickness)
+    void RenderManager::DrawArc(const ArcGeometry& arc, float lineThickness)
     {
         DrawGeometry(&arc, lineThickness);
     }
-    void RenderManager::FillArc(const Arc& arc)
+    void RenderManager::FillArc(const ArcGeometry& arc)
     {
         FillGeometry(&arc);
     }

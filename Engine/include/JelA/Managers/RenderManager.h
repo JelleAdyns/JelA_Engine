@@ -10,8 +10,8 @@ namespace jela
     class GameWindow;
 
     class Geometry;
-    class Polygon;
-    class Arc;
+    class PolygonGeometry;
+    class ArcGeometry;
 
     class RenderManager
     {
@@ -95,11 +95,11 @@ namespace jela
         void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-        void DrawPolygon(const Polygon& polygon, float lineThickness = 1.f);
-        void FillPolygon(const Polygon& polygon);
+        void DrawPolygon(const PolygonGeometry& polygon, float lineThickness = 1.f);
+        void FillPolygon(const PolygonGeometry& polygon);
 
-        void DrawArc(const Arc& arc, float lineThickness = 1.f);
-        void FillArc(const Arc& arc);
+        void DrawArc(const ArcGeometry& arc, float lineThickness = 1.f);
+        void FillArc(const ArcGeometry& arc);
 
         void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f) const;
         void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f) const;

@@ -9,9 +9,9 @@ namespace jela
     void RectfRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(m_Color);
-        if (m_Fill) r->FillRectangle(m_Primitive);
-        else r->DrawRectangle(m_Primitive, m_LineThickness);
+        r->SetColor(GetColor());
+        if (IsFilled()) r->FillRectangle(GetPrimitive());
+        else r->DrawRectangle(GetPrimitive(), GetLineThickness());
     }
 
     RoundedRectfRenderer::RoundedRectfRenderer(const RoundedRectf& rect): PrimitiveRenderer{std::forward<const RoundedRectf&>(rect)}
@@ -19,14 +19,14 @@ namespace jela
     void RoundedRectfRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(m_Color);
-        if (m_Fill) r->FillRoundedRect(m_Primitive);
-        else r->DrawRoundedRect(m_Primitive, m_LineThickness);
+        r->SetColor(GetColor());
+        if (IsFilled()) r->FillRoundedRect(GetPrimitive());
+        else r->DrawRoundedRect(GetPrimitive(), GetLineThickness());
     }
     void RoundedRectfRenderer::SetRadius(float radiusX, float radiusY)
     {
-        m_Primitive.xRadius = std::max(0.f, radiusX);
-        m_Primitive.yRadius = std::max(0.f, radiusY);
+        GetPrimitive().xRadius = std::max(0.f, radiusX);
+        GetPrimitive().yRadius = std::max(0.f, radiusY);
     }
     void RoundedRectfRenderer::SetRadius(const Vector2f& radii){SetRadius(radii.x, radii.y);}
     void RoundedRectfRenderer::SetRadius(float radius){ SetRadius(radius, radius); }
@@ -36,14 +36,14 @@ namespace jela
     void EllipsefRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(m_Color);
-        if (m_Fill) r->FillEllipse(m_Primitive);
-        else r->DrawEllipse(m_Primitive, m_LineThickness);
+        r->SetColor(GetColor());
+        if (IsFilled()) r->FillEllipse(GetPrimitive());
+        else r->DrawEllipse(GetPrimitive(), GetLineThickness());
     }
     void EllipsefRenderer::SetRadius(float radiusX, float radiusY)
     {
-        m_Primitive.radiusX = std::max(0.f, radiusX);
-        m_Primitive.radiusY = std::max(0.f, radiusY);
+        GetPrimitive().radiusX = std::max(0.f, radiusX);
+        GetPrimitive().radiusY = std::max(0.f, radiusY);
     }
     void EllipsefRenderer::SetRadius(const Vector2f& radii){SetRadius(radii.x, radii.y);}
     void EllipsefRenderer::SetRadius(float radius){ SetRadius(radius, radius); }
@@ -53,9 +53,9 @@ namespace jela
     void CirclefRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(m_Color);
-        if (m_Fill) r->FillCircle(m_Primitive);
-        else r->DrawCircle(m_Primitive, m_LineThickness);
+        r->SetColor(GetColor());
+        if (IsFilled()) r->FillCircle(GetPrimitive());
+        else r->DrawCircle(GetPrimitive(), GetLineThickness());
     }
-    void CirclefRenderer::SetRadius(float radius){ m_Primitive.rad = std::max(0.f, radius); }
+    void CirclefRenderer::SetRadius(float radius){ GetPrimitive().rad = std::max(0.f, radius); }
 }

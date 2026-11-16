@@ -6,8 +6,8 @@ namespace jela
     void LineRenderer::Draw() const
     {
         const auto r = ENGINE.RenderMngr();
-        r->SetColor(m_Color);
-        r->DrawLine(m_Point1, m_Point2, m_LineThickness);
+        r->SetColor(GetColor());
+        r->DrawLine(m_Point1, m_Point2, GetLineThickness());
     }
     void LineRenderer::Move(const Vector2f& offset){Move(offset.x,offset.y);}
     void LineRenderer::Move(float xOffset, float yOffset){ m_Point1.x += xOffset; m_Point1.y += yOffset; m_Point2.x += xOffset; m_Point2.y += yOffset; }

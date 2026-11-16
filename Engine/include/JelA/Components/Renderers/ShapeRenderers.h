@@ -16,7 +16,7 @@ namespace jela
         Color GetColor() const { return m_Color; }
 
         void Draw() const override = 0;
-    protected:
+    private:
         float m_LineThickness{1.f};
         Color m_Color{Color::WHITE};
     };
@@ -63,10 +63,11 @@ namespace jela
         void SetFill(bool fill) {m_Fill = fill;}
 
         const Primitive& GetPrimitive() const {return m_Primitive;}
+        Primitive& GetPrimitive() {return m_Primitive;}
         bool IsFilled() const {return m_Fill;}
 
         void Draw() const override = 0;
-    protected:
+    private:
         Primitive m_Primitive{};
         bool m_Fill{false};
     };
