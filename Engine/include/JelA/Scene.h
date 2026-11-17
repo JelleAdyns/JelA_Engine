@@ -95,12 +95,7 @@ namespace jela
         static constexpr std::size_t GetMaxObjects() { return GameObjectHandler::MAX_GAME_OBJECTS; };
 
         Scene() = default;
-        virtual ~Scene()
-        {
-            m_IsBeingDestroyed = true;
-            m_GameObjectHandler.Clear();
-            m_ComponentHandler.Clear();
-        }
+        virtual ~Scene();
         Scene(const Scene&) = delete;
         Scene(Scene&&) noexcept = delete;
         Scene& operator=(const Scene&) = delete;
@@ -125,23 +120,11 @@ namespace jela
             friend class GameObject;
 
             template <cDerivedComponent T, typename ...Args>
-            static T* AddComponent(Scene* pScene, Args&& ...args)
-            {
-                return pScene->AddComponent<T>(std::forward<Args>(args)...);
-            }
-            static void RemoveComponent(Scene* pScene, const Component* pCompToRemove)
-            {
-                return pScene->RemoveComponent(pCompToRemove);
-            }
+            static T* AddComponent(Scene* pScene, Args&& ...args);
+            static void RemoveComponent(Scene* pScene, const Component* pCompToRemove);
             template <template<typename> typename Container>
-            static void RemoveComponents(Scene* pScene, const Container<Component*>& pCompsToRemove)
-            {
-                pScene->RemoveComponents<Container>(pCompsToRemove);
-            }
-            static GameObject& ConsumeGameObject(Scene* pScene, GameObject&& gameObject)
-            {
-                return pScene->ConsumeGameObject(std::forward<GameObject&&>(gameObject));
-            }
+            static void RemoveComponents(Scene* pScene, const Container<Component*>& pCompsToRemove);
+            static GameObject& ConsumeGameObject(Scene* pScene, GameObject&& gameObject);
         };
 
     protected:
@@ -149,16 +132,13 @@ namespace jela
         GameObject& AddGameObject();
 
     private:
-        template <cDerivedComponent T, typename ...Args> T* AddComponent(Args&& ...args)
-        {
-            return m_ComponentHandler.AddComponent<T>(std::forward<Args>(args)...);
-        }
+
+        template <cDerivedComponent T, typename ...Args> T* AddComponent(Args&& ...args);
         void RemoveComponent(const Component* pCompToRemove);
+
         template <template<typename> typename Container>
-        void RemoveComponents(const Container<Component*>& pCompsToRemove)
-        {
-            m_ComponentHandler.RemoveComponents<Container>(pCompsToRemove);
-        }
+        void RemoveComponents(const Container<Component*>& pCompsToRemove);
+
         GameObject& ConsumeGameObject(GameObject&& gameObject);
 
         static constexpr std::size_t POOL_SIZE = 10'000;
@@ -245,6 +225,30 @@ namespace jela
     T* Scene::ComponentHandler::GetComponent(std::size_t vecIndex)
     {
         return m_Components.at(vecIndex).Get<T>();
+    }
+
+    //GameObjectDoor
+    template <cDerivedComponent T, typename ... Args>
+    T* Scene::GameObjectDoor::AddComponent(Scene* pScene, Args&&... args)
+    {
+        return pScene->AddComponent<T>(std::forward<Args>(args)...);
+    }
+    template <template <typename> class Container>
+    void Scene::GameObjectDoor::RemoveComponents(Scene* pScene, const Container<Component*>& pCompsToRemove)
+    {
+        pScene->RemoveComponents<Container>(pCompsToRemove);
+    }
+
+    //Scene
+    template <cDerivedComponent T, typename ... Args>
+    T* Scene::AddComponent(Args&&... args)
+    {
+        return m_ComponentHandler.AddComponent<T>(std::forward<Args>(args)...);
+    }
+    template <template <typename> class Container>
+    void Scene::RemoveComponents(const Container<Component*>& pCompsToRemove)
+    {
+        m_ComponentHandler.RemoveComponents<Container>(pCompsToRemove);
     }
 
     // ---------------------------------------------------------------------------------------------------------------

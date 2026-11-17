@@ -9,6 +9,12 @@
 
 namespace jela
 {
+    Scene::~Scene()
+    {
+        m_IsBeingDestroyed = true;
+        m_GameObjectHandler.Clear();
+        m_ComponentHandler.Clear();
+    }
     void Scene::InitObjects() const
     {
         m_ComponentHandler.InitComponents();
@@ -58,6 +64,15 @@ namespace jela
         m_ComponentHandler.RemoveComponent(pCompToRemove);
     }
 
+    void Scene::GameObjectDoor::RemoveComponent(Scene* pScene, const Component* pCompToRemove)
+    {
+        return pScene->RemoveComponent(pCompToRemove);
+    }
+    GameObject& Scene::GameObjectDoor::ConsumeGameObject(Scene* pScene, GameObject&& gameObject)
+    {
+        return pScene->ConsumeGameObject(std::forward<GameObject&&>(gameObject));
+    }
+
     Scene::GameObjectHandler::GameObjectHandler(SingleLinkAllocator& alloc):
         m_GameObjectAlloc{std::type_identity<GameObject>{}, MAX_GAME_OBJECTS, alloc}
     {}
@@ -76,7 +91,6 @@ namespace jela
 
         std::ranges::for_each(rangeToRemove, [this](GameObject* pGameObject){DestroyGameObject(pGameObject);});
         m_pGameObjects.erase(rangeToRemove.begin(), rangeToRemove.end());
-
     }
     void Scene::GameObjectHandler::Clear()
     {
