@@ -28,7 +28,13 @@ namespace jela
             r->PushTransform();
             r->ApplyMatrix(t->WorldTransform());
             obj->Draw();
+#ifndef NDEBUG
+            if (m_DrawGizmos) obj->DrawGizmos();
+#endif
             r->PopTransform();
+#ifndef NDEBUG
+            if (m_DrawGizmos) obj->DrawWorldGizmos();
+#endif
         }
     }
     void Scene::Update()

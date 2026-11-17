@@ -13,10 +13,15 @@ namespace jela
         obj.m_IsPartOfScene = true;
         return obj;
     }
-    void GameObject::Start()
+    void GameObject::DrawGizmos()
     {
         for (Component* pComp : m_Components | std::views::values)
-            pComp->Start();
+            pComp->DrawGizmos();
+    }
+    void GameObject::DrawWorldGizmos()
+    {
+        for (Component* pComp : m_Components | std::views::values)
+            pComp->DrawWorldGizmos();
     }
     void GameObject::Draw() const
     {

@@ -101,7 +101,8 @@ namespace jela
         bool HasComponent() const { return HasComponent(typeid(T)); }
         bool HasComponent(const std::type_index& typeID) const { return m_Components.contains(typeID); }
 
-        void Start();
+        void DrawGizmos();
+        void DrawWorldGizmos();
         void Draw() const;
         void Update();
 

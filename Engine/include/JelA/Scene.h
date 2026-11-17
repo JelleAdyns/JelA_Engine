@@ -118,6 +118,7 @@ namespace jela
         void Update();
 
         bool IsBeingDestroyed() const { return m_IsBeingDestroyed; }
+        void SetDrawGizmos(bool draw) { m_DrawGizmos = draw; }
 
         class GameObjectDoor
         {
@@ -162,6 +163,7 @@ namespace jela
 
         static constexpr std::size_t POOL_SIZE = 10'000;
 
+        bool m_DrawGizmos{true};
         bool m_IsBeingDestroyed{false};
         BufferAllocator<POOL_SIZE> m_MemoryPool{};
 

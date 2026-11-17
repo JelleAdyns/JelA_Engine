@@ -21,6 +21,7 @@ namespace jela
         RectTransform(Vector2f size);
         RectTransform(float width, float height);
 
+        void DrawGizmos() override;
         void Start() override;
         void SetWorldPos(float x, float y) override;
         void SetWorldPos(const Vector2f& newWorldPos) override;

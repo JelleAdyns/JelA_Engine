@@ -18,13 +18,6 @@ namespace jela
             m_pTextureImage->GetDestRect(),
             m_pTextureImage->GetSourceRect(),
             GetOpacity());
-
-        if (const auto* pRectTranform = GetOwner()->GetComponent<RectTransform>())
-        {
-            ENGINE.RenderMngr()->SetColor(Color::GREEN);
-            ENGINE.RenderMngr()->DrawEllipse( -pRectTranform->AnchoredPos(), 20,20);
-            ENGINE.RenderMngr()->SetColor(Color::WHITE);
-        }
     }
     void TextureRenderer::SetOpacity(uint8_t opacityPercentage)
     {

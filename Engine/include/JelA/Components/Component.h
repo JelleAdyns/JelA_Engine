@@ -59,9 +59,12 @@ namespace jela
             BASE_MAX_AMOUNT = maxAmount;
         }
 
-        virtual void Init() {};
-        virtual void Start() {};
-        virtual void Update() {};
+        virtual void DrawGizmos() {}
+        virtual void DrawWorldGizmos() {}
+
+        virtual void Init() {}
+        virtual void Start() {}
+        virtual void Update() {}
 
         void SetOwner(ComponentOwnerKey, GameObject* pObject)
         {

@@ -1,5 +1,6 @@
 #include "JelA/Components/RectTransform.h"
 
+#include "JelA/Engine.h"
 #include "JelA/GameObject.h"
 
 namespace jela
@@ -12,6 +13,12 @@ namespace jela
     {
         m_Pivot = GetAnchorMapping(Anchor::Center);
         m_Anchor = GetAnchorMapping(Anchor::Center);
+    }
+    void RectTransform::DrawGizmos()
+    {
+        ENGINE.RenderMngr()->SetColor(Color::GREEN);
+        ENGINE.RenderMngr()->DrawEllipse(-AnchoredPos(), 20,20);
+        ENGINE.RenderMngr()->SetColor(Color::WHITE);
     }
     void RectTransform::Start()
     {
