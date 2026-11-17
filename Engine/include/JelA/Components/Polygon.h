@@ -13,7 +13,7 @@ namespace jela
         {};
 
         void RecreateShape(const std::vector<Point2f>& vertices, bool closeSegment = true) {  m_Polygon.Recreate(vertices, closeSegment); }
-        void ResetPosition();
+        void ResetOffset() { m_Polygon.ResetPosition(); };
         void SetOffset(float x, float y) { SetOffset({ x,y }); }
         void SetOffset(const Vector2f& offset) { m_Polygon.Move(offset - m_Polygon.GetTranslation());}
 
@@ -22,6 +22,7 @@ namespace jela
         bool IsPointInside(const Point2f& point) const { return m_Polygon.IsPointInside(point); }
         bool IsSegmentClosed() const {return m_Polygon.IsSegmentClosed();}
         const PolygonGeometry& GetPolygon() const { return m_Polygon; }
+        Vector2f GetOffset() const { return m_Polygon.GetTranslation(); }
 
     private:
         PolygonGeometry m_Polygon;

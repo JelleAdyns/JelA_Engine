@@ -42,6 +42,7 @@ set(LIB_HEADERS
         include/JelA/Utils.h
         include/JelA/Components/Renderers/GeometryRenderers.h
         include/JelA/Components/Polygon.h
+        include/JelA/Components/Arc.h
 )
 set(LIB_SOURCES
         ${LIB_HEADERS}
