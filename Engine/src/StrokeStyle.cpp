@@ -1,5 +1,6 @@
 #include "JelA/StrokeStyle.h"
-#include "JelA/StrokeStyle.h"
+#include <memory>
+
 
 #include "JelA/Engine.h"
 
@@ -37,6 +38,7 @@ namespace jela
         SafeRelease(&m_pStrokeStyle);
     }
     StrokeStyle::StrokeStyle(const StrokeStyle& other):
+        m_CustomDashesCount{other.m_CustomDashesCount},
         m_NeedsToChange{other.m_NeedsToChange},
         m_StartCap{other.m_StartCap},
         m_EndCap{other.m_EndCap},
@@ -47,9 +49,21 @@ namespace jela
         m_MiterLimit{other.m_MiterLimit},
         m_DashOffset{other.m_DashOffset}
     {
-        UpdateState(other);
+        m_pCustomDashes = nullptr;
+
+        if (m_CustomDashesCount > 0)
+        {
+            const auto p = new float[m_CustomDashesCount]{};
+            for (uint8_t i = 0; i < m_CustomDashesCount; ++i) p[i] = other.m_pCustomDashes[i];
+            m_pCustomDashes.reset(p);
+        }
+
+        UpdateState();
     }
     StrokeStyle::StrokeStyle(StrokeStyle&& other) noexcept:
+        m_pStrokeStyle{std::exchange(other.m_pStrokeStyle, nullptr)},
+        m_pCustomDashes{std::exchange(other.m_pCustomDashes, nullptr)},
+        m_CustomDashesCount{std::exchange(other.m_CustomDashesCount, std::uint8_t{})},
         m_NeedsToChange{std::exchange(other.m_NeedsToChange, false)},
         m_StartCap{std::exchange(other.m_StartCap, Cap::Flat)},
         m_EndCap{std::exchange(other.m_EndCap, Cap::Flat)},
@@ -58,8 +72,7 @@ namespace jela
         m_Style{std::exchange(other.m_Style, Dash::Solid)},
         m_Transform{std::exchange(other.m_Transform, TransformStyle::Normal)},
         m_MiterLimit{std::exchange(other.m_MiterLimit, 0.f)},
-        m_DashOffset{std::exchange(other.m_DashOffset, 0.f)},
-        m_pStrokeStyle{std::exchange(other.m_pStrokeStyle, nullptr)}
+        m_DashOffset{std::exchange(other.m_DashOffset, 0.f)}
     {}
     StrokeStyle& StrokeStyle::operator=(const StrokeStyle& other)
     {
@@ -84,6 +97,8 @@ namespace jela
         std::swap(m_MiterLimit, other.m_MiterLimit);
         std::swap(m_DashOffset, other.m_DashOffset);
         std::swap(m_pStrokeStyle, other.m_pStrokeStyle);
+        std::swap(m_pCustomDashes, other.m_pCustomDashes);
+        std::swap(m_CustomDashesCount, other.m_CustomDashesCount);
     }
     void StrokeStyle::SetOuterCapStyles(Cap startCap, Cap endCap)
     {
@@ -121,9 +136,35 @@ namespace jela
         m_DashOffset = std::max(dashOffset, 0.0f);
         m_NeedsToChange = true;
     }
-    void StrokeStyle::SetCustomDashes(const std::vector<float>& values) const
+    void StrokeStyle::SetCustomDashes(const std::vector<float>& values)
     {
-        CreateStrokeStyle(values.data(), static_cast<uint32_t>(values.size()));
+        constexpr uint8_t max = std::numeric_limits<uint8_t>::max();
+
+        m_Style = Dash::Custom;
+        if (values.size() > max)
+        {
+            const std::vector<float> cappedValues
+            {
+                values.begin(),
+                std::next(values.begin(), max - 1)
+            };
+            CreateStrokeStyle(cappedValues.data(), static_cast<uint32_t>(cappedValues.size()));
+            OutputDebugString(std::format(_T("Capped the custom dashes count to a size of {}, because the size of the vector was larger (with a size of {}).\n"), max, values.size()).c_str());
+        }
+        else CreateStrokeStyle(values.data(), static_cast<uint32_t>(values.size()));
+
+        const auto size = m_pStrokeStyle->GetDashesCount();
+        m_CustomDashesCount = static_cast<std::uint8_t>(size);
+        m_pCustomDashes.reset();
+
+        // Create new array if necessary
+        if (size > 0)
+        {
+            const auto p = new float[size]{};
+            m_pStrokeStyle->GetDashes(p, size);
+            m_pCustomDashes.reset(p);
+        }
+
         m_NeedsToChange = true;
     }
     StrokeStyle::Cap StrokeStyle::GetStartCapStyle() const { return m_StartCap; }
@@ -138,19 +179,16 @@ namespace jela
     std::vector<float> StrokeStyle::GetCustomDashes() const
     {
         if (m_pStrokeStyle == nullptr) return {};
+        if (m_pCustomDashes == nullptr) return {};
+        if (m_CustomDashesCount == 0) return {};
 
-        const auto size = m_pStrokeStyle->GetDashesCount();
-        if (size == 0) return {};
-
-        std::vector<float> result(size);
-        m_pStrokeStyle->GetDashes(result.data(), size);
-        return result;
+        return std::vector<float>{&(m_pCustomDashes[0]), &(m_pCustomDashes[m_CustomDashesCount])};
     }
 
     ID2D1StrokeStyle1* StrokeStyle::RendererDoor::GetStyle(const StrokeStyle& style){ return style.GetStyle(); }
     ID2D1StrokeStyle1* StrokeStyle::GetStyle() const
     {
-        if (m_NeedsToChange) UpdateState(*this);
+        if (m_NeedsToChange) UpdateState();
 
         return m_pStrokeStyle;
     }
@@ -172,16 +210,16 @@ namespace jela
                 static_cast<D2D1_STROKE_TRANSFORM_TYPE>(m_Transform)
                 ),
             customDashes,
-            (customDashes ? numberOfElements : 0),
+            customDashes ? numberOfElements : 0,
             &m_pStrokeStyle);
 
         m_NeedsToChange = false;
     }
-    void StrokeStyle::UpdateState(const StrokeStyle& objectToExtractDashesFrom) const
+    void StrokeStyle::UpdateState() const
     {
-        if (const auto customDashes = objectToExtractDashesFrom.GetCustomDashes(); customDashes.empty())
+        if (m_CustomDashesCount == 0 || m_Style != Dash::Custom)
             CreateStrokeStyle(nullptr, 0);
-        else
-            CreateStrokeStyle(customDashes.data(), static_cast<uint32_t>(customDashes.size()));
+        else if (m_Style == Dash::Custom)
+            CreateStrokeStyle(m_pCustomDashes.get(), m_CustomDashesCount);
     }
 }

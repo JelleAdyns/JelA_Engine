@@ -80,7 +80,7 @@ namespace jela
         void SetTransformStyle(TransformStyle transformStyle);
         void SetMiterLimit(float miterLimit);
         void SetDashOffset(float dashOffset);
-        void SetCustomDashes(const std::vector<float>& values) const;
+        void SetCustomDashes(const std::vector<float>& values);
 
         Cap GetStartCapStyle() const;
         Cap GetEndCapStyle() const;
@@ -101,7 +101,12 @@ namespace jela
     private:
         ID2D1StrokeStyle1* GetStyle() const;
         void CreateStrokeStyle(const float* customDashes, uint32_t numberOfElements) const;
-        void UpdateState(const StrokeStyle& objectToExtractDashesFrom) const;
+        void UpdateState() const;
+
+        mutable ID2D1StrokeStyle1* m_pStrokeStyle{};
+
+        std::unique_ptr<const float[]> m_pCustomDashes {nullptr};
+        std::uint8_t m_CustomDashesCount{0};
 
         mutable bool m_NeedsToChange{false};
 
@@ -113,7 +118,6 @@ namespace jela
         TransformStyle m_Transform {TransformStyle::Normal};
         float m_MiterLimit {10.f};
         float m_DashOffset {0.f};
-        mutable ID2D1StrokeStyle1* m_pStrokeStyle{};
     };
 }
 #endif //STROKESTYLE_H
