@@ -6,6 +6,8 @@
 
 namespace jela
 {
+	class RenderManager;
+
 	class Geometry
 	{
 	public:
@@ -14,19 +16,24 @@ namespace jela
 		Geometry& operator=(const Geometry& other);
 		Geometry& operator=(Geometry&& other) noexcept;
 
-		virtual void Move(float x, float y) { Move({ x,y }); }
-		virtual void Move(const Vector2f& translation) { m_Translation += translation; }
+		virtual void Move(float x, float y);
+		virtual void Move(const Vector2f& translation);
+		virtual void ResetPosition();
 
-		const Vector2f& GetTranslation() const { return m_Translation; };
-		ID2D1PathGeometry* GetGeometry() const { return m_pGeo; };
+		const Vector2f& GetTranslation() const;;
 
-		virtual void ResetPosition() { m_Translation = {}; }
+		class RendererDoor
+		{
+			friend RenderManager;
+			static ID2D1PathGeometry* GetGeometry(const Geometry* geo);
+		};
+
 	protected:
 		Geometry() = default;
-		virtual ~Geometry() { SafeRelease(&m_pGeo); };
+		virtual ~Geometry();;
+		ID2D1PathGeometry* GetGeometry() const;;
 
 		HRESULT Recreate(bool releasePrevious = true);
-
 	private:
 		void swap(Geometry& other) noexcept;
 		Vector2f m_Translation{};

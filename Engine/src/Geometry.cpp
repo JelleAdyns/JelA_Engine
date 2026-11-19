@@ -47,6 +47,17 @@ namespace jela
 		Geometry{std::move(other)}.swap(*this);
 		return *this;
 	}
+	void Geometry::Move(float x, float y){ Move({ x,y }); }
+	void Geometry::Move(const Vector2f& translation) { m_Translation += translation; }
+	void Geometry::ResetPosition() { m_Translation = {}; }
+
+	const Vector2f& Geometry::GetTranslation() const { return m_Translation; }
+
+	ID2D1PathGeometry* Geometry::RendererDoor::GetGeometry(const Geometry* geo){ return geo->GetGeometry(); }
+
+	Geometry::~Geometry() { SafeRelease(&m_pGeo); }
+	ID2D1PathGeometry* Geometry::GetGeometry() const { return m_pGeo; }
+
 	HRESULT Geometry::Recreate(bool releasePrevious)
 	{
 		if (releasePrevious) SafeRelease(&m_pGeo);

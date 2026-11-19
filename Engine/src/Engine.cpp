@@ -245,7 +245,7 @@ namespace jela
     {
         return m_IsQuitting;
     }
-    void Engine::NotifyError(HWND hWnd, const std::wstring& pszErrorMessage, HRESULT hrErr)
+    void Engine::NotifyError(HWND hWnd, const tstring& pszErrorMessage, HRESULT hrErr)
     {
         constexpr size_t MESSAGE_LEN = 512;
         TCHAR message[MESSAGE_LEN];

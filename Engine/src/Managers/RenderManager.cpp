@@ -19,36 +19,36 @@ namespace jela
         m_DXHandler.dDeviceContext2D.SetBackgroundColor(newColor);
     }
 
-    void RenderManager::DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness) const
+    void RenderManager::DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawLine(firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y, lineThickness);
+        DrawLine(firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness) const
+    void RenderManager::DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawLine(firstX, firstY, secondPoint.x, secondPoint.y, lineThickness);
+        DrawLine(firstX, firstY, secondPoint.x, secondPoint.y, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness) const
+    void RenderManager::DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness);
+        DrawLine(firstPoint.x, firstPoint.y, secondX, secondY, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
+    void RenderManager::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        m_DXHandler.dDeviceContext2D.DrawLine(firstX, firstY, secondX, secondY, lineThickness);
+        m_DXHandler.dDeviceContext2D.DrawLine(firstX, firstY, secondX, secondY, lineThickness, ConvertStrokeStyle(pStrokeStyle));
     }
 
-    void RenderManager::DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength, float lineThickness) const
+    void RenderManager::DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawVector(origin.x, origin.y, vector.x, vector.y, headLineLength, lineThickness);
+        DrawVector(origin.x, origin.y, vector.x, vector.y, headLineLength, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawVector(const Point2f& origin, float vectorX, float vectorY, float headLineLength, float lineThickness) const
+    void RenderManager::DrawVector(const Point2f& origin, float vectorX, float vectorY, float headLineLength, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawVector(origin.x, origin.y, vectorX, vectorY, headLineLength, lineThickness);
+        DrawVector(origin.x, origin.y, vectorX, vectorY, headLineLength, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawVector(float originX, float originY, const Vector2f& vector, float headLineLength, float lineThickness) const
+    void RenderManager::DrawVector(float originX, float originY, const Vector2f& vector, float headLineLength, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawVector(originX, originY, vector.x, vector.y, headLineLength, lineThickness);
+        DrawVector(originX, originY, vector.x, vector.y, headLineLength, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness) const
+    void RenderManager::DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
         const float endX = originX + vectorX;
         const float endY = originY + vectorY;
@@ -62,50 +62,52 @@ namespace jela
         const Point2f arrowP3{ endX + cosf(flippedVectorAngle + desiredHeadAngle) * headLineLength,
                                 endY + sinf(flippedVectorAngle + desiredHeadAngle) * headLineLength };
 
-        DrawLine(originX, originY, endX, endY, lineThickness);
-        DrawLine(endX, endY, arrowP2.x, arrowP2.y, lineThickness);
-        DrawLine(endX, endY, arrowP3.x, arrowP3.y, lineThickness);
+        DrawLine(originX, originY, endX, endY, lineThickness, pStrokeStyle);
+        DrawLine(endX, endY, arrowP2.x, arrowP2.y, lineThickness, pStrokeStyle);
+        DrawLine(endX, endY, arrowP3.x, arrowP3.y, lineThickness, pStrokeStyle);
     }
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
 
-    void RenderManager::DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness) const
+    void RenderManager::DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRectangle( leftBottom.x, leftBottom.y, width, height, lineThickness);
+        DrawRectangle( leftBottom.x, leftBottom.y, width, height, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRectangle(const Rectf& rect, float lineThickness) const
+    void RenderManager::DrawRectangle(const Rectf& rect, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRectangle( rect.left, rect.bottom ,rect.width, rect.height, lineThickness);
+        DrawRectangle( rect.left, rect.bottom ,rect.width, rect.height, lineThickness, pStrokeStyle);
     }
 
-    void RenderManager::DrawRectangle(float left, float bottom, float width, float height, float lineThickness) const
+    void RenderManager::DrawRectangle(float left, float bottom, float width, float height, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
         m_DXHandler.dDeviceContext2D.DrawRectangle(
             left,         bottom ,
             left + width, bottom + height,
-            lineThickness);
+            lineThickness,
+            ConvertStrokeStyle(pStrokeStyle));
     }
 
-    void RenderManager::DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY, lineThickness);
+        DrawRoundedRect(leftBottom.x, leftBottom.y, width, height, radiusX, radiusY, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY, lineThickness);
+        DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, radiusX, radiusY, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRoundedRect(const RoundedRectf& rect, float lineThickness) const
+    void RenderManager::DrawRoundedRect(const RoundedRectf& rect, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, rect.xRadius, rect.yRadius, lineThickness);
+        DrawRoundedRect(rect.left, rect.bottom, rect.width, rect.height, rect.xRadius, rect.yRadius, lineThickness, pStrokeStyle);
     }
 
-    void RenderManager::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
         m_DXHandler.dDeviceContext2D.DrawRoundedRect(
           left,         bottom,
           left + width, bottom + height,
           radiusX,radiusY,
-          lineThickness
+          lineThickness,
+          ConvertStrokeStyle(pStrokeStyle)
         );
     }
 
@@ -228,37 +230,38 @@ namespace jela
 
 #else
 
-    void RenderManager::DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness) const
+    void RenderManager::DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRectangle(leftTop.x, leftTop.y, width, height, lineThickness);
+        DrawRectangle(leftTop.x, leftTop.y, width, height, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRectangle(const Rectf& rect, float lineThickness) const
+    void RenderManager::DrawRectangle(const Rectf& rect, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRectangle(rect.left, rect.top, rect.width, rect.height, lineThickness);
+        DrawRectangle(rect.left, rect.top, rect.width, rect.height, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRectangle(float left, float top, float width, float height, float lineThickness) const
+    void RenderManager::DrawRectangle(float left, float top, float width, float height, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        m_DXHandler.dDeviceContext2D.DrawRectangle(left, top, left + width, top + height, lineThickness);
+        m_DXHandler.dDeviceContext2D.DrawRectangle(left, top, left + width, top + height, lineThickness, ConvertStrokeStyle(pStrokeStyle));
     }
 
-    void RenderManager::DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY, lineThickness);
+        DrawRoundedRect(leftTop.x, leftTop.y, width, height, radiusX, radiusY, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, radiusX, radiusY, lineThickness);
+        DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, radiusX, radiusY, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRoundedRect(const RoundedRectf& rect, float lineThickness) const
+    void RenderManager::DrawRoundedRect(const RoundedRectf& rect, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, rect.xRadius, rect.yRadius, lineThickness);
+        DrawRoundedRect(rect.left, rect.top, rect.width, rect.height, rect.xRadius, rect.yRadius, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
         m_DXHandler.dDeviceContext2D.DrawRoundedRect(
            left, top, left + width, top + height,
            radiusX,radiusY,
-           lineThickness
+           lineThickness,
+           ConvertStrokeStyle(pStrokeStyle)
         );
     }
 
@@ -368,24 +371,25 @@ namespace jela
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
     //Ellipse
-    void RenderManager::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness);
+        DrawEllipse(center.x, center.y, radiusX, radiusY, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawEllipse(const Ellipsef& ellipse, float lineThickness) const
+    void RenderManager::DrawEllipse(const Ellipsef& ellipse, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness);
+        DrawEllipse(ellipse.center.x, ellipse.center.y, ellipse.radiusX, ellipse.radiusY, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawCircle(const Circlef& circle, float lineThickness) const
+    void RenderManager::DrawCircle(const Circlef& circle, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
-        DrawEllipse(circle.center, circle.rad, circle.rad, lineThickness);
+        DrawEllipse(circle.center, circle.rad, circle.rad, lineThickness, pStrokeStyle);
     }
-    void RenderManager::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness) const
+    void RenderManager::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness, const StrokeStyle* pStrokeStyle) const
     {
         m_DXHandler.dDeviceContext2D.DrawEllipse(
            centerX, centerY,
            radiusX, radiusY,
-           lineThickness
+           lineThickness,
+           ConvertStrokeStyle(pStrokeStyle)
         );
     }
 
@@ -410,36 +414,40 @@ namespace jela
     }
 
     //Geometry
-    void RenderManager::DrawPolygon(const PolygonGeometry& polygon, float lineThickness)
+    void RenderManager::DrawPolygon(const PolygonGeometry& polygon, float lineThickness, const StrokeStyle* pStrokeStyle)
     {
-        DrawGeometry(&polygon, lineThickness);
+        DrawGeometry(&polygon, lineThickness, pStrokeStyle);
     }
     void RenderManager::FillPolygon(const PolygonGeometry& polygon)
     {
         FillGeometry(&polygon);
     }
-    void RenderManager::DrawArc(const ArcGeometry& arc, float lineThickness)
+    void RenderManager::DrawArc(const ArcGeometry& arc, float lineThickness, const StrokeStyle* pStrokeStyle)
     {
-        DrawGeometry(&arc, lineThickness);
+        DrawGeometry(&arc, lineThickness, pStrokeStyle);
     }
     void RenderManager::FillArc(const ArcGeometry& arc)
     {
         FillGeometry(&arc);
     }
 
-    void RenderManager::DrawGeometry(const Geometry* const pGeometryObject, float lineThickness)
+    void RenderManager::DrawGeometry(const Geometry* const pGeometryObject, float lineThickness, const StrokeStyle* pStrokeStyle)
     {
         PushTransform();
         Translate(pGeometryObject->GetTranslation());
-        m_DXHandler.dDeviceContext2D.DrawGeometry(pGeometryObject->GetGeometry(), lineThickness);
+        m_DXHandler.dDeviceContext2D.DrawGeometry(Geometry::RendererDoor::GetGeometry(pGeometryObject), lineThickness, ConvertStrokeStyle(pStrokeStyle));
         PopTransform();
     }
     void RenderManager::FillGeometry(const Geometry* const pGeometryObject)
     {
         PushTransform();
         Translate(pGeometryObject->GetTranslation());
-        m_DXHandler.dDeviceContext2D.FillGeometry(pGeometryObject->GetGeometry());
+        m_DXHandler.dDeviceContext2D.FillGeometry(Geometry::RendererDoor::GetGeometry(pGeometryObject));
         PopTransform();
+    }
+    ID2D1StrokeStyle1* RenderManager::ConvertStrokeStyle(const StrokeStyle* pStrokeStyle)
+    {
+        return pStrokeStyle ? StrokeStyle::RendererDoor::GetStyle(*pStrokeStyle) : nullptr;
     }
 
 

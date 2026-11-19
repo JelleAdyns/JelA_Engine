@@ -328,7 +328,7 @@ namespace jela::DX
     {
         m_TransformStack.ApplyMatrix(matrix);
     }
-    void DeviceContext2D::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness) const
+    void DeviceContext2D::DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness, ID2D1StrokeStyle1* pStrokeStyle) const
     {
         if (IsInFaultyState()) return;
         SetTransform();
@@ -339,10 +339,11 @@ namespace jela::DX
             D2D1::Point2F(firstX, firstY),
             D2D1::Point2F(secondX, secondY),
             m_pDColorBrush,
-            lineThickness
+            lineThickness,
+            pStrokeStyle
         );
     }
-    void DeviceContext2D::DrawRectangle(float left, float top, float right, float bottom, float lineThickness) const
+    void DeviceContext2D::DrawRectangle(float left, float top, float right, float bottom, float lineThickness, ID2D1StrokeStyle1* pStrokeStyle) const
     {
         if (IsInFaultyState()) return;
         SetTransform();
@@ -356,7 +357,8 @@ namespace jela::DX
         get()->DrawRectangle(
             D2D1::RectF(left, top, right, bottom),
             m_pDColorBrush,
-            lineThickness
+            lineThickness,
+            pStrokeStyle
         );
     }
     void DeviceContext2D::FillRectangle(float left, float top, float right, float bottom) const
@@ -374,7 +376,7 @@ namespace jela::DX
             D2D1::RectF(left, top, right, bottom),
             m_pDColorBrush);
     }
-    void DeviceContext2D::DrawRoundedRect(float left, float top, float right, float bottom, float radiusX, float radiusY, float lineThickness) const
+    void DeviceContext2D::DrawRoundedRect(float left, float top, float right, float bottom, float radiusX, float radiusY, float lineThickness, ID2D1StrokeStyle1* pStrokeStyle) const
     {
         if (IsInFaultyState()) return;
         SetTransform();
@@ -393,7 +395,8 @@ namespace jela::DX
                 radiusY
             ),
             m_pDColorBrush,
-            lineThickness
+            lineThickness,
+            pStrokeStyle
         );
     }
     void DeviceContext2D::FillRoundedRect(float left, float top, float right, float bottom, float radiusX, float radiusY) const
@@ -415,7 +418,7 @@ namespace jela::DX
             ),
             m_pDColorBrush);
     }
-    void DeviceContext2D::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness) const
+    void DeviceContext2D::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness, ID2D1StrokeStyle1* pStrokeStyle) const
     {
         if (IsInFaultyState()) return;
         SetTransform();
@@ -425,7 +428,8 @@ namespace jela::DX
         get()->DrawEllipse(
             D2D1::Ellipse( D2D1::Point2F(centerX, centerY), radiusX, radiusY),
             m_pDColorBrush,
-            lineThickness
+            lineThickness,
+            pStrokeStyle
         );
     }
     void DeviceContext2D::FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const
@@ -439,11 +443,11 @@ namespace jela::DX
            D2D1::Ellipse( D2D1::Point2F(centerX, centerY), radiusX, radiusY),
            m_pDColorBrush);
     }
-    void DeviceContext2D::DrawGeometry(ID2D1PathGeometry* pGeo, float lineThickness) const
+    void DeviceContext2D::DrawGeometry(ID2D1PathGeometry* pGeo, float lineThickness, ID2D1StrokeStyle1* pStrokeStyle) const
     {
         if (IsInFaultyState()) return;
         SetTransform();
-        get()->DrawGeometry(pGeo, m_pDColorBrush, lineThickness);
+        get()->DrawGeometry(pGeo, m_pDColorBrush, lineThickness, pStrokeStyle);
     }
     void DeviceContext2D::FillGeometry(ID2D1PathGeometry* pGeo) const
     {

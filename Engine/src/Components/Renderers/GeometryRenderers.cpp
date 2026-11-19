@@ -15,7 +15,7 @@ namespace jela
 
         r->SetColor(GetColor());
         if (m_Fill) r->FillPolygon(m_pPolygon->GetPolygon());
-        else r->DrawPolygon(m_pPolygon->GetPolygon(), GetLineThickness());
+        else r->DrawPolygon(m_pPolygon->GetPolygon(), GetLineThickness(), &GetStrokeStyle());
     }
     void PolygonRenderer::SetFill(bool fill)
     {
@@ -31,7 +31,7 @@ namespace jela
 
         r->SetColor(GetColor());
         if (m_Fill) r->FillArc(m_pArc->GetArc());
-        else r->DrawArc(m_pArc->GetArc(), GetLineThickness());
+        else r->DrawArc(m_pArc->GetArc(), GetLineThickness(), &GetStrokeStyle());
     }
     void ArcRenderer::SetFill(bool fill)
     {

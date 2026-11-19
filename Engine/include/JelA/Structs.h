@@ -4,7 +4,7 @@
 #include <cassert>
 #include <numbers>
 
-#include "JelA/Misc/Defines.h"
+#include "Misc/Defines.h"
 #include "Misc/Concepts.h"
 
 namespace jela

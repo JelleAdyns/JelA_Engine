@@ -50,57 +50,62 @@ namespace jela::DX
         DXObject& operator=(const DXObject& other) = delete;
         DXObject& operator=(DXObject&& other) noexcept = delete;
 
-        bool IsInValidState() const { return m_HrState.Succeeded() && m_pDObject; }
-        bool IsInFaultyState() const { return m_HrState.Failed() || !m_pDObject; }
+        virtual bool IsInValidState() const { return m_pDObject; }
+        virtual bool IsInFaultyState() const { return !m_pDObject; }
 
         T*  get() const { return m_pDObject; }
 
     protected:
         DXObject() = default;
         void Init(T* pointerToOwn) { m_pDObject = pointerToOwn;}
-        HResultHandler& StartHResult(const tstring& message) const { return m_HrState = HResultHandler{S_OK, message}; }
 
     private:
         T* m_pDObject;
+    };
+    template <typename T>
+        requires std::is_base_of_v<IUnknown, T>
+    class DXPipelineObject : public DXObject<T>
+    {
+    public:
+        ~DXPipelineObject() override = default;
+
+        bool IsInValidState() const override { return m_HrState.Succeeded() && DXObject<T>::IsInValidState(); }
+        bool IsInFaultyState() const override { return m_HrState.Failed() || DXObject<T>::IsInFaultyState();; }
+
+    protected:
+        DXPipelineObject() = default;
+        HResultHandler& StartHResult(const tstring& message) const { return m_HrState = HResultHandler{S_OK, message}; }
+
+    private:
         mutable HResultHandler m_HrState{E_FAIL}; // Faulty state by default. If StartHResult was never called, we know something went wrong
     };
 
-    class Debug final: public DXObject<IDXGIDebug1>
+    class Debug final: public DXPipelineObject<IDXGIDebug1>
     {
 #ifdef _DEBUG
     public:
         Debug();
         ~Debug() override;
-
-        Debug(const Debug&) = delete;
-        Debug(Debug&&) noexcept = delete;
-        Debug& operator=(const Debug&) = delete;
-        Debug& operator=(Debug&&) noexcept = delete;
 #endif
     };
 
-    class Factory2D final: public DXObject<ID2D1Factory1>
+    class Factory2D final: public DXPipelineObject<ID2D1Factory1>
     {
     public:
         Factory2D();
     };
 
-    class DeviceGI final: public DXObject<IDXGIDevice1>
+    class DeviceGI final: public DXPipelineObject<IDXGIDevice1>
     {
     public:
         explicit DeviceGI(const Device3D& device3D);
     };
 
-    class Device3D final: public DXObject<ID3D11Device5>
+    class Device3D final: public DXPipelineObject<ID3D11Device5>
     {
     public:
         Device3D();
         ~Device3D() override;
-
-        Device3D(const Device3D&) = delete;
-        Device3D(Device3D&&) noexcept = delete;
-        Device3D& operator=(const Device3D&) = delete;
-        Device3D& operator=(Device3D&&) noexcept = delete;
 
         void SetViewport() const;
         bool HasFlag(D3D11_CREATE_DEVICE_FLAG flagToCheck) const;
@@ -113,22 +118,17 @@ namespace jela::DX
         uint32_t m_CreateDeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     };
 
-    class Device2D final: public DXObject<ID2D1Device>
+    class Device2D final: public DXPipelineObject<ID2D1Device>
     {
     public:
         explicit Device2D(const Factory2D&, const DeviceGI&);
     };
 
-    class DeviceContext2D final: public DXObject<ID2D1DeviceContext>
+    class DeviceContext2D final: public DXPipelineObject<ID2D1DeviceContext>
     {
     public:
         explicit DeviceContext2D(const Device2D& device2D);
         ~DeviceContext2D() override;
-
-        DeviceContext2D(const DeviceContext2D&) = delete;
-        DeviceContext2D(DeviceContext2D&&) noexcept = delete;
-        DeviceContext2D& operator=(const DeviceContext2D&) = delete;
-        DeviceContext2D& operator=(DeviceContext2D&&) noexcept = delete;
 
         void ReleaseBuffers();
         void SetBackgroundColor(Color newColor);
@@ -142,18 +142,18 @@ namespace jela::DX
         void Scale(float xScale, float yScale, float xPointToScaleFrom, float yPointToScaleFrom);
         void ApplyMatrix(const Matrix3X3& matrix);
 
-        void DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness = 1.f) const;
+        void DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness = 1.f, ID2D1StrokeStyle1* pStrokeStyle = nullptr) const;
 
-        void DrawRectangle(float left, float top, float right, float bottom, float lineThickness = 1.f) const;
+        void DrawRectangle(float left, float top, float right, float bottom, float lineThickness = 1.f, ID2D1StrokeStyle1* pStrokeStyle = nullptr) const;
         void FillRectangle(float left, float top, float right, float bottom) const;
 
-        void DrawRoundedRect(float left, float top, float right, float bottom, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(float left, float top, float right, float bottom, float radiusX, float radiusY, float lineThickness = 1.f, ID2D1StrokeStyle1* pStrokeStyle = nullptr) const;
         void FillRoundedRect(float left, float top, float right, float bottom, float radiusX, float radiusY) const;
 
-        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f, ID2D1StrokeStyle1* pStrokeStyle = nullptr) const;
         void FillEllipse(float centerX, float centerY, float radiusX, float radiusY) const;
 
-        void DrawGeometry(ID2D1PathGeometry* pGeo, float lineThickness = 1.f) const;
+        void DrawGeometry(ID2D1PathGeometry* pGeo, float lineThickness = 1.f, ID2D1StrokeStyle1* pStrokeStyle = nullptr) const;
         void FillGeometry(ID2D1PathGeometry* pGeo) const;
 
         void DrawString(const std::wstring& textToDisplay, float left, float top, float right, float bottom, IDWriteTextFormat* pTextFormat) const;
@@ -174,7 +174,7 @@ namespace jela::DX
         TransformStack m_TransformStack{};
     };
 
-    class SwapChain final: public DXObject<IDXGISwapChain1>
+    class SwapChain final: public DXPipelineObject<IDXGISwapChain1>
     {
     public:
         SwapChain(const Device3D& device3D, const DeviceGI& deviceGI);

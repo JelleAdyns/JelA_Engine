@@ -11,7 +11,7 @@ namespace jela
         const auto r = ENGINE.RenderMngr();
         r->SetColor(GetColor());
         if (IsFilled()) r->FillRectangle(GetPrimitive());
-        else r->DrawRectangle(GetPrimitive(), GetLineThickness());
+        else r->DrawRectangle(GetPrimitive(), GetLineThickness(), &GetStrokeStyle());
     }
 
     RoundedRectfRenderer::RoundedRectfRenderer(const RoundedRectf& rect): PrimitiveRenderer{std::forward<const RoundedRectf&>(rect)}
@@ -21,7 +21,7 @@ namespace jela
         const auto r = ENGINE.RenderMngr();
         r->SetColor(GetColor());
         if (IsFilled()) r->FillRoundedRect(GetPrimitive());
-        else r->DrawRoundedRect(GetPrimitive(), GetLineThickness());
+        else r->DrawRoundedRect(GetPrimitive(), GetLineThickness(), &GetStrokeStyle());
     }
     void RoundedRectfRenderer::SetRadius(float radiusX, float radiusY)
     {
@@ -38,7 +38,7 @@ namespace jela
         const auto r = ENGINE.RenderMngr();
         r->SetColor(GetColor());
         if (IsFilled()) r->FillEllipse(GetPrimitive());
-        else r->DrawEllipse(GetPrimitive(), GetLineThickness());
+        else r->DrawEllipse(GetPrimitive(), GetLineThickness(), &GetStrokeStyle());
     }
     void EllipsefRenderer::SetRadius(float radiusX, float radiusY)
     {
@@ -55,7 +55,7 @@ namespace jela
         const auto r = ENGINE.RenderMngr();
         r->SetColor(GetColor());
         if (IsFilled()) r->FillCircle(GetPrimitive());
-        else r->DrawCircle(GetPrimitive(), GetLineThickness());
+        else r->DrawCircle(GetPrimitive(), GetLineThickness(), &GetStrokeStyle());
     }
     void CirclefRenderer::SetRadius(float radius){ GetPrimitive().rad = std::max(0.f, radius); }
 }

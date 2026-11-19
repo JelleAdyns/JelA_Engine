@@ -7,7 +7,7 @@
 
 namespace jela
 {
-    TextureImage::TextureImage(const std::wstring& textureName)
+    TextureImage::TextureImage(const tstring& textureName)
     {
         ENGINE.ResourceMngr()->GetTexture(textureName, m_pTexture);
     }

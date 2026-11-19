@@ -43,6 +43,7 @@ set(LIB_HEADERS
         include/JelA/Components/Renderers/GeometryRenderers.h
         include/JelA/Components/Polygon.h
         include/JelA/Components/Arc.h
+        include/JelA/StrokeStyle.h
 )
 set(LIB_SOURCES
         ${LIB_HEADERS}
@@ -74,6 +75,7 @@ set(LIB_SOURCES
         src/Components/Renderers/LineRenderer.cpp
         src/Components/Renderers/PrimitiveRenderers.cpp
         src/Components/Renderers/GeometryRenderers.cpp
+        src/StrokeStyle.cpp
 )
 
 

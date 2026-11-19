@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "JelA/Structs.h"
 #include "JelA/Misc/Concepts.h"
+#include "JelA/StrokeStyle.h"
 
 namespace jela
 {
@@ -14,11 +15,14 @@ namespace jela
         float GetLineThickness() const {return m_LineThickness;}
         void SetColor(Color color) { m_Color = color; }
         Color GetColor() const { return m_Color; }
+        const StrokeStyle& GetStrokeStyle() const { return m_StrokeStyle; }
+        StrokeStyle& GetStrokeStyle() { return m_StrokeStyle; }
 
         void Draw() const override = 0;
     private:
         float m_LineThickness{1.f};
         Color m_Color{Color::WHITE};
+        StrokeStyle m_StrokeStyle{};
     };
 
     template <typename T>

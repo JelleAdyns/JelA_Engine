@@ -2,6 +2,7 @@
 #define RENDERMANAGER_H
 
 #include "JelA/DirectXObjects.h"
+#include "JelA/StrokeStyle.h"
 #include "JelA/Managers/ResourceManager.h"
 #include "JelA/Structs.h"
 
@@ -21,25 +22,25 @@ namespace jela
         void SetColor(Color newColor) const;
         void SetBackGroundColor(Color newColor);
 
-        void DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness = 1.f) const;
-        void DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness = 1.f) const;
-        void DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness = 1.f) const;
-        void DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness = 1.f) const;
+        void DrawLine(const Point2f& firstPoint, const Point2f& secondPoint, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawLine(float firstX, float firstY, const Point2f& secondPoint, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawLine(const Point2f& firstPoint, float secondX, float secondY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawLine(float firstX, float firstY, float secondX, float secondY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
 
-        void DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength = 30.f, float lineThickness = 1.f) const;
-        void DrawVector(const Point2f& origin, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f) const;
-        void DrawVector(float originX, float originY, const Vector2f& vector, float headLineLength = 30.f, float lineThickness = 1.f) const;
-        void DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f) const;
+        void DrawVector(const Point2f& origin, const Vector2f& vector, float headLineLength = 30.f, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawVector(const Point2f& origin, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawVector(float originX, float originY, const Vector2f& vector, float headLineLength = 30.f, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawVector(float originX, float originY, float vectorX, float vectorY, float headLineLength = 30.f, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
 
 #ifdef MATHEMATICAL_COORDINATESYSTEM
-        void DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness = 1.f) const;
-        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f) const;
-        void DrawRectangle(float left, float bottom, float width, float height, float lineThickness = 1.f) const;
+        void DrawRectangle(const Point2f& leftBottom, float width, float height, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRectangle(float left, float bottom, float width, float height, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
 
-        void DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
-        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
-        void DrawRoundedRect(const RoundedRectf& rect, float lineThickness = 1.f) const;
-        void DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const Point2f& leftBottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRoundedRect(const RoundedRectf& rect, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
 
         void DrawString(const tstring& textToDisplay, const Point2f& leftBottom, float width, float height, bool showRect = false) const;
         void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false) const;
@@ -63,14 +64,14 @@ namespace jela
         void FillRoundedRect(const RoundedRectf& rect) const;
         void FillRoundedRect(float left, float bottom, float width, float height, float radiusX, float radiusY) const;
 #else
-        void DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness = 1.f) const;
-        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f) const;
-        void DrawRectangle(float left, float top, float width, float height, float lineThickness = 1.f) const;
+        void DrawRectangle(const Point2f& leftTop, float width, float height, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRectangle(const Rectf& rect, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRectangle(float left, float top, float width, float height, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
 
-        void DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
-        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f) const;
-        void DrawRoundedRect(const RoundedRectf& rect, float lineThickness = 1.f) const;
-        void DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f) const;
+        void DrawRoundedRect(const Point2f& leftTop, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRoundedRect(const Rectf& rect, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRoundedRect(const RoundedRectf& rect, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
 
         void DrawString(const tstring& textToDisplay, const Point2f& leftTop, float width, float height, bool showRect = false) const;
         void DrawString(const tstring& textToDisplay, const Rectf& destRect, bool showRect = false) const;
@@ -95,16 +96,16 @@ namespace jela
         void FillRoundedRect(float left, float top, float width, float height, float radiusX, float radiusY) const;
 #endif // MATHEMATICAL_COORDINATESYSTEM
 
-        void DrawPolygon(const PolygonGeometry& polygon, float lineThickness = 1.f);
+        void DrawPolygon(const PolygonGeometry& polygon, float lineThickness = 1.f, const StrokeStyle* = nullptr);
         void FillPolygon(const PolygonGeometry& polygon);
 
-        void DrawArc(const ArcGeometry& arc, float lineThickness = 1.f);
+        void DrawArc(const ArcGeometry& arc, float lineThickness = 1.f, const StrokeStyle* = nullptr);
         void FillArc(const ArcGeometry& arc);
 
-        void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f) const;
-        void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f) const;
-        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f) const;
-        void DrawCircle(const Circlef& circle, float lineThickness = 1.f) const;
+        void DrawEllipse(const Point2f& center, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawEllipse(const Ellipsef& ellipse, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
+        void DrawCircle(const Circlef& circle, float lineThickness = 1.f, const StrokeStyle* = nullptr) const;
 
         void FillEllipse(const Point2f& center, float radiusX, float radiusY) const;
         void FillEllipse(const Ellipsef& ellipse) const;
@@ -132,8 +133,9 @@ namespace jela
     private:
         HResultHandler OnRender() const;
         HResultHandler OnResizeBackBuffer();
-        void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f);
+        void DrawGeometry(const Geometry* pGeometryObject, float lineThickness = 1.f, const StrokeStyle* = nullptr);
         void FillGeometry(const Geometry* pGeometryObject);
+        static ID2D1StrokeStyle1* ConvertStrokeStyle(const StrokeStyle* pStrokeStyle);
 
         DX::DXHandler m_DXHandler{};
         GameWindow* m_pWindow;
