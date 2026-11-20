@@ -2,79 +2,90 @@
 #define SHAPERENDERERS_H
 
 #include "Renderer.h"
-#include "JelA/Structs.h"
-#include "JelA/Misc/Concepts.h"
 #include "JelA/StrokeStyle.h"
+#include "JelA/Engine.h"
+#include "JelA/GameObject.h"
+#include "JelA/Components/LineStylizer.h"
 
 namespace jela
 {
-    class ShapeRenderer : public Renderer
+    class OutLineRenderer : public Renderer
     {
     public:
+        void Start() override{ m_pLineStylizer = GetOwner()->GetComponent<LineStylizer>(); }
         void SetLineThickness(float lineThickness) {m_LineThickness = std::max(1.f,lineThickness);}
         float GetLineThickness() const {return m_LineThickness;}
-        void SetColor(Color color) { m_Color = color; }
-        Color GetColor() const { return m_Color; }
-        const StrokeStyle& GetStrokeStyle() const { return m_StrokeStyle; }
-        StrokeStyle& GetStrokeStyle() { return m_StrokeStyle; }
+        void SetLineColor(Color color) { m_LineColor = color; }
+        Color GetLineColor() const { return m_LineColor; }
 
-        void Draw() const override = 0;
+        void Draw() const override
+        {
+            RenderManager* r = ENGINE.RenderMngr();
+            r->SetColor(GetLineColor());
+            Line(r, m_LineThickness, m_pLineStylizer ? &m_pLineStylizer->GetStrokeStyle() : nullptr);
+        };
+
+    protected:
+        LineStylizer* GetLineStylizer() const {return m_pLineStylizer;};
+        virtual void Line(RenderManager* r, float lineThickness, const StrokeStyle* ss) const = 0;
     private:
+        LineStylizer* m_pLineStylizer{nullptr};
         float m_LineThickness{1.f};
-        Color m_Color{Color::WHITE};
-        StrokeStyle m_StrokeStyle{};
+        Color m_LineColor{Color::WHITE};
     };
+    template <bool NEVER_USE_OUTLINE = false>
+    class FillableRenderer;
 
-    template <typename T>
-    concept cIsShape = cAnyOf<T, Rectf, RoundedRectf, Ellipsef, Circlef>;
-
-    template <cIsShape Primitive>
-    class PrimitiveRenderer : public ShapeRenderer
+    template <>
+    class FillableRenderer<false> : public OutLineRenderer
     {
     public:
-
-        PrimitiveRenderer() = default;
-        explicit PrimitiveRenderer(const Primitive& primitive): m_Primitive{primitive} {}
-
-        void SetOffset(const Vector2f& offset)
+        void Draw() const override
         {
-            if constexpr (std::is_same_v<Primitive, Rectf> || std::is_same_v<Primitive, RoundedRectf>)
-                m_Primitive.SetPos(offset);
-            else if constexpr (std::is_same_v<Primitive, Ellipsef> || std::is_same_v<Primitive, Circlef>)
+            if (IsFilled())
             {
-                m_Primitive.center.x = offset.x;
-                m_Primitive.center.y = offset.y;
+                RenderManager* r = ENGINE.RenderMngr();
+                r->SetColor(GetFillColor());
+                Fill(r);
             }
-        }
-        void SetWidth(float width)
-        {
-            width = std::max(1.f, width);
-
-            if constexpr (std::is_same_v<Primitive, Rectf> || std::is_same_v<Primitive, RoundedRectf>) m_Primitive.width = width;
-            else if constexpr (std::is_same_v<Primitive, Ellipsef>) m_Primitive.radiusX = width/2;
-            else if constexpr (std::is_same_v<Primitive, Circlef>) m_Primitive.rad = width/2;
-        }
-        void SetHeight(float height)
-        {
-            height = std::max(1.f, height);
-
-            if constexpr (std::is_same_v<Primitive, Rectf> || std::is_same_v<Primitive, RoundedRectf>) m_Primitive.height = height;
-            else if constexpr (std::is_same_v<Primitive, Ellipsef>) m_Primitive.radiusY = height/2;
-            else if constexpr (std::is_same_v<Primitive, Circlef>) m_Primitive.rad = height/2;
+            if (IsOutlined()) OutLineRenderer::Draw();
         }
 
-        void SetPrimitive(const Primitive& primitive) const {m_Primitive = primitive;}
+        void SetDrawOutline(bool drawOutline) {m_DrawOutline = drawOutline;}
+        bool IsOutlined() const {return m_DrawOutline;}
         void SetFill(bool fill) {m_Fill = fill;}
-
-        const Primitive& GetPrimitive() const {return m_Primitive;}
-        Primitive& GetPrimitive() {return m_Primitive;}
         bool IsFilled() const {return m_Fill;}
+        void SetFillColor(Color color) { m_FillColor = color; }
+        Color GetFillColor() const { return m_FillColor; }
 
-        void Draw() const override = 0;
+    protected:
+        virtual void Fill(RenderManager* r) const = 0;
+        void Line(RenderManager* r, float lineThickness, const StrokeStyle* ss) const override = 0;
     private:
-        Primitive m_Primitive{};
+        Color m_FillColor{Color::WHITE};
+        bool m_DrawOutline{true};
         bool m_Fill{false};
     };
+    template <>
+    class FillableRenderer<true> : public Renderer
+    {
+    public:
+        void Draw() const override
+        {
+            RenderManager* r = ENGINE.RenderMngr();
+            r->SetColor(GetFillColor());
+            Fill(r);
+        };
+
+        void SetFillColor(Color color) { m_FillColor = color; }
+        Color GetFillColor() const { return m_FillColor; }
+    protected:
+        virtual void Fill(RenderManager* r) const = 0;
+        virtual void Line(RenderManager*, float, const StrokeStyle*) const {/*NO-OP*/};
+    private:
+        Color m_FillColor{Color::WHITE};
+    };
+
 }
 
 #endif //SHAPERENDERERS_H

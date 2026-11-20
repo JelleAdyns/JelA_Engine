@@ -73,7 +73,8 @@ namespace jela
 
         void swap(StrokeStyle& other) noexcept;
 
-        void SetOuterCapStyles(Cap startCap, Cap endCap);
+        void SetStartCap(Cap startCap);
+        void SetEndCap(Cap endCap);
         void SetCapStyle(Cap dashCap);
         void SetJoinStyle(Join joinStyle);
         void SetDashStyle(Dash dash);

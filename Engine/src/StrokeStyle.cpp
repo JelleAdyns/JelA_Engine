@@ -100,9 +100,13 @@ namespace jela
         std::swap(m_pCustomDashes, other.m_pCustomDashes);
         std::swap(m_CustomDashesCount, other.m_CustomDashesCount);
     }
-    void StrokeStyle::SetOuterCapStyles(Cap startCap, Cap endCap)
+    void StrokeStyle::SetStartCap(Cap startCap)
     {
         m_StartCap = startCap;
+        m_NeedsToChange = true;
+    }
+    void StrokeStyle::SetEndCap(Cap endCap)
+    {
         m_EndCap = endCap;
         m_NeedsToChange = true;
     }

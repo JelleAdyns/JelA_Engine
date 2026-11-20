@@ -3,18 +3,47 @@
 
 namespace jela
 {
-    void LineRenderer::Draw() const
+    LineRenderer::LineRenderer(const Point2f& point1, const Point2f& point2):
+        m_Point1{point1}, m_Point2{point2}
+    {}
+
+    void LineRenderer::Move(const Vector2f& offset)
     {
-        const auto r = ENGINE.RenderMngr();
-        r->SetColor(GetColor());
-        r->DrawLine(m_Point1, m_Point2, GetLineThickness(), &GetStrokeStyle());
+        Move(offset.x,offset.y);
     }
-    void LineRenderer::Move(const Vector2f& offset){Move(offset.x,offset.y);}
-    void LineRenderer::Move(float xOffset, float yOffset){ m_Point1.x += xOffset; m_Point1.y += yOffset; m_Point2.x += xOffset; m_Point2.y += yOffset; }
-    void LineRenderer::SetPoint1(const Point2f& point){SetPoint1(point.x,point.y);}
-    void LineRenderer::SetPoint1(float x, float y){ m_Point1.x = x; m_Point1.y = y; }
-    void LineRenderer::SetPoint2(const Point2f& point){SetPoint2(point.x,point.y);}
-    void LineRenderer::SetPoint2(float x, float y){ m_Point2.x = x; m_Point2.y = y; }
-    Point2f LineRenderer::GetPoint1() const{return m_Point1;}
-    Point2f LineRenderer::GetPoint2() const{return m_Point2;}
+    void LineRenderer::Move(float xOffset, float yOffset)
+    {
+        m_Point1.x += xOffset;
+        m_Point1.y += yOffset;
+        m_Point2.x += xOffset;
+        m_Point2.y += yOffset;
+    }
+    void LineRenderer::SetPoint1(const Point2f& point)
+    {
+        SetPoint1(point.x,point.y);
+    }
+    void LineRenderer::SetPoint1(float x, float y)
+    {
+        m_Point1.x = x; m_Point1.y = y;
+    }
+    void LineRenderer::SetPoint2(const Point2f& point)
+    {
+        SetPoint2(point.x,point.y);
+    }
+    void LineRenderer::SetPoint2(float x, float y)
+    {
+        m_Point2.x = x; m_Point2.y = y;
+    }
+    Point2f LineRenderer::GetPoint1() const
+    {
+        return m_Point1;
+    }
+    Point2f LineRenderer::GetPoint2() const
+    {
+        return m_Point2;
+    }
+    void LineRenderer::Line(RenderManager* r, float lineThickness, const StrokeStyle* ss) const
+    {
+        r->DrawLine(m_Point1, m_Point2, lineThickness, ss);
+    }
 }

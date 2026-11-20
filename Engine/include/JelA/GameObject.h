@@ -80,21 +80,23 @@ namespace jela
         template <cDerivedComponent T>
         T* GetComponent() const
         {
-            if constexpr (std::is_same_v<jela::Transform,T>)
+            if constexpr (cIsTransform<T>)
             {
-                if (m_pTransform) return m_pTransform;
+                return CastComponent<T>(m_pTransform);
             }
-
-            if (const auto& typeID = typeid(T);
-                HasComponent(typeID))
+            else if constexpr (cDerivedRenderer<T>)
             {
-                if (auto p = dynamic_cast<T*>(m_Components.at(typeID)); p != nullptr)
-                    return p;
-
-                throw std::bad_typeid();
+                return CastComponent<T>(m_pRenderer);
             }
-
-            return nullptr;
+            else
+            {
+                if (const auto& typeID = typeid(T);
+                    HasComponent(typeID))
+                {
+                    return CastComponent<T>(m_Components.at(typeID));
+                }
+                return nullptr;
+            }
         }
 
         template <cDerivedComponent T>
@@ -122,7 +124,16 @@ namespace jela
         const Scene* OwnerScene() const { return m_pScene; }
     private:
         explicit GameObject(Scene& scene);
+        template <cDerivedComponent T>
+        T* CastComponent(Component* pCompTocast) const
+        {
+            if (!pCompTocast) return nullptr;
 
+            auto p = dynamic_cast<T*>(pCompTocast);
+            if (p == nullptr) throw std::bad_typeid();
+
+            return p;
+        }
         bool m_IsPartOfScene{false};
         bool m_IsDead{false};
         Scene* m_pScene;
