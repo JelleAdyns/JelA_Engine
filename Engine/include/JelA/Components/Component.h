@@ -59,6 +59,7 @@ namespace jela
             BASE_MAX_AMOUNT = maxAmount;
         }
 
+        virtual void BeforeDraw() {};
         virtual void DrawGizmos() {}
         virtual void DrawWorldGizmos() {}
 

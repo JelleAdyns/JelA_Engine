@@ -105,6 +105,7 @@ namespace jela
 
         void DrawGizmos();
         void DrawWorldGizmos();
+        void BeforeDraw() const;
         void Draw() const;
         void Update();
 

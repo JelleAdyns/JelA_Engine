@@ -15,6 +15,10 @@ namespace jela
         {
             m_pPolygon = Component::GetOwner()->GetComponent<Polygon>();
         }
+        void BeforeDraw() override
+        {
+            m_pPolygon->UpdateGeometry();
+        }
 
     protected:
         void Fill(RenderManager* r) const override
@@ -39,6 +43,10 @@ namespace jela
         void Init() override
         {
             m_pArc = Component::GetOwner()->GetComponent<Arc>();
+        }
+        void BeforeDraw() override
+        {
+            m_pArc->UpdateGeometry();
         }
 
     protected:

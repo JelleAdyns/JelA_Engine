@@ -6,6 +6,10 @@ namespace jela
     {
         return m_StrokeStyle;
     }
+    void LineStylizer::BeforeDraw()
+    {
+        m_StrokeStyle.UpdateState();
+    }
     void LineStylizer::SetOuterCapStyles(Cap startCap, Cap endCap)
     {
         m_StrokeStyle.SetStartCap(startCap);

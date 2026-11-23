@@ -99,17 +99,18 @@ namespace jela
             static ID2D1StrokeStyle1* GetStyle(const StrokeStyle& style);
         };
 
+        void UpdateState();
     private:
         ID2D1StrokeStyle1* GetStyle() const;
-        void CreateStrokeStyle(const float* customDashes, uint32_t numberOfElements) const;
-        void UpdateState() const;
+        bool CreateStrokeStyle();
+        void CopyDashesBuffer(const float* dashesToCopy, std::uint8_t size);
 
-        mutable ID2D1StrokeStyle1* m_pStrokeStyle{};
+        ID2D1StrokeStyle1* m_pStrokeStyle{};
 
         std::unique_ptr<const float[]> m_pCustomDashes {nullptr};
         std::uint8_t m_CustomDashesCount{0};
 
-        mutable bool m_NeedsToChange{false};
+        bool m_NeedsToChange{false};
 
         Cap m_StartCap{Cap::Flat};
         Cap m_EndCap{Cap::Flat};

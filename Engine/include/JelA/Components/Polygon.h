@@ -12,11 +12,14 @@ namespace jela
             m_Polygon{std::forward<const std::vector<Point2f>&>(points), closeSegment}
         {};
 
-        void RecreateShape(const std::vector<Point2f>& vertices, bool closeSegment = true) {  m_Polygon.Recreate(vertices, closeSegment); }
+        void SetCloseSgement(bool closeSegment) { m_Polygon.SetCloseSegment(closeSegment); }
+        void ReplaceShape(const std::vector<Point2f>& vertices) {  m_Polygon.ReplacePoints(vertices); }
+        void ReplaceShape(const std::vector<Point2f>& vertices, bool closeSegment) {  m_Polygon.ReplacePolygon(vertices, closeSegment); }
         void ResetOffset() { m_Polygon.ResetPosition(); };
         void SetOffset(float x, float y) { SetOffset({ x,y }); }
         void SetOffset(const Vector2f& offset) { m_Polygon.Move(offset - m_Polygon.GetTranslation());}
 
+        void UpdateGeometry() { m_Polygon.UpdateGeometry(); }
         std::vector<Point2f> GetOriginalVertices() const { return m_Polygon.GetOriginalPoints(); }
         const std::vector<Point2f>& GetVertices() const { return m_Polygon.GetPoints(); }
         bool IsPointInside(const Point2f& point) const { return m_Polygon.IsPointInside(point); }

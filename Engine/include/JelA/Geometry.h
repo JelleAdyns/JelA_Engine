@@ -36,8 +36,8 @@ namespace jela
 		HRESULT Recreate(bool releasePrevious = true);
 	private:
 		void swap(Geometry& other) noexcept;
-		Vector2f m_Translation{};
 		ID2D1PathGeometry* m_pGeo{};
+		Vector2f m_Translation{};
 	};
 
 	class PolygonGeometry final : public Geometry
@@ -51,7 +51,11 @@ namespace jela
 		PolygonGeometry& operator=(PolygonGeometry&& other) noexcept = default;
 		~PolygonGeometry() override = default;
 
-		bool Recreate(const std::vector<Point2f>& points, bool closeSegment = true);
+		void ReplacePoints(const std::vector<Point2f>& points);
+		void ReplacePolygon(const std::vector<Point2f>& points, bool closeSegment = true);
+		void SetCloseSegment(bool closeSegment);
+		void UpdateGeometry();
+
 
 		void ResetPosition() override;
 		void Move(float x, float y) override { Move({ x,y }); }
@@ -62,8 +66,10 @@ namespace jela
 		bool IsPointInside(const Point2f& point) const;
 		bool IsSegmentClosed() const;
 	private:
+		bool Recreate();
 		void AdjustPoints(const std::function<void(Point2f&)>& func);
 
+		bool m_NeedsToChange{};
 		bool m_SegmentClosed{};
 		std::vector<Point2f> m_Points{};
 	};
@@ -81,10 +87,12 @@ namespace jela
 		ArcGeometry& operator=(ArcGeometry&& other) noexcept = default;
 		~ArcGeometry() override = default;
 
-		bool Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
-		bool RecreateByRadius(float radiusX, float radiusY, bool closeSegment);
-		bool RecreateByAngle(float startAngle, float angle, bool closeSegment);
-		bool Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
+		void SetRadius(float radiusX, float radiusY);
+		void SetStartAngle(float startAngle);
+		void SetAngle(float angle);
+		void SetCloseSegment(bool closeSegment);
+		void SetFromPoints(const Point2f& point1, const Point2f& point2, bool clockwise);
+		void UpdateGeometry();
 
         void SetPosition(const Point2f& center) { SetPosition(center.x, center.y); }
 
@@ -93,12 +101,16 @@ namespace jela
         // The center (position) of an Arc object is equal to the translation.
         Point2f GetPosition() const { return Point2f{GetTranslation().x, GetTranslation().y}; }
         const Vector2f& GetRadius() const { return m_Radius; }
-        float GetStartAngle() const { return m_StartAngle; }
-        float GetAngle() const { return m_Angle; }
+        float GetStartAngle() const { return static_cast<float>(m_StartAngle); }
+        float GetAngle() const { return static_cast<float>(m_Angle); }
 	private:
+		bool Recreate();
 		Vector2f m_Radius{};
 		float m_StartAngle{};
 		float m_Angle{};
+
+		bool m_SegmentClosed{};
+		bool m_NeedsToChange{};
 	};
 }
 

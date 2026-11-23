@@ -16,6 +16,8 @@ namespace jela
     public:
         const StrokeStyle& GetStrokeStyle() const;
 
+        void BeforeDraw() override;
+
         void SetOuterCapStyles(Cap startCap, Cap endCap);
         void SetOuterCapStyles(Cap capStyle);
         void SetDashCapStyle(Cap dashCapStyle);

@@ -29,6 +29,9 @@ namespace jela
         const auto r = ENGINE.RenderMngr();
 
         for (const auto & obj : objs)
+            obj->BeforeDraw();
+
+        for (const auto & obj : objs)
         {
             const auto t = obj->Transform();
             r->PushTransform();

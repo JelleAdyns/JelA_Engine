@@ -21,15 +21,35 @@ namespace jela
             m_Arc{point1, point2, clockwise, closeSegment}
         {}
 
-        bool Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment);
-        bool RecreateByRadius(float radiusX, float radiusY, bool closeSegment);
-        bool RecreateByAngle(float startAngle, float angle, bool closeSegment);
-        bool Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment);
+        void SetCloseSegment(bool closeSegment) { m_Arc.SetCloseSegment(closeSegment); }
+        void ReplaceArc(float radiusX, float radiusY, float startAngle, float angle)
+        {
+            m_Arc.SetRadius(radiusX, radiusY);
+            m_Arc.SetStartAngle(startAngle);
+            m_Arc.SetAngle(angle);
+        }
+        void SetRadius(const Vector2f& radii) { SetRadius(radii.x, radii.y); }
+        void SetRadius(float radiusX, float radiusY)
+        {
+            m_Arc.SetRadius(radiusX, radiusY);
+        }
+        void SetStartAngle(float startAngle){ m_Arc.SetStartAngle(startAngle); };
+        void SetAngle(float angle){ m_Arc.SetAngle(angle); }
+        void SetAngles(float startAngle, float angle)
+        {
+            m_Arc.SetStartAngle(startAngle);
+            m_Arc.SetStartAngle(angle);
+        }
+        void ReplaceByPoints(const Point2f& point1, const Point2f& point2, bool clockwise)
+        {
+            m_Arc.SetFromPoints(point1, point2, clockwise);
+        }
 
         void SetOffset(const Point2f& offset) { SetOffset(offset.x, offset.y); }
 
         void SetOffset(float x, float y) { m_Arc.SetPosition(x, y); };
 
+        void UpdateGeometry() { m_Arc.UpdateGeometry(); }
         Vector2f GetOffset() const { return m_Arc.GetTranslation(); }
         const Vector2f& GetRadius() const { return m_Arc.GetRadius(); }
         float GetStartAngle() const { return m_Arc.GetStartAngle(); }

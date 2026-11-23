@@ -75,17 +75,46 @@ namespace jela
 	//--------------------------------------------------------------------------------------------------------------------
 	// Polygon
 	PolygonGeometry::PolygonGeometry(const std::vector<Point2f>& points, bool closeSegment) :
-		Geometry{},
-		m_Points{points}
+		Geometry{}
 	{
 		AdjustPoints([&](Point2f& point) { point += GetTranslation(); });
-		if (!Recreate(points, closeSegment))
-			OutputDebugString(std::format(_T("Creation of Polygon failed!\n")).c_str());
+		ReplacePolygon(points, closeSegment);
+		m_NeedsToChange = true;
+		UpdateGeometry();
 	}
 
-	bool PolygonGeometry::Recreate(const std::vector<Point2f>& points, bool closeSegment)
+	void PolygonGeometry::ReplacePoints(const std::vector<Point2f>& points)
 	{
+		if (m_Points.size() != points.size()) m_NeedsToChange = true;
+		else
+		{
+			if (const auto ogPoints = GetOriginalPoints();
+				std::ranges::mismatch(ogPoints, points).in1 != ogPoints.cend())
+				m_NeedsToChange = true;
+		}
 		m_Points = points;
+	}
+	void PolygonGeometry::ReplacePolygon(const std::vector<Point2f>& points, bool closeSegment)
+	{
+		ReplacePoints(points);
+		SetCloseSegment(closeSegment);
+	}
+	void PolygonGeometry::SetCloseSegment(bool closeSegment)
+	{
+		if (m_SegmentClosed != closeSegment) m_NeedsToChange = true;
+		m_SegmentClosed = closeSegment;
+	}
+	void PolygonGeometry::UpdateGeometry()
+	{
+		if (!m_NeedsToChange) return;
+		if (!Recreate())
+		{
+			OutputDebugString(std::format(_T("Creation of Polygon failed!\n")).c_str());
+		}
+	}
+	bool PolygonGeometry::Recreate()
+	{
+		OutputDebugString(_T("Recreating the Polygon...\n"));
 		if (m_Points.empty()) return false;
 
 		HRESULT hr = S_OK;
@@ -112,12 +141,13 @@ namespace jela
 
 			pSink->BeginFigure(D2points.front(), D2D1_FIGURE_BEGIN_FILLED);
 			pSink->AddLines(D2points.data(), static_cast<UINT32>(D2points.size()));
-			pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+			pSink->EndFigure(m_SegmentClosed ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
 
 			hr = pSink->Close();
 		}
-        SafeRelease(&pSink);
+		SafeRelease(&pSink);
 
+		m_NeedsToChange = false;
 		return hr == S_OK;
 	}
 
@@ -194,36 +224,50 @@ namespace jela
 	// Arc
 	ArcGeometry::ArcGeometry(float centerX, float centerY, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
 		Geometry{},
-		m_Radius{radiusX,radiusY},
-		m_StartAngle{startAngle},
-		m_Angle{angle}
+		m_Radius{radiusX, radiusY},
+		m_SegmentClosed{closeSegment}
 	{
 		SetPosition(centerX,centerY);
-		if (!Recreate(radiusX, radiusY, startAngle, angle, closeSegment))
-		{
-			OutputDebugString(std::format(_T("Creation of Arc failed! Tried to create an arc with:\n"
-									"center: ({}, {})\nradius: (x:{}, y:{})\nstart angle: {}\nangle: {}\nclose segments: {} "),
-				centerX,centerY,radiusX,radiusY,startAngle,angle, closeSegment).c_str());
-		}
+		SetStartAngle(startAngle);
+		SetAngle(angle);
+
+		m_NeedsToChange = true;
+		UpdateGeometry();
 	}
 	ArcGeometry::ArcGeometry(const Point2f& center, float radiusX, float radiusY, float startAngle, float angle, bool closeSegment) :
 		ArcGeometry{ center.x, center.y, radiusX, radiusY, startAngle, angle, closeSegment }
 	{}
 	ArcGeometry::ArcGeometry(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment) :
-		Geometry{}
+		Geometry{},
+		m_SegmentClosed{closeSegment}
 	{
-		if (!Recreate(point1, point2, clockwise, closeSegment))
-		{
-			OutputDebugString(std::format(_T("Creation of Arc failed! Tried to create an arc with:\n"
-									"point 1: {}\npoint 2: {}\nclockwise: {}\nclose segments: {} "),
-				point1.ToTString(),point2.ToTString(),clockwise,closeSegment).c_str());
-		}
+		SetFromPoints(point1, point2, clockwise);
+
+		m_NeedsToChange = true;
+		UpdateGeometry();
 	}
 
-	bool ArcGeometry::Recreate(float radiusX, float radiusY, float startAngle, float angle, bool closeSegment)
+	void ArcGeometry::SetRadius(float radiusX, float radiusY)
 	{
 		assert(radiusX >= 0 && radiusY >= 0);
 
+		if (m_Radius.x != radiusX || m_Radius.y != radiusY)
+			m_NeedsToChange = true;
+
+		m_Radius.x = radiusX;
+		m_Radius.y = radiusY;
+	}
+	void ArcGeometry::SetStartAngle(float startAngle)
+	{
+		while (startAngle >= 360.f) startAngle -= 360;
+		while (startAngle <= -360.f) startAngle += 360;
+
+		if (m_StartAngle != startAngle) m_NeedsToChange = true;
+
+		m_StartAngle = startAngle;
+	}
+	void ArcGeometry::SetAngle(float angle)
+	{
 		if (angle >= 360.f)
 		{
 			angle = 359.9f;
@@ -234,9 +278,64 @@ namespace jela
 			angle = -359.9f;
 			OutputDebugString(_T("Angle is smaller or equal to -360. Use Ellipse instead.\n"));
 		}
-		while (startAngle >= 360.f) startAngle -= 360;
-		while (startAngle <= -360.f) startAngle += 360;
 
+		if (m_Angle != angle) m_NeedsToChange = true;
+
+		m_Angle = angle;
+	}
+	void ArcGeometry::SetCloseSegment(bool closeSegment)
+	{
+		if (m_SegmentClosed != closeSegment) m_NeedsToChange = true;
+		m_SegmentClosed = closeSegment;
+	}
+	void ArcGeometry::SetFromPoints(const Point2f& point1, const Point2f& point2, bool clockwise)
+	{
+		if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) clockwise = !clockwise;
+
+		auto rad = point1 - point2;
+		rad.x = std::abs(rad.x);
+		rad.y = std::abs(rad.y);
+		SetRadius(rad.x, rad.y);
+
+		SetAngle(clockwise ? -90.f : 90.f);
+
+		float startAngle{};
+		const auto& swapCenterPoint = [&](bool xComparison)
+		{																		// CP1  _____P2
+			if (xComparison == clockwise) SetPosition(point1.x, point2.y);		//	   /
+			else						  SetPosition(point2.x, point1.y);		//	  /
+																				//   |
+			if (xComparison) startAngle += 90;									//	 |
+			if (!clockwise) startAngle += 90;									// P1		 CP2
+		};
+
+		if (point1.y >= point2.y)
+		{
+			startAngle = 0;
+			swapCenterPoint(point1.x <= point2.x);
+		}
+		else
+		{
+			startAngle = 180;
+			swapCenterPoint(point1.x > point2.x);
+		}
+
+		SetStartAngle(startAngle);
+	}
+	void ArcGeometry::UpdateGeometry()
+	{
+		if (!m_NeedsToChange) return;
+
+		if (!Recreate())
+		{
+			OutputDebugString(std::format(_T("Creation of Arc failed! Tried to create an arc with:\n"
+									"offset: {}\nradius: {}\nstart angle: {}\nangle: {}\nclose segments: {}\n"),
+				GetTranslation().ToTString(), m_Radius.ToTString(),m_StartAngle,m_Angle, m_SegmentClosed).c_str());
+		}
+	}
+	bool ArcGeometry::Recreate()
+	{
+		OutputDebugString(_T("Recreating the Arc...\n"));
 		HRESULT hr = Geometry::Recreate();
 
 		if (!SUCCEEDED(hr)) return false;
@@ -249,77 +348,39 @@ namespace jela
 
 		if (SUCCEEDED(hr))
 		{
-			const auto startRad = (startAngle + std::min(angle, 0.f)) * std::numbers::pi_v<float> / 180;
-			const auto endRad = (startAngle + std::max(angle, 0.f)) * std::numbers::pi_v<float> / 180;
+			const auto startRad = (m_StartAngle + std::min(m_Angle, 0.f)) * std::numbers::pi_v<float> / 180;
+			const auto endRad = (m_StartAngle + std::max(m_Angle, 0.f)) * std::numbers::pi_v<float> / 180;
 
-			const auto startX = radiusX * std::cosf(startRad);
-			auto startY = radiusY * std::sinf(startRad);
+			const auto startX = m_Radius.x * std::cosf(startRad);
+			auto startY = m_Radius.y * std::sinf(startRad);
 			if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) startY = -startY;
 
-			const auto endX = radiusX * std::cosf(endRad);
-			auto endY = radiusY * std::sinf(endRad);
+			const auto endX = m_Radius.x * std::cosf(endRad);
+			auto endY = m_Radius.y * std::sinf(endRad);
 			if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM) endY = -endY;
 
-			const D2D1_ARC_SEGMENT arcSegment{
-				D2D1::Point2F(endX, endY),
-				D2D1::SizeF(radiusX, radiusY),
-				0,
-				USE_MATHEMATICAL_COORDINATESYSTEM ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE,
-				std::abs(angle) < 180.f ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
+			const D2D1_ARC_SEGMENT arcSegment
+			{
+				.point = D2D1::Point2F(endX, endY),
+				.size = D2D1::SizeF(m_Radius.x, m_Radius.y),
+				.rotationAngle = 0,
+				.sweepDirection = USE_MATHEMATICAL_COORDINATESYSTEM ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE,
+				.arcSize = std::abs(m_Angle) < 180 ? D2D1_ARC_SIZE_SMALL : D2D1_ARC_SIZE_LARGE
 			};
 
 			pSink->BeginFigure(D2D1::Point2F(startX, startY), D2D1_FIGURE_BEGIN_FILLED);
 			pSink->AddArc(arcSegment);
 
-			if (closeSegment) pSink->AddLine(D2D1::Point2F());
+			if (m_SegmentClosed) pSink->AddLine(D2D1::Point2F());
 
-			pSink->EndFigure(closeSegment ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+			pSink->EndFigure(m_SegmentClosed ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
 			hr = pSink->Close();
 		}
 
 		SafeRelease(&pSink);
 
+		m_NeedsToChange = false;
 		return hr == S_OK;
-	}
-	bool ArcGeometry::RecreateByRadius(float radiusX, float radiusY, bool closeSegment)
-	{
-		return Recreate(radiusX, radiusY, m_StartAngle, m_Angle, closeSegment);
-	}
-	bool ArcGeometry::RecreateByAngle(float startAngle, float angle, bool closeSegment)
-	{
-		return Recreate(m_Radius.x, m_Radius.y, startAngle, angle, closeSegment);
-	}
-	bool ArcGeometry::Recreate(const Point2f& point1, const Point2f& point2, bool clockwise, bool closeSegment)
-	{
-		if constexpr (USE_MATHEMATICAL_COORDINATESYSTEM == false) clockwise = !clockwise;
-
-		m_Radius = point1 - point2;
-		m_Radius.x = std::abs(m_Radius.x);
-		m_Radius.y = std::abs(m_Radius.y);
-
-		m_Angle = clockwise ? -90.f : 90.f;
-
-        const auto& swapCenterPoint = [&](bool xComparison)
-        {																		// CP1  _____P2
-        	if (xComparison == clockwise) SetPosition(point1.x, point2.y);		//	   /
-        	else						  SetPosition(point2.x, point1.y);		//	  /
-																				//   |
-            if (xComparison) m_StartAngle += 90;								//	 |
-        	if (!clockwise) m_StartAngle += 90;									// P1		 CP2
-		};
-
-		if (point1.y >= point2.y)
-		{
-			m_StartAngle = 0;
-			swapCenterPoint(point1.x <= point2.x);
-		}
-		else
-		{
-			m_StartAngle = 180;
-			swapCenterPoint(point1.x > point2.x);
-		}
-
-		return Recreate(m_Radius.x, m_Radius.y, m_StartAngle, m_Angle, closeSegment);
 	}
 
 	void ArcGeometry::SetPosition(float centerX, float centerY)

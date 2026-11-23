@@ -23,6 +23,11 @@ namespace jela
         for (Component* pComp : m_Components | std::views::values)
             pComp->DrawWorldGizmos();
     }
+    void GameObject::BeforeDraw() const
+    {
+        for (Component* pComp : m_Components | std::views::values)
+            pComp->BeforeDraw();
+    }
     void GameObject::Draw() const
     {
         if (m_pRenderer) m_pRenderer->Draw();

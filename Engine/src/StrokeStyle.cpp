@@ -28,7 +28,7 @@ namespace jela
         m_MiterLimit{miterLimit},
         m_DashOffset{dashOffset}
     {
-        CreateStrokeStyle(nullptr, 0);
+        CreateStrokeStyle();
     }
     StrokeStyle::StrokeStyle(Dash dashStyle, TransformStyle transformStyle, Join joinStyle, Cap startCap, Cap endCap, Cap dashCap, float miterLimit, float dashOffset):
         StrokeStyle{dashStyle, startCap, endCap, dashCap, joinStyle, transformStyle, miterLimit, dashOffset}
@@ -51,14 +51,9 @@ namespace jela
     {
         m_pCustomDashes = nullptr;
 
-        if (m_CustomDashesCount > 0)
-        {
-            const auto p = new float[m_CustomDashesCount]{};
-            for (uint8_t i = 0; i < m_CustomDashesCount; ++i) p[i] = other.m_pCustomDashes[i];
-            m_pCustomDashes.reset(p);
-        }
+        CopyDashesBuffer(other.m_pCustomDashes.get(), other.m_CustomDashesCount);
 
-        UpdateState();
+        CreateStrokeStyle();
     }
     StrokeStyle::StrokeStyle(StrokeStyle&& other) noexcept:
         m_pStrokeStyle{std::exchange(other.m_pStrokeStyle, nullptr)},
@@ -102,73 +97,72 @@ namespace jela
     }
     void StrokeStyle::SetStartCap(Cap startCap)
     {
+        if (m_StartCap != startCap) m_NeedsToChange = true;
         m_StartCap = startCap;
-        m_NeedsToChange = true;
     }
     void StrokeStyle::SetEndCap(Cap endCap)
     {
+        if (m_EndCap != endCap) m_NeedsToChange = true;
         m_EndCap = endCap;
-        m_NeedsToChange = true;
     }
     void StrokeStyle::SetCapStyle(Cap dashCap)
     {
+        if (m_DashCap != dashCap) m_NeedsToChange = true;
         m_DashCap = dashCap;
-        m_NeedsToChange = true;
     }
     void StrokeStyle::SetJoinStyle(Join joinStyle)
     {
+        if (m_LineJoin != joinStyle) m_NeedsToChange = true;
         m_LineJoin = joinStyle;
-        m_NeedsToChange = true;
     }
     void StrokeStyle::SetDashStyle(Dash dash)
     {
+        if (m_Style != dash) m_NeedsToChange = true;
+
+        if (dash == Dash::Custom && !m_pCustomDashes)
+        {
+            constexpr std::array dashes{1.f};
+            CopyDashesBuffer(dashes.data(), static_cast<std::uint8_t>(dashes.size()));
+        }
+
         m_Style = dash;
-        m_NeedsToChange = true;
     }
     void StrokeStyle::SetTransformStyle(TransformStyle transformStyle)
     {
+        if (m_Transform != transformStyle) m_NeedsToChange = true;
         m_Transform = transformStyle;
-        m_NeedsToChange = true;
     }
     void StrokeStyle::SetMiterLimit(float miterLimit)
     {
-        m_MiterLimit = std::max(miterLimit, 1.0f);
-        m_NeedsToChange = true;
+        miterLimit = std::max(miterLimit, 1.0f);
+        if (m_MiterLimit != miterLimit) m_NeedsToChange = true;
+        m_MiterLimit = miterLimit;
     }
     void StrokeStyle::SetDashOffset(float dashOffset)
     {
-        m_DashOffset = std::max(dashOffset, 0.0f);
-        m_NeedsToChange = true;
+        dashOffset = std::max(dashOffset, 0.0f);
+        if (m_DashOffset != dashOffset) m_NeedsToChange = true;
+        m_DashOffset = dashOffset;
     }
     void StrokeStyle::SetCustomDashes(const std::vector<float>& values)
     {
         constexpr uint8_t max = std::numeric_limits<uint8_t>::max();
 
-        m_Style = Dash::Custom;
+        std::vector resultValues{values};
+
+        // Cap buffersize if necessary
         if (values.size() > max)
         {
-            const std::vector<float> cappedValues
-            {
-                values.begin(),
-                std::next(values.begin(), max - 1)
-            };
-            CreateStrokeStyle(cappedValues.data(), static_cast<uint32_t>(cappedValues.size()));
+            resultValues = std::vector<float>{ values.begin(), std::next(values.begin(), max - 1) };
             OutputDebugString(std::format(_T("Capped the custom dashes count to a size of {}, because the size of the vector was larger (with a size of {}).\n"), max, values.size()).c_str());
         }
-        else CreateStrokeStyle(values.data(), static_cast<uint32_t>(values.size()));
 
-        const auto size = m_pStrokeStyle->GetDashesCount();
-        m_CustomDashesCount = static_cast<std::uint8_t>(size);
         m_pCustomDashes.reset();
+        const auto size = resultValues.size();
 
-        // Create new array if necessary
-        if (size > 0)
-        {
-            const auto p = new float[size]{};
-            m_pStrokeStyle->GetDashes(p, size);
-            m_pCustomDashes.reset(p);
-        }
+        CopyDashesBuffer(resultValues.data(),static_cast<std::uint8_t>(size));
 
+        m_Style = Dash::Custom;
         m_NeedsToChange = true;
     }
     StrokeStyle::Cap StrokeStyle::GetStartCapStyle() const { return m_StartCap; }
@@ -192,12 +186,11 @@ namespace jela
     ID2D1StrokeStyle1* StrokeStyle::RendererDoor::GetStyle(const StrokeStyle& style){ return style.GetStyle(); }
     ID2D1StrokeStyle1* StrokeStyle::GetStyle() const
     {
-        if (m_NeedsToChange) UpdateState();
-
         return m_pStrokeStyle;
     }
-    void StrokeStyle::CreateStrokeStyle(const float* customDashes, uint32_t numberOfElements) const
+    bool StrokeStyle::CreateStrokeStyle()
     {
+        OutputDebugString(_T("Creating Stroke Style...\n"));
         SafeRelease(&m_pStrokeStyle);
 
         HResultHandler hr {S_OK, _T("StrokeStyle::CreateStrokeStyle")};
@@ -213,17 +206,44 @@ namespace jela
                 m_DashOffset,
                 static_cast<D2D1_STROKE_TRANSFORM_TYPE>(m_Transform)
                 ),
-            customDashes,
-            customDashes ? numberOfElements : 0,
+            (m_Style == Dash::Custom ? m_pCustomDashes.get() : nullptr),
+            (m_Style == Dash::Custom ? m_CustomDashesCount : 0),
             &m_pStrokeStyle);
 
         m_NeedsToChange = false;
+
+        return hr.Succeeded();
     }
-    void StrokeStyle::UpdateState() const
+    void StrokeStyle::UpdateState()
     {
-        if (m_CustomDashesCount == 0 || m_Style != Dash::Custom)
-            CreateStrokeStyle(nullptr, 0);
-        else if (m_Style == Dash::Custom)
-            CreateStrokeStyle(m_pCustomDashes.get(), m_CustomDashesCount);
+        if (!m_NeedsToChange) return;
+
+        if (!CreateStrokeStyle())
+        {
+            OutputDebugString(
+                std::format(_T("Creation of StrokeStyle failed. Properties:\n"
+                "Start Cap: {}\nEnd Cap: {}\nDash Cap: {}\nJoin Style: {}\nDash Style: {}\nTransform Style: {}\nMiter Limit: {}\nDash Offset: {}\nCustom Dashes Buffer Size: {}\n"),
+                std::to_underlying(m_StartCap),
+                std::to_underlying(m_EndCap),
+                std::to_underlying(m_DashCap),
+                std::to_underlying(m_LineJoin),
+                std::to_underlying(m_Style),
+                std::to_underlying(m_Transform),
+                m_MiterLimit,
+                m_DashOffset,
+                m_CustomDashesCount).c_str()
+                );
+        }
+    }
+    void StrokeStyle::CopyDashesBuffer(const float* dashesToCopy, std::uint8_t size)
+    {
+        m_CustomDashesCount = size;
+        if (m_CustomDashesCount > 0)
+        {
+            const auto p = new float[m_CustomDashesCount]{};
+            for (std::uint8_t i = 0; i < m_CustomDashesCount; i++) p[i] = dashesToCopy[i];
+
+            m_pCustomDashes.reset(p);
+        }
     }
 }
