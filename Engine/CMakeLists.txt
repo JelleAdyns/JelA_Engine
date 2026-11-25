@@ -1,6 +1,10 @@
 project(JelA_Engine)
 
-set(LIB_HEADERS
+#Define MATHEMATICAL_COORDINATESYSTEM to position the origin at the bottom-left corner of the screen
+#When not defined, the origin is positioned at the top-left corner of the screen
+option(USE_MATHEMATICAL_COORDINATESYSTEM "Origin positioned in bottom left" TRUE)
+
+set(LIB_SOURCES
         include/JelA/Commands/Command.h
         include/JelA/Commands/MovementCommands.h
         include/JelA/Components/Renderers/LineRenderer.h
@@ -45,9 +49,7 @@ set(LIB_HEADERS
         include/JelA/Components/Arc.h
         include/JelA/StrokeStyle.h
         include/JelA/Components/LineStylizer.h
-)
-set(LIB_SOURCES
-        ${LIB_HEADERS}
+
         src/AudioService.cpp
         src/Controller.cpp
         src/DirectXObjects.cpp
@@ -78,12 +80,18 @@ set(LIB_SOURCES
         src/Components/LineStylizer.cpp
 )
 
+set(LIB_HEADERS ${LIB_SOURCES})
+set(INC_REGEX "^include/")
+list(FILTER LIB_HEADERS INCLUDE REGEX ${INC_REGEX})
+list(FILTER LIB_SOURCES EXCLUDE REGEX ${INC_REGEX})
 
 add_library(${PROJECT_NAME} STATIC ${LIB_SOURCES})
 
 if(USE_MATHEMATICAL_COORDINATESYSTEM)
-    target_compile_definitions(JelA_Engine PUBLIC MATHEMATICAL_COORDINATESYSTEM)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC MATHEMATICAL_COORDINATESYSTEM)
 endif()
+target_compile_definitions(${PROJECT_NAME} PUBLIC UNICODE _UNICODE)
+
 target_sources(${PROJECT_NAME} PUBLIC FILE_SET HEADERS BASE_DIRS include FILES ${LIB_HEADERS})
 
 target_include_directories(${PROJECT_NAME}
@@ -94,7 +102,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE
         "xinput"
         "shlwapi"
-        "Dwrite"
+        "dwrite"
         "d2d1"
         "d3d11"
         "dxgi"

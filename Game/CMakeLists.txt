@@ -5,9 +5,15 @@ set(SOURCES
 	"Main.cpp"
 )
 
+#if window icon is found, add the resource file to the project
+set(RESOURCE_FILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Icons.rc")
+if(EXISTS ${RESOURCE_FILE_PATH} AND EXISTS "${CMAKE_SOURCE_DIR}/Resources/WindowIcon.ico")
+	list(APPEND SOURCES ${RESOURCE_FILE_PATH})
+	message(STATUS "Adding Resource file")
+endif()
+
 #Create the Game Project
-#You need to remove ${CMAKE_CURRENT_SOURCE_DIR}/Icons.rc if you don't have an Icon for the application
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/Icons.rc")
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 
 #Specify that the project is a WIN32 application (DON'T MODIFY THIS)
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE YES)
