@@ -9,7 +9,7 @@ namespace jela
 {
     TextureImage::TextureImage(const tstring& textureName)
     {
-        ENGINE.ResourceMngr()->GetTexture(textureName, m_pTexture);
+        SetTexture(textureName);
     }
     void TextureImage::Init()
     {
@@ -34,6 +34,10 @@ namespace jela
     Rectf TextureImage::GetSourceRect() const
     {
         return m_SourceRect;
+    }
+    void TextureImage::SetTexture(const tstring& textureName)
+    {
+        ENGINE.ResourceMngr()->GetTexture(textureName, m_pTexture);
     }
     void TextureImage::SetSourceRectPos(float x, float y)
     {

@@ -12,7 +12,8 @@ namespace jela
     {
     public:
 
-        TextureImage(const tstring& textureName);
+        TextureImage() = default;
+        explicit TextureImage(const tstring& textureName);
 
         void Init() override;
         const ResourcePtr<Texture>& GetManagedTexture() const;
@@ -20,6 +21,7 @@ namespace jela
 
         Rectf GetDestRect() const;
         Rectf GetSourceRect() const;
+        void SetTexture(const tstring& textureName);
         void SetSourceRectPos(float x, float y);
         void SetSourceRectPos(Vector2f newPos);
         void SetSourceRectSize(float width, float height);

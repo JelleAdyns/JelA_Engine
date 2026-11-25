@@ -5,6 +5,9 @@
 
 namespace jela
 {
+    RectTransform::RectTransform():
+        RectTransform{0,0}
+    {}
     RectTransform::RectTransform(Vector2f size):
         RectTransform{size.x,size.y}
     {}

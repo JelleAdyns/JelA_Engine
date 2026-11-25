@@ -18,7 +18,8 @@ namespace jela
             Center,
             SIZE
         };
-        RectTransform(Vector2f size);
+        RectTransform();
+        explicit RectTransform(Vector2f size);
         RectTransform(float width, float height);
 
         void DrawGizmos() override;

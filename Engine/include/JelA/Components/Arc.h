@@ -8,6 +8,10 @@ namespace jela
     class Arc final : public Component
     {
     public:
+        Arc():
+            Arc{50,50}
+        {}
+
         Arc(float radiusX, float radiusY, float angle = 90.f, bool closeSegment = true):
             m_Arc{0.f, 0.f, radiusX, radiusY, 0.f, angle, closeSegment}
         {}

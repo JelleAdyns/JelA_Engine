@@ -8,6 +8,7 @@ namespace jela
     class Polygon final : public Component
     {
     public:
+        Polygon():Polygon{{}}{}
         explicit Polygon(const std::vector<Point2f>& points, bool closeSegment = true):
             m_Polygon{std::forward<const std::vector<Point2f>&>(points), closeSegment}
         {};
