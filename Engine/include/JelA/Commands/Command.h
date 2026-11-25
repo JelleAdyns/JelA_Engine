@@ -26,7 +26,7 @@ namespace jela
         GameObjectCommand& operator= (const GameObjectCommand&) = default;
         GameObjectCommand& operator= (GameObjectCommand&&) noexcept = default;
     protected:
-        GameObjectCommand(GameObject* pGameObject) :
+        explicit GameObjectCommand(GameObject* pGameObject) :
             m_pGameObject{ pGameObject }
         {}
         GameObject* GetGameObject() const { return m_pGameObject; }

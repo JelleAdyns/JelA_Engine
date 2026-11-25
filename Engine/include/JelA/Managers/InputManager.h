@@ -80,8 +80,12 @@ namespace jela
     };
     class InputManager
     {
-
     public:
+        InputManager(const InputManager& other) = delete;
+        InputManager(InputManager&& other) noexcept = delete;
+        InputManager& operator=(const InputManager& other) = delete;
+        InputManager& operator=(InputManager&& other) noexcept = delete;
+
         void ProcessInput();
         void QueueEvent(EventInfo&& event);
         bool IsKeyBoardActive() const { return m_IsKeyboardActive; }

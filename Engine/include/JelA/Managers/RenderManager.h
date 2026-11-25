@@ -17,6 +17,11 @@ namespace jela
     class RenderManager
     {
     public:
+        RenderManager(const RenderManager& other) = delete;
+        RenderManager(RenderManager&& other) noexcept = delete;
+        RenderManager& operator=(const RenderManager& other) = delete;
+        RenderManager& operator=(RenderManager&& other) noexcept = delete;
+
         explicit RenderManager(GameWindow* pWindow);
 
         void SetColor(Color newColor) const;

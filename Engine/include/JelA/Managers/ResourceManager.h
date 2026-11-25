@@ -14,10 +14,10 @@ namespace jela
     public:
         explicit Texture(const tstring& filename);
 
-        Texture(const Texture& other);;
-        Texture(Texture&& other) noexcept;;
+        Texture(const Texture& other);
+        Texture(Texture&& other) noexcept;
         Texture& operator=(const Texture& other);
-        Texture& operator=(Texture&& other) noexcept;;
+        Texture& operator=(Texture&& other) noexcept;
 
         ~Texture();
 
